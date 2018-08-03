@@ -1,0 +1,155 @@
+diff -c -r wu-ftpd-2.4/src/ftpd.c wu-ftpd-2.4-dce-0.5/src/ftpd.c
+*** wu-ftpd-2.4/src/ftpd.c	Mon Jan  6 07:27:09 1997
+--- wu-ftpd-2.4-dce-0.5/src/ftpd.c	Fri Mar 21 08:49:50 1997
+***************
+*** 105,110 ****
+--- 105,115 ----
+  #include <krb.h>
+  #endif
+  
++ #ifdef DCE_AUTH
++ #include <dce/dce_error.h>
++ #include <dce/sec_login.h>
++ #endif
++ 
+  #ifdef ULTRIX_AUTH
+  #include <auth.h>
+  #include <sys/svcinfo.h>
+***************
+*** 243,248 ****
+--- 248,259 ----
+  char krb_ticket_name[100];
+  #endif /* KERBEROS */
+  
++ #ifdef DCE_AUTH
++ static int dce_check_pass(char *passwd);
++ static error_status_t dce_st;
++ static sec_login_handle_t login_context;
++ #endif
++ 
+  #ifdef ULTRIX_AUTH
+  int ultrix_check_pass(char *passwd, char *xpasswd);
+  #endif
+***************
+*** 1010,1015 ****
+--- 1021,1029 ----
+          xpasswd = crypt(passwd, salt);
+  #endif
+  
++ #ifdef DCE_AUTH
++         if (!dce_check_pass(passwd)) {
++ #else
+  #ifdef ULTRIX_AUTH
+          if ((numfails = ultrix_check_pass(passwd, xpasswd)) < 0) {
+  #else
+***************
+*** 1017,1022 ****
+--- 1031,1037 ----
+          if (pw == NULL || *pw->pw_passwd == '\0' ||
+              strcmp(xpasswd, pw->pw_passwd)) {
+  #endif
++ #endif
+              reply(530, "Login incorrect.");
+  
+  #ifdef LOG_FAILED                       /* 27-Apr-93    EHK/BM             */
+***************
+*** 2430,2435 ****
+--- 2445,2453 ----
+          close(xferlog);
+      acl_remove();
+      /* beware of flushing buffers after a SIGPIPE */
++ #ifdef DCE_AUTH
++     sec_login_purge_context(&login_context, &dce_st);
++ #endif
+      _exit(status);
+  }
+  
+***************
+*** 2772,2777 ****
+--- 2790,2853 ----
+      unlink(krb_ticket_name);
+  }
+  #endif /* KERBEROS */
++ 
++ #ifdef DCE_AUTH
++ static int dce_check_pass(char *passwd)
++ {
++   dce_error_string_t dce_error;
++   int dce_error_st;
++   sec_login_auth_src_t auth_src;
++   sec_passwd_rec_t pw_entry;
++   sec_passwd_str_t dce_pw;
++   boolean32 reset_passwd;
++ 
++   if (pw == NULL)
++     return 0;
++   
++   if (!sec_login_setup_identity(pw->pw_name, sec_login_no_flags, &login_context, &dce_st))
++     {
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "setup identity failed for %s - %s", pw->pw_name, dce_error);
++       sec_login_purge_context(&login_context, &dce_st);
++       return 0;
++     }
++ 
++   pw_entry.version_number = sec_passwd_c_version_none;
++   pw_entry.pepper = NULL;
++   pw_entry.key.key_type = sec_passwd_plain;
++           
++   strncpy( (char *)dce_pw, passwd, sec_passwd_str_max_len);
++   dce_pw[sec_passwd_str_max_len] = '\0';
++   pw_entry.key.tagged_union.plain = &(dce_pw[0]);
++ 
++   if (!sec_login_valid_and_cert_ident(login_context, &pw_entry, &reset_passwd,
++                                       &auth_src, &dce_st))
++     {
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "valid_and_cert identity failed for %s - %s", pw->pw_name, dce_error);
++       sec_login_purge_context(&login_context, &dce_st);
++       return 0;
++     }
++ 
++   if (auth_src != sec_login_auth_src_network)
++     {
++       sec_login_purge_context(&login_context, &dce_st);
++       syslog(LOG_NOTICE, "no network creds for %s", pw->pw_name);
++       return 0;
++     }
++           
++   sec_login_set_context(login_context, &dce_st);
++   if (dce_st)
++     {
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "set context failed for %s - %s", pw->pw_name, dce_error);
++       sec_login_purge_context(&login_context, &dce_st);
++       return 0;
++     }
++ 
++   return 1;
++ }
++ #endif
+  
+  #ifdef ULTRIX_AUTH
+  static int
+diff -c -r wu-ftpd-2.4/src/makefiles/Makefile.sol wu-ftpd-2.4-dce-0.5/src/makefiles/Makefile.sol
+*** wu-ftpd-2.4/src/makefiles/Makefile.sol	Fri Apr  1 11:03:28 1994
+--- wu-ftpd-2.4-dce-0.5/src/makefiles/Makefile.sol	Fri Mar 21 08:52:21 1997
+***************
+*** 1,8 ****
+! CC       = cc
+  IFLAGS   = -I.. -I../support
+  LFLAGS   = -L../support
+! CFLAGS   = -g -DDEBUG ${IFLAGS} ${LFLAGS}
+! LIBES    = -lsupport -lsocket -lnsl -lgen
+  LIBC     = /lib/libc.a
+  LINTFLAGS=	
+  LKERB    = -lauth -lckrb -lkrb -ldes
+--- 1,8 ----
+! CC       = gcc
+  IFLAGS   = -I.. -I../support
+  LFLAGS   = -L../support
+! CFLAGS   = -g -DDEBUG ${IFLAGS} ${LFLAGS} -DDCE_AUTH
+! LIBES    = -lsupport -ldce -lsocket -lnsl -lthread -lm -lgen
+  LIBC     = /lib/libc.a
+  LINTFLAGS=	
+  LKERB    = -lauth -lckrb -lkrb -ldes

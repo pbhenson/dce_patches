@@ -1,0 +1,48 @@
+DCE authentication/DFS fileset patch (version 2.5) for samba 2.2.0a
+-------------------------------------------------------------------
+
+This patch adds support for DCE authentication and DFS filesets to
+samba 2.2.0a. In addition to plaintext password support, encrypted
+passwords are supported with the optional sec_auth package.
+Additional features include DFS fileset quota reporting and Windows
+Terminal Server connection multiplexing.
+
+To apply the patch, first acquire the samba distribution, and then
+execute the commands:
+
+     cd /path/to/samba-2.2.0a
+     patch -p1 -d . < /path/to/samba-2.2.0a-dce-2.5.diff
+
+
+See the file docs/textdocs/README.DCEDFS after applying the patch
+for configuration information.
+
+
+Feedback/Availability
+---------------------
+
+Please report problems/requests to <henson@acm.org>.
+
+The latest version of this patch is currently available at:
+
+     http://www.csupomona.edu/~henson/www/projects/dce_patches/samba/
+
+
+---------------------------------------------------------------------------
+  Copyright (C) 1999-2001 Paul Henson <henson@acm.org>
+
+   This patch is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 1, or (at your option)
+   any later version.
+
+   This patch is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License, write to the Free
+   Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+   The GNU General Public License is, as of this writing, also available
+   at http://www.gnu.org/copyleft/gpl.html

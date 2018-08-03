@@ -1,0 +1,189 @@
+diff -c -r imap-4.5/Makefile imap-4.5-dce-1.0/Makefile
+*** imap-4.5/Makefile	Wed Jan 27 14:40:30 1999
+--- imap-4.5-dce-1.0/Makefile	Wed Mar 24 14:32:38 1999
+***************
+*** 50,56 ****
+  # mbox	if file "mbox" exists on the home directory, automatically moves mail
+  #	 from the spool directory to "mbox" and uses "mbox" as INBOX.
+  
+! EXTRADRIVERS=mbox
+  
+  
+  # The following plaintext login types are defined:
+--- 50,56 ----
+  # mbox	if file "mbox" exists on the home directory, automatically moves mail
+  #	 from the spool directory to "mbox" and uses "mbox" as INBOX.
+  
+! EXTRADRIVERS=
+  
+  
+  # The following plaintext login types are defined:
+***************
+*** 236,241 ****
+--- 236,243 ----
+  # ghp	GCC HP-UX 10.x
+  # gs5	GCC 2.7.1 (95q4 from Skunkware _not_ 98q2!) SCO Open Server 5.0.x
+  # gso	GCC Solaris
++ # gsd25       GCC Solaris 2.5[.1] with DCE/DFS support
++ # gsd26       GCC Solaris 2.6 with DCE/DFS support
+  # gsu	GCC SUN-OS
+  # gul	GCC RISC Ultrix (DEC-5000)
+  # hpp	HP-UX 9.x
+***************
+*** 283,289 ****
+  
+  # Note on SCO you may have to set LN to "ln".
+  
+! a32 a41 aix bs3 bsf bsi bso d-g d54 drs epx gas gh9 ghp gs5 gso gsu gul hpp hpx lnp lyn mct mnt neb nxt nx3 osf os4 ptx qnx sc5 sco sgi shp sl4 sl5 slx snx sol sos uw2: an
+  	$(BUILD) OS=$@
+  
+  # If you use sv4, you may find that it works to move it to use the an process.
+--- 285,291 ----
+  
+  # Note on SCO you may have to set LN to "ln".
+  
+! a32 a41 aix bs3 bsf bsi bso d-g d54 drs epx gas gh9 ghp gs5 gso gsd25 gsd26 gsu gul hpp hpx lnp lyn mct mnt neb nxt nx3 osf os4 ptx qnx sc5 sco sgi shp sl4 sl5 slx snx sol sos uw2: an
+  	$(BUILD) OS=$@
+  
+  # If you use sv4, you may find that it works to move it to use the an process.
+diff -c -r imap-4.5/src/imapd/imapd.c imap-4.5-dce-1.0/src/imapd/imapd.c
+*** imap-4.5/src/imapd/imapd.c	Wed Jan 27 21:34:39 1999
+--- imap-4.5-dce-1.0/src/imapd/imapd.c	Wed Mar 24 14:33:12 1999
+***************
+*** 1083,1088 ****
+--- 1083,1089 ----
+      }
+      PFLUSH;			/* make sure output blatted */
+    } while (state != LOGOUT);	/* until logged out */
++   server_logout();
+    syslog (LOG_INFO,"Logout user=%.80s host=%.80s",user ? user : "???",
+  	  tcp_clienthost ());
+    return 0;			/* all done */
+diff -c -r imap-4.5/src/osdep/unix/Makefile imap-4.5-dce-1.0/src/osdep/unix/Makefile
+*** imap-4.5/src/osdep/unix/Makefile	Tue Jan 26 15:17:39 1999
+--- imap-4.5-dce-1.0/src/osdep/unix/Makefile	Wed Mar 24 14:39:45 1999
+***************
+*** 299,304 ****
+--- 299,322 ----
+  	 BASELDFLAGS="-lsocket -lnsl -lgen" \
+  	 RANLIB=true CC=gcc
+  
++ gsd25:  # GCC Solaris 2.5[.1] with DCE/DFS support
++ 	$(BUILD) `cat EXTRASPECIALS` OS=sol SIGTYPE=psx CHECKPW=dcedfs \
++ 	MAILSPOOL=/var/mail SPOOLDIR=/var/spool \
++ 	ACTIVEFILE=/usr/share/news/active \
++ 	RSHPATH=/usr/bin/rsh \
++ 	BASECFLAGS="-g -O2 -DHOMEDIRMAIL" \
++ 	BASELDFLAGS="-ldce -lsocket -lnsl -lthread -lm -lgen" \
++ 	RANLIB=true CC=gcc
++ 
++ gsd26:  # GCC Solaris 2.6 with DCE/DFS support
++ 	$(BUILD) `cat EXTRASPECIALS` OS=sol SIGTYPE=psx CHECKPW=dcedfs \
++ 	MAILSPOOL=/var/mail SPOOLDIR=/var/spool \
++ 	ACTIVEFILE=/usr/share/news/active \
++ 	RSHPATH=/usr/bin/rsh \
++ 	BASECFLAGS="-g -O2 -I/usr/include/dce -D_REENTRANT -DHOMEDIRMAIL" \
++ 	BASELDFLAGS="-ldce -lsocket -lnsl -lgen" \
++ 	RANLIB=true CC=gcc
++ 
+  gsu:	# GCC SUN-OS
+  	$(BUILD) `cat EXTRASPECIALS` OS=sun \
+  	 BASECFLAGS="-O2 -DNFSKLUDGE" \
+diff -c -r imap-4.5/src/osdep/unix/ckp_dcedfs.c imap-4.5-dce-1.0/src/osdep/unix/ckp_dcedfs.c
+*** imap-4.5/src/osdep/unix/ckp_dcedfs.c	Wed Mar 24 15:50:45 1999
+--- imap-4.5-dce-1.0/src/osdep/unix/ckp_dcedfs.c	Wed Mar 24 14:28:23 1999
+***************
+*** 0 ****
+--- 1,62 ----
++ /*
++  * DCE authentication code for uwash imapd
++  *
++  * Paul Henson <henson@acm.org>
++  * California State Polytechnic University, Pomona
++  *
++  * Copyright (c) 1997-99 Paul Henson
++  *
++  */
++ 
++ #include <dce/sec_login.h>
++ 
++ static sec_login_handle_t login_context = NULL;
++ 
++ struct passwd *checkpw (struct passwd *pw,char *pass,int argc,char *argv[])
++ {
++   sec_login_auth_src_t auth_src;
++   sec_passwd_rec_t pw_entry;
++   boolean32 reset_passwd;
++   sec_passwd_str_t tmp_pw;
++   error_status_t dce_st;
++ 
++   if (!sec_login_setup_identity(pw->pw_name, sec_login_no_flags, &login_context, &dce_st))
++     return NIL;
++   
++   pw_entry.version_number = sec_passwd_c_version_none;
++   pw_entry.pepper = NULL;
++   pw_entry.key.key_type = sec_passwd_plain;
++   strncpy((char *)tmp_pw, pass, sec_passwd_str_max_len);
++   tmp_pw[sec_passwd_str_max_len] = '\0';
++   pw_entry.key.tagged_union.plain = &(tmp_pw[0]);
++ 
++   if (!sec_login_valid_and_cert_ident(login_context, &pw_entry, &reset_passwd, &auth_src, &dce_st))
++     {
++       sec_login_purge_context(&login_context, &dce_st);
++       return NIL;
++     }
++   
++   if (auth_src != sec_login_auth_src_network)
++     {
++       sec_login_purge_context(&login_context, &dce_st);
++       return NIL;
++     }
++  
++   sec_login_set_context(login_context, &dce_st);
++  
++   if (dce_st)
++     {
++       sec_login_purge_context(&login_context, &dce_st);
++       return NIL;
++     }
++ 
++   return pw;
++ }
++ 
++ void server_logout()
++ {
++   error_status_t dce_st;
++ 
++   if (login_context)
++     sec_login_purge_context(&login_context, &dce_st);
++ }
+diff -c -r imap-4.5/src/osdep/unix/env_unix.c imap-4.5-dce-1.0/src/osdep/unix/env_unix.c
+*** imap-4.5/src/osdep/unix/env_unix.c	Tue Dec 15 22:51:20 1998
+--- imap-4.5-dce-1.0/src/osdep/unix/env_unix.c	Wed Mar 24 14:41:26 1999
+***************
+*** 492,497 ****
+--- 492,504 ----
+  				/* do systemwide configuration */
+    dorc ("/etc/c-client.cf",NIL);
+    if (!anonymousHome) anonymousHome = cpystr (ANONYMOUSHOME);
++ 
++ #ifdef HOMEDIRMAIL
++   sprintf(tmp, "%s/.mail/imap", home);
++   myHomeDir = cpystr(tmp);
++   sprintf(tmp, "%s/.mail/mail", home);
++   sysInbox = cpystr(tmp);
++ #else  
+    if (user) {			/* remember user name and home directory */
+      if (blackBoxDir) {		/* build black box directory name */
+        sprintf (tmp,"%s/%s",blackBoxDir,myUserName);
+***************
+*** 520,525 ****
+--- 527,534 ----
+  				/* make sure an error message happens */
+      if (!blackBoxDir) blackBoxDir = blackBoxDefaultHome = anonymousHome;
+    }
++ #endif
++ 
+    dorc (strcat (strcpy (tmp,myHomeDir),"/.mminit"),T);
+    dorc (strcat (strcpy (tmp,myHomeDir),"/.imaprc"),NIL);
+    if (!myLocalHost) mylocalhost ();

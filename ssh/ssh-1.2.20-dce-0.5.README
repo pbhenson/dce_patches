@@ -1,0 +1,72 @@
+DCE password authentication patch (version 0.5) for ssh version 1.2.20
+----------------------------------------------------------------------
+
+
+This patch adds DCE password authentication support to ssh. It allows
+sshd to use the DCE security registry to authenticate remote users using
+password authentication, and attaches DCE credentials to the ssh login.
+
+
+You can retrieve ssh 1.2.20 via the URL:
+
+     ftp://ftp.cs.hut.fi/pub/ssh/ssh-1.2.20.tar.gz
+
+
+To apply the patch, acquire and untar the ssh distribution, change into
+the ssh-1.2.20 directory and type:
+
+patch -p1 -d . < /path/to/ssh-1.2.20-dce-0.5.diff
+
+
+Once the patch has been applied, configure ssh as directed in the INSTALL
+file. Then, you need to manually edit the Makefile. Add "-DDCE" to the
+DEFS line, as well as any other required defines to compile DCE
+applications on your system. Add the appropriate DCE libraries for your
+system to the LIBS line (for Solaris 2.5, LIBS should be set to
+"-ldce -lsocket -lnsl -lthread -lm"). Finish compiling and installing ssh
+as directed in the INSTALL file.
+
+This patch has only been tested under Solaris 2.5/Transarc DCE 1.1.
+
+If your OS doesn't support DCE as a naming service, you will need to
+replicate your registry in local files for ssh to work. Solaris
+users can install my nss_dce package to integrate DCE into the Solaris
+naming service switch:
+
+http://www.intranet.csupomona.edu/~henson/www/projects/nss_dce/
+
+
+Feedback/Availability
+---------------------
+
+Please report any bugs or feature requests to <henson@acm.org>.
+
+The latest version of this patch is currently available at
+
+http://www.intranet.csupomona.edu/~henson/www/projects/dce_patches/ssh/
+
+
+Changes
+-------
+
+0.5 - First publicly released version for ssh 1.2.20
+
+
+---------------------------------------------------------------------------
+   Copyright (C) 1997 Paul Henson <henson@acm.org>
+
+   This patch is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 1, or (at your option)
+   any later version.
+
+   This patch is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License, write to the Free
+   Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+   The GNU General Public License is, as of this writing, also available
+   at http://www.irsociety.com/webchat/gnu.html

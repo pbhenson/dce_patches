@@ -1,0 +1,57 @@
+DCE authentication patch (version 0.5) for qpopper 2.3
+------------------------------------------------------
+
+
+This patch adds DCE authentication to qpopper version 2.3, Qualcomm's
+free POP server. It allows you to use the DCE registry to authenticate
+POP users, and to serve mail from DFS.
+
+
+To apply the patch, acquire and untar the qpopper distribution, change into
+the qpopper2.3 directory and type:
+
+patch -p1 -d . < /path/to/qpopper2.3-dce-0.5.diff
+
+
+This patch has only been tested under Solaris 2.5/Transarc 1.1. If you want
+to use this patch with a different vendor's DCE, you will need to edit
+the appropriate makefile for your system, add the AUTH_DCE define, and
+the correct libraries for your OS. You can refer to make.solaris2 as an
+example.
+
+After patch installation, the Solaris makefile by default includes the
+HOMEDIRMAIL option to serve mail from a user's home directory. If you
+don't want to serve mail from home directories, you need to remove this
+option. If you do, you might want to edit pop_dropcopy.c to change where
+in a home directory qpopper looks for mail, and change POP_TMPDROP in
+popper.h so the server doesn't store temporary copies in the system mail
+directory. Please see the INSTALL file in the qpopper distribution for
+more details.
+
+
+If your OS doesn't support DCE as a naming service, you will need to
+replicate your registry in local files for qpopper to work. Solaris
+users can install my nss_dce package to integrate DCE into the Solaris
+naming service switch:
+
+http://www.intranet.csupomona.edu/~henson/www/projects/nss_dce/
+
+
+---------------------------------------------------------------------------
+   Copyright (C) 1997 Paul Henson <henson@acm.org>
+
+   This patch is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 1, or (at your option)
+   any later version.
+
+   This patch is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License, write to the Free
+   Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+   The GNU General Public License is, as of this writing, also available
+   at http://www.irsociety.com/webchat/gnu.html

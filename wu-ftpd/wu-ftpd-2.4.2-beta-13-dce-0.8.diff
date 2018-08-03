@@ -1,0 +1,204 @@
+diff -c -r wu-ftpd-2.4.2-beta-13/config.h wu-ftpd-2.4.2-beta-13-dce-0.8/config.h
+*** wu-ftpd-2.4.2-beta-13/config.h	Mon Mar  3 01:39:34 1997
+--- wu-ftpd-2.4.2-beta-13-dce-0.8/config.h	Tue Jun  3 17:25:39 1997
+***************
+*** 74,76 ****
+--- 74,84 ----
+  
+  #undef SKEY
+  
++ /*
++  * DCE
++  * Add support for DCE authentication
++  *
++  */
++ 
++ #define DCE
++  
+diff -c -r wu-ftpd-2.4.2-beta-13/src/ftpd.c wu-ftpd-2.4.2-beta-13-dce-0.8/src/ftpd.c
+*** wu-ftpd-2.4.2-beta-13/src/ftpd.c	Mon Mar  3 01:39:56 1997
+--- wu-ftpd-2.4.2-beta-13-dce-0.8/src/ftpd.c	Tue Jun  3 17:07:08 1997
+***************
+*** 141,146 ****
+--- 141,151 ----
+  #include <krb.h>
+  #endif
+  
++ #ifdef DCE
++ #include <dce/dce_error.h>
++ #include <dce/sec_login.h>
++ #endif
++ 
+  #ifdef ULTRIX_AUTH
+  #include <auth.h>
+  #include <sys/svcinfo.h>
+***************
+*** 347,352 ****
+--- 352,363 ----
+  char krb_ticket_name[100];
+  #endif /* KERBEROS */
+  
++ #ifdef DCE
++ static int dce_check_pass(char *passwd);
++ static error_status_t dce_st;
++ static sec_login_handle_t login_context;
++ #endif
++ 
+  #ifdef ULTRIX_AUTH
+  int ultrix_check_pass(char *passwd, char *xpasswd);
+  #endif
+***************
+*** 1413,1418 ****
+--- 1424,1432 ----
+  #endif
+  #endif
+  #endif
++ #ifdef DCE
++         if (!dce_check_pass(passwd)) {
++ #else
+  #ifdef ULTRIX_AUTH
+          if ((numfails = ultrix_check_pass(passwd, xpasswd)) < 0) {
+  #else
+***************
+*** 1420,1425 ****
+--- 1434,1440 ----
+        if (pw == NULL || *pw->pw_passwd == '\0' ||
+              strcmp(xpasswd, pw->pw_passwd)) {
+  #endif
++ #endif
+              reply(530, "Login incorrect.");
+  
+  #ifdef LOG_FAILED                       /* 27-Apr-93    EHK/BM             */
+***************
+*** 3203,3208 ****
+--- 3218,3226 ----
+      close (data);		/* H* fix: clean up a little better */
+      close (pdata);
+      /* beware of flushing buffers after a SIGPIPE */
++ #ifdef DCE
++     sec_login_purge_context(&login_context, &dce_st);
++ #endif
+      _exit(status);
+  }
+  
+***************
+*** 3712,3717 ****
+--- 3730,3793 ----
+      unlink(krb_ticket_name);
+  }
+  #endif /* KERBEROS */
++ 
++ #ifdef DCE  /* DCE authentication code by Paul Henson <henson@acm.org> */
++ static int dce_check_pass(char *passwd)
++ {
++   dce_error_string_t dce_error;
++   int dce_error_st;
++   sec_login_auth_src_t auth_src;
++   sec_passwd_rec_t pw_entry;
++   sec_passwd_str_t dce_pw;
++   boolean32 reset_passwd;
++ 
++   if (pw == NULL)
++     return 0;
++   
++   if (!sec_login_setup_identity(pw->pw_name, sec_login_no_flags, &login_context, &dce_st))
++     {
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "setup identity failed for %s - %s", pw->pw_name, dce_error);
++       sec_login_purge_context(&login_context, &dce_st);
++       return 0;
++     }
++ 
++   pw_entry.version_number = sec_passwd_c_version_none;
++   pw_entry.pepper = NULL;
++   pw_entry.key.key_type = sec_passwd_plain;
++           
++   strncpy( (char *)dce_pw, passwd, sec_passwd_str_max_len);
++   dce_pw[sec_passwd_str_max_len] = '\0';
++   pw_entry.key.tagged_union.plain = &(dce_pw[0]);
++ 
++   if (!sec_login_valid_and_cert_ident(login_context, &pw_entry, &reset_passwd,
++                                       &auth_src, &dce_st))
++     {
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "valid_and_cert identity failed for %s - %s", pw->pw_name, dce_error);
++       sec_login_purge_context(&login_context, &dce_st);
++       return 0;
++     }
++ 
++   if (auth_src != sec_login_auth_src_network)
++     {
++       sec_login_purge_context(&login_context, &dce_st);
++       syslog(LOG_NOTICE, "no network creds for %s", pw->pw_name);
++       return 0;
++     }
++           
++   sec_login_set_context(login_context, &dce_st);
++   if (dce_st)
++     {
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "set context failed for %s - %s", pw->pw_name, dce_error);
++       sec_login_purge_context(&login_context, &dce_st);
++       return 0;
++     }
++ 
++   return 1;
++ }
++ #endif
+  
+  #ifdef ULTRIX_AUTH
+  static int
+diff -c -r wu-ftpd-2.4.2-beta-13/src/makefiles/Makefile.aix wu-ftpd-2.4.2-beta-13-dce-0.8/src/makefiles/Makefile.aix
+*** wu-ftpd-2.4.2-beta-13/src/makefiles/Makefile.aix	Sun Mar  2 16:12:58 1997
+--- wu-ftpd-2.4.2-beta-13-dce-0.8/src/makefiles/Makefile.aix	Tue Jun  3 17:46:55 1997
+***************
+*** 2,11 ****
+  # Makefile for AIX
+  # $Id: Makefile.aix,v 1.4 1997/01/16 08:35:26 sob Exp $
+  #
+! CC       = cc
+! IFLAGS   = -I.. -I../support
+! LFLAGS   = -L../support
+! CFLAGS   = -O2 ${IFLAGS} ${LFLAGS}
+  LIBES    = -lsupport -ls
+  LIBC     = /lib/libc.a
+  LINTFLAGS=
+--- 2,11 ----
+  # Makefile for AIX
+  # $Id: Makefile.aix,v 1.4 1997/01/16 08:35:26 sob Exp $
+  #
+! CC       = xlc_r4
+! IFLAGS   = -I.. -I../support -I/usr/include/dce
+! LFLAGS   = -L../support -ldce -lc_r -ldcepthreads -lpthreads -lm -lc -lcurses
+! CFLAGS   = -O2 ${IFLAGS} ${LFLAGS} -D_DCE_PTHREADS -D_AIX41
+  LIBES    = -lsupport -ls
+  LIBC     = /lib/libc.a
+  LINTFLAGS=
+diff -c -r wu-ftpd-2.4.2-beta-13/src/makefiles/Makefile.sol wu-ftpd-2.4.2-beta-13-dce-0.8/src/makefiles/Makefile.sol
+*** wu-ftpd-2.4.2-beta-13/src/makefiles/Makefile.sol	Mon Mar  3 01:13:03 1997
+--- wu-ftpd-2.4.2-beta-13-dce-0.8/src/makefiles/Makefile.sol	Tue Jun  3 17:28:39 1997
+***************
+*** 2,12 ****
+  # $Id: Makefile.sol,v 1.3 1997/03/03 09:12:59 sob Exp sob $
+  #
+  #
+! CC       = cc
+  IFLAGS   = -I.. -I../support
+  LFLAGS   = -L../support
+! CFLAGS   = -g ${IFLAGS} ${LFLAGS}
+! LIBES    = -lsupport -lsocket -lnsl -lgen
+  LIBC     = /lib/libc.a
+  LINTFLAGS=	
+  LKERB    = -lauth -lckrb -lkrb -ldes
+--- 2,12 ----
+  # $Id: Makefile.sol,v 1.3 1997/03/03 09:12:59 sob Exp sob $
+  #
+  #
+! CC       = gcc
+  IFLAGS   = -I.. -I../support
+  LFLAGS   = -L../support
+! CFLAGS   = -O2 ${IFLAGS} ${LFLAGS}
+! LIBES    =  -lsupport -ldce -lsocket -lnsl -lthread -lm -lgen
+  LIBC     = /lib/libc.a
+  LINTFLAGS=	
+  LKERB    = -lauth -lckrb -lkrb -ldes

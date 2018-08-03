@@ -1,0 +1,675 @@
+diff -r -c netatalk-1.4b2/Makefile netatalk-1.4b2-dce-0.8/Makefile
+*** netatalk-1.4b2/Makefile	Wed Oct  9 11:14:20 1996
+--- netatalk-1.4b2-dce-0.8/Makefile	Wed Apr  9 15:45:47 1997
+***************
+*** 32,37 ****
+--- 32,40 ----
+  #AFSDIR=/usr/local/afs
+  #KRBDIR=/usr/local/kerberos
+  
++ DCEDEFS = -DDCE -DDFS
++ DCELIBS = -ldce -ldcedfs -lsocket -lnsl -lthread -lm
++ 
+  ##########################################################################
+  
+  all install depend clean tags kernel kinstall kpatch:	FRC
+***************
+*** 54,60 ****
+  	    SBINDIR="${SBINDIR}" BINDIR="${BINDIR}" RESDIR="${RESDIR}"\
+  	    ETCDIR="${ETCDIR}" LIBDIR="${LIBDIR}" INCDIR="${INCDIR}" \
+  	    DESTDIR="${DESTDIR}" MANDIR="${MANDIR}" \
+! 	    AFSDIR="${AFSDIR}" KRBDIR="${KRBDIR}" $@
+  
+  FRC:
+  
+--- 57,64 ----
+  	    SBINDIR="${SBINDIR}" BINDIR="${BINDIR}" RESDIR="${RESDIR}"\
+  	    ETCDIR="${ETCDIR}" LIBDIR="${LIBDIR}" INCDIR="${INCDIR}" \
+  	    DESTDIR="${DESTDIR}" MANDIR="${MANDIR}" \
+! 	    AFSDIR="${AFSDIR}" KRBDIR="${KRBDIR}" \
+! 	    DCEDEFS="${DCEDEFS}" DCELIBS="${DCELIBS}" $@
+  
+  FRC:
+  
+diff -r -c netatalk-1.4b2/README netatalk-1.4b2-dce-0.8/README
+*** netatalk-1.4b2/README	Mon Sep 30 15:17:48 1996
+--- netatalk-1.4b2-dce-0.8/README	Fri Mar 21 09:52:26 1997
+***************
+*** 57,62 ****
+--- 57,66 ----
+  0.  To build afpd for use with an AFS filesystem, first follow the
+      instructions in README.AFS, then complete these instructions.
+  
++     To build afpd for use with DCE authentication and DFS filesets,
++     first follow the instructions in README.DCEDFS, the complete
++     these instructions.
++ 
+  1.  Set DESTDIR in the root Makefile.  DESTDIR is the directory below
+      which all binaries will be installed.  Setting it causes all
+      installation-relative pathnames to be set correctly.  You may also
+diff -r -c netatalk-1.4b2/README.DCEDFS netatalk-1.4b2-dce-0.8/README.DCEDFS
+*** netatalk-1.4b2/README.DCEDFS	Fri Mar 21 09:39:26 1997
+--- netatalk-1.4b2-dce-0.8/README.DCEDFS	Thu Apr 10 11:05:58 1997
+***************
+*** 0 ****
+--- 1,83 ----
++ Netatalk 1.4b2 DCE/DFS patch (version 0.8)
++ ------------------------------------------
++ 
++ This patch adds support for DCE authentication and DFS filesets to
++ Netatalk. Since you're reading this file, I trust you've already applied
++ the patch to the Netatalk source, and are ready to configure/compile.
++ 
++ By default, the Makefile has both DCE authentication and DFS fileset
++ support turned on. If you wish to disable DFS fileset support, edit the
++ Makefile and remove "-DDFS" from DCEDEFS, and "-ldcedfs" from DCELIBS.
++ 
++ Transarc currently includes the necessary DFS header files, but does not
++ include libdcedfs.a, needed to compile the DFS fileset support. Fortunately,
++ as long as you have the application developers kit (in particular, the IDL
++ compiler), you can generate it yourself. Retrieve the DFS IDL files from
++ the OSF web site via the URL:
++ 
++ http://www.osf.org/mall/dce/SW-code/internal-idl.tar.gz
++ 
++ Note that these are freely distributed by the OSF, but they require you
++ to register before retrieving them via the URL:
++ 
++ http://www.osf.org/cgi-bin/mall/register
++ 
++ 
++ Once you have retrieved the file, untar it and execute the following
++ commands (given in csh) to generate libdcedfs.a:
++ 
++      cd /path/to/internal-idl/file/
++      mkdir libdcedfs
++      cd libdcedfs
++      ln -s ../*/*.idl .
++      ln -s ../*/*/*.idl .
++      ln -s . dcedfs
++      foreach file (*.idl)
++        idl -I. -server none -cc_cmd 'gcc -c' $file
++      end
++      ar -r libdcedfs.a *.o
++ 
++ 
++ Once the library has been created, either place it somewhere it will be
++ found by the linker, or edit the Makefile to add the appropriate -L option
++ to DCELIBS so the linker will find it.
++ 
++ Note that either your OS must support DCE as a naming service, or you need
++ to replicate your registry in local files. Solaris users can use my
++ nss_dce package to integrate DCE into the Solaris naming services switch,
++ it is available via the URL:
++ 
++ http://www.intranet.csupomona.edu/~henson/www/projects/nss_dce/
++ 
++ 
++ Changes
++ -------
++ 
++ 0.8 - Fixed incorrect assumption that the object UUID of the flserver was
++       constant. The UUID is now determined at runtime.
++ 
++     - Added code to report correct access permissions on a directory in
++       DFS.
++ 
++ 
++ 0.5 - First publicly released version.
++ 
++ 
++ ---------------------------------------------------------------------------
++    Copyright (C) 1997 Paul Henson <henson@acm.org>
++ 
++    This patch is free software; you can redistribute it and/or modify
++    it under the terms of the GNU General Public License as published by
++    the Free Software Foundation; either version 1, or (at your option)
++    any later version.
++ 
++    This patch is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++    GNU General Public License for more details.
++ 
++    For a copy of the GNU General Public License, write to the Free
++    Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
++ 
++    The GNU General Public License is, as of this writing, also available
++    at http://www.irsociety.com/webchat/gnu.html
+diff -r -c netatalk-1.4b2/etc/Makefile netatalk-1.4b2-dce-0.8/etc/Makefile
+*** netatalk-1.4b2/etc/Makefile	Tue Feb 20 08:37:56 1996
+--- netatalk-1.4b2-dce-0.8/etc/Makefile	Thu Mar 20 14:22:08 1997
+***************
+*** 10,16 ****
+  	    ADDLIBS="${ADDLIBS}" DEFS="${DEFS}" OPTOPTS="${OPTOPTS}" \
+  	    SBINDIR="${SBINDIR}" BINDIR="${BINDIR}" RESDIR="${RESDIR}" \
+  	    ETCDIR="${ETCDIR}" LIBDIR="${LIBDIR}" INCDIR="${INCDIR}" \
+! 	    DESTDIR="${DESTDIR}" AFSDIR="${AFSDIR}" KRBDIR="${KRBDIR}"
+  
+  FRC:
+  
+--- 10,17 ----
+  	    ADDLIBS="${ADDLIBS}" DEFS="${DEFS}" OPTOPTS="${OPTOPTS}" \
+  	    SBINDIR="${SBINDIR}" BINDIR="${BINDIR}" RESDIR="${RESDIR}" \
+  	    ETCDIR="${ETCDIR}" LIBDIR="${LIBDIR}" INCDIR="${INCDIR}" \
+! 	    DESTDIR="${DESTDIR}" AFSDIR="${AFSDIR}" KRBDIR="${KRBDIR}" \
+! 	    DCEDEFS="${DCEDEFS}" DCELIBS="${DCELIBS}"
+  
+  FRC:
+  
+diff -r -c netatalk-1.4b2/etc/afpd/Makefile netatalk-1.4b2-dce-0.8/etc/afpd/Makefile
+*** netatalk-1.4b2/etc/afpd/Makefile	Fri Sep 27 09:04:07 1996
+--- netatalk-1.4b2-dce-0.8/etc/afpd/Makefile	Thu Mar 20 14:26:02 1997
+***************
+*** 3,17 ****
+  
+  SRC = unix.c afs.c kuam.c send_to_kdc.c lifetime.c ofork.c \
+  	main.c switch.c auth.c volume.c directory.c file.c \
+! 	enumerate.c desktop.c filedir.c fork.c appl.c gettok.c bprint.c
+  OBJ = unix.o afs.o kuam.o send_to_kdc.o lifetime.o ofork.o \
+  	main.o switch.o auth.o volume.o directory.o file.o \
+! 	enumerate.o desktop.o filedir.o fork.o appl.o gettok.o bprint.o
+  
+  INCPATH=	-I../../include ${AFSINCPATH} ${KRBINCPATH}
+! CFLAGS=	${DEFS} ${AFSDEFS} ${KRBDEFS} ${OPTOPTS} ${INCPATH} \
+  	-DAPPLCNAME -DCRLF # -DDOWNCASE
+! LIBS=	-latalk ${AFSLIBS} ${KRBLIBS} ${ADDLIBS}
+  LIBDIRS=	-L../../libatalk ${AFSLIBDIRS} ${KRBLIBDIRS}
+  TAGSFILE=	tags
+  CC=	cc
+--- 3,22 ----
+  
+  SRC = unix.c afs.c kuam.c send_to_kdc.c lifetime.c ofork.c \
+  	main.c switch.c auth.c volume.c directory.c file.c \
+! 	enumerate.c desktop.c filedir.c fork.c appl.c gettok.c bprint.c \
+! 	dcedfs.c
+  OBJ = unix.o afs.o kuam.o send_to_kdc.o lifetime.o ofork.o \
+  	main.o switch.o auth.o volume.o directory.o file.o \
+! 	enumerate.o desktop.o filedir.o fork.o appl.o gettok.o bprint.o \
+! 	dcedfs.o
+! 
+! 
+! 
+  
+  INCPATH=	-I../../include ${AFSINCPATH} ${KRBINCPATH}
+! CFLAGS=	${DEFS} ${AFSDEFS} ${KRBDEFS} ${OPTOPTS} ${INCPATH} ${DCEDEFS}\
+  	-DAPPLCNAME -DCRLF # -DDOWNCASE
+! LIBS=	-latalk ${AFSLIBS} ${KRBLIBS} ${DCELIBS} ${ADDLIBS}
+  LIBDIRS=	-L../../libatalk ${AFSLIBDIRS} ${KRBLIBDIRS}
+  TAGSFILE=	tags
+  CC=	cc
+diff -r -c netatalk-1.4b2/etc/afpd/auth.c netatalk-1.4b2-dce-0.8/etc/afpd/auth.c
+*** netatalk-1.4b2/etc/afpd/auth.c	Mon Sep 16 11:33:55 1996
+--- netatalk-1.4b2-dce-0.8/etc/afpd/auth.c	Wed Apr  9 15:46:55 1997
+***************
+*** 71,76 ****
+--- 71,80 ----
+  };
+  #endif AFS
+  
++ #ifdef DCE
++ int dce_login(struct passwd *pwd, char *password);
++ #endif
++ 
+  int	afp_version = 11;
+  uid_t	uuid;
+  #if defined( __svr4__ ) && !defined( NGROUPS )
+***************
+*** 553,558 ****
+--- 557,563 ----
+  	}
+      }
+  
++ #ifndef DCE
+  #ifdef SHADOWPW
+      if (( sp = getspnam( clrtxtname )) == NULL ) {
+  	syslog( LOG_INFO, "no shadow passwd entry for %s", clrtxtname );
+***************
+*** 560,565 ****
+--- 565,571 ----
+      }
+      pwd->pw_passwd = sp->sp_pwdp;
+  #endif SHADOWPW
++ #endif DCE
+  
+      if ( pwd->pw_passwd != NULL ) {
+  	if ( *ibuf == '\0' ) {
+***************
+*** 571,580 ****
+--- 577,591 ----
+  	    return( login( pwd->pw_name, pwd->pw_uid, pwd->pw_gid ));
+  	}
+  #endif AFS
++ #ifdef DCE
++         if (dce_login(pwd, ibuf))
++           return( login( pwd->pw_name, pwd->pw_uid, pwd->pw_gid ));
++ #else DCE
+  	p = crypt( ibuf, pwd->pw_passwd );
+  	if ( strcmp( p, pwd->pw_passwd ) == 0 ) {
+  	    return( login( pwd->pw_name, pwd->pw_uid, pwd->pw_gid ));
+  	}
++ #endif DCE
+      }
+      return( AFPERR_NOTAUTH );
+  }
+diff -r -c netatalk-1.4b2/etc/afpd/dcedfs.c netatalk-1.4b2-dce-0.8/etc/afpd/dcedfs.c
+*** netatalk-1.4b2/etc/afpd/dcedfs.c	Fri Mar 21 09:49:28 1997
+--- netatalk-1.4b2-dce-0.8/etc/afpd/dcedfs.c	Wed Apr  9 16:08:54 1997
+***************
+*** 0 ****
+--- 1,350 ----
++ /*
++  * DCE/DFS support for Netatalk
++  *
++  * Paul Henson <henson@acm.org>
++  * California State Polytechnic University, Pomona
++  *
++  * Copyright (c) 1997 Paul Henson -- see README.DCEDFS file for details
++  *
++  */
++ 
++ #include <stdio.h>
++ #include <unistd.h>
++ #include <string.h>
++ #include <sys/types.h>
++ #include <sys/syslog.h>
++ #include <netinet/in.h>
++ #include <arpa/inet.h>
++ #include <pwd.h>
++ 
++ #ifdef DCE
++ 
++ #include <dce/sec_login.h>
++ #include <dce/dce_error.h>
++ 
++ static sec_login_handle_t login_context;
++ 
++ int dce_login(struct passwd *pwd, char *password)
++ {
++   error_status_t dce_st;
++   dce_error_string_t dce_error;
++   int dce_error_st;
++   sec_login_auth_src_t auth_src;
++   sec_passwd_rec_t pw_entry;
++   boolean32 reset_passwd;
++   sec_passwd_str_t tmp_pw;
++ 
++   if (!sec_login_setup_identity(pwd->pw_name, sec_login_no_flags, &login_context, &dce_st))
++     {
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "unable to setup identity for %s - %s", pwd->pw_name, dce_error);
++       return 0;
++     }
++ 
++   pw_entry.version_number = sec_passwd_c_version_none;
++   pw_entry.pepper = NULL;
++   pw_entry.key.key_type = sec_passwd_plain;
++   strncpy( (char *)tmp_pw, password, sec_passwd_str_max_len);
++   tmp_pw[sec_passwd_str_max_len] = '\0';
++   pw_entry.key.tagged_union.plain = &(tmp_pw[0]);
++ 
++   if (!sec_login_valid_and_cert_ident(login_context, &pw_entry, &reset_passwd, &auth_src, &dce_st))
++     {
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "unable to validate identity for %s - %s", pwd->pw_name, dce_error);
++       return 0;
++     }
++ 
++   if (auth_src != sec_login_auth_src_network)
++     {
++       sec_login_purge_context(&login_context, &dce_st);
++       syslog(LOG_NOTICE, "no network credentials for %s", pwd->pw_name);
++       return 0;
++     }
++ 
++   sec_login_set_context(login_context, &dce_st);
++ 
++   if (dce_st)
++     {
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "unable to set context for %s - %s", pwd->pw_name, dce_error);
++       sec_login_purge_context(&login_context, &dce_st);
++       return 0;
++     }
++   return 1;
++ }
++ #endif
++ 
++ #ifdef DFS
++ #include <dce/rpc.h>
++ #include <dcedfs/common_data.h>
++ #include <dcedfs/compat.h>
++ #include <dcedfs/flserver.h>
++ #include <dcedfs/flclient.h>
++ #include <dcedfs/ftserver.h>
++ #include <dcedfs/ftserver_data.h>
++ #include <dcedfs/ioctl.h>
++ 
++ #include "directory.h"
++ #include "volume.h"
++ 
++ static rpc_binding_handle_t flserver_h[3];
++ static int flserver_h_count = 0;
++ 
++ static int path_to_fid(char *path, struct afsFid *fidp)
++ {
++   struct afs_ioctl ioctl_data;
++ 
++   ioctl_data.in_size = 0;
++   ioctl_data.out_size = sizeof(afsFid);
++   ioctl_data.out = (caddr_t) fidp;
++ 
++   return (!pioctl(path, VIOCGETFID, &ioctl_data, 1));
++ }  
++ 
++ static int bind_flservers()
++ {
++   unsigned32 import_status, group_status, rpc_status;
++   rpc_ns_handle_t import_context;
++   rpc_ns_handle_t group_context;
++   unsigned_char_t *name, *string_binding, *protseq, *network_addr;
++   uuid_t obj_uuid;
++   unsigned_char_t *string_uuid;
++   rpc_binding_handle_t temp_h;
++   dce_error_string_t dce_error;
++   int dce_error_st;
++   
++ 
++   rpc_ns_entry_object_inq_begin(rpc_c_ns_syntax_default, "/.:/fs",
++ 				&import_context, &import_status);
++ 
++   if (import_status)
++     {
++       dce_error_inq_text(import_status, dce_error, &dce_error_st);      
++       syslog(LOG_NOTICE, "bind_flservers.entry_object_inq_begin failed - %s", dce_error);
++       return 0;
++     }
++ 
++   rpc_ns_entry_object_inq_next(import_context, &obj_uuid, &import_status);
++ 
++   if (import_status)
++     {
++       dce_error_inq_text(import_status, dce_error, &dce_error_st);      
++       syslog(LOG_NOTICE, "bind_flservers.entry_object_inq_next failed - %s", dce_error);
++       return 0;
++     }
++ 
++   rpc_ns_entry_object_inq_done(&import_context, &import_status);
++ 
++   uuid_to_string(&obj_uuid, &string_uuid, &import_status);
++ 
++   if (import_status)
++     {
++       dce_error_inq_text(import_status, dce_error, &dce_error_st);      
++       syslog(LOG_NOTICE, "bind_flservers.uuid_to_string failed - %s", dce_error);
++       return 0;
++     }
++ 
++   rpc_ns_group_mbr_inq_begin(rpc_c_ns_syntax_default, "/.:/fs", rpc_c_ns_syntax_default,
++                              &group_context, &group_status);
++ 
++   if (group_status)
++     {
++       dce_error_inq_text(group_status, dce_error, &dce_error_st);      
++       syslog(LOG_NOTICE, "bind_flservers.group_mbr_inq_begin failed - %s", dce_error);
++       return 0;
++     }
++   
++   while ((!group_status) &&  (flserver_h_count < 3))
++     {
++       rpc_ns_group_mbr_inq_next(group_context, &name, &group_status);
++ 
++       if (group_status)
++         {
++           if (group_status != rpc_s_no_more_members)
++             {
++               dce_error_inq_text(group_status, dce_error, &dce_error_st);      
++               syslog(LOG_NOTICE, "bind_flservers.group_mbr_inq_next failed - %s", dce_error);
++             }
++           continue;
++         }
++       
++       rpc_ns_binding_import_begin(rpc_c_ns_syntax_default, name, NULL,
++                                   NULL, &import_context, &import_status);
++       
++       if (import_status)
++         {
++           dce_error_inq_text(import_status, dce_error, &dce_error_st);      
++           syslog(LOG_NOTICE, "bind_flservers.binding_import_begin failed - %s", dce_error);
++           rpc_ns_binding_import_done(&import_context, &import_status);
++           continue;
++         }
++       
++       rpc_ns_binding_import_next(import_context, &temp_h, &import_status);
++       
++       if (import_status)
++         {
++           dce_error_inq_text(import_status, dce_error, &dce_error_st);      
++           syslog(LOG_NOTICE, "bind_flservers.binding_import_next failed - %s", dce_error);
++           rpc_ns_binding_import_done(&import_context, &import_status);
++           continue;
++         }
++       
++       rpc_binding_to_string_binding(temp_h, &string_binding, &import_status);
++       rpc_binding_free(&temp_h, &rpc_status);
++       
++       if (import_status)
++         {
++           dce_error_inq_text(import_status, dce_error, &dce_error_st);      
++           syslog(LOG_NOTICE, "bind_flservers.to_string_binding failed - %s", dce_error);
++           rpc_ns_binding_import_done(&import_context, &import_status);
++           continue;
++         }
++       
++       rpc_string_binding_parse(string_binding, NULL, &protseq, &network_addr,
++                                NULL, NULL, &import_status);
++       rpc_string_free(&string_binding, &rpc_status);
++       
++       if (import_status)
++         {
++           dce_error_inq_text(import_status, dce_error, &dce_error_st);      
++           syslog(LOG_NOTICE, "bind_flservers.binding_parse failed - %s", dce_error);
++           rpc_ns_binding_import_done(&import_context, &import_status);
++           continue;
++         }
++       
++       rpc_string_binding_compose(string_uuid,
++                                  protseq, network_addr, NULL, NULL,
++                                  &string_binding, &import_status);
++       rpc_string_free(&protseq, &rpc_status);
++       rpc_string_free(&network_addr, &rpc_status);
++       
++       if (import_status)
++         {
++           dce_error_inq_text(import_status, dce_error, &dce_error_st);      
++           syslog(LOG_NOTICE, "bind_flservers.binding_compose failed - %s", dce_error);
++           rpc_ns_binding_import_done(&import_context, &import_status);
++           continue;
++         }
++       
++       rpc_binding_from_string_binding(string_binding,
++                                       &flserver_h[flserver_h_count],
++                                       &import_status);
++       rpc_string_free(&string_binding, &rpc_status);
++       
++       if (import_status)
++         {
++           dce_error_inq_text(import_status, dce_error, &dce_error_st);      
++           syslog(LOG_NOTICE, "bind_flservers.from_string_binding failed - %s", dce_error);
++         }
++       else
++         flserver_h_count++;
++       
++       rpc_ns_binding_import_done(&import_context, &import_status);
++     }
++   rpc_ns_group_mbr_inq_done(&group_context, &group_status);
++   rpc_string_free(&string_uuid, &import_status);
++ 
++   return flserver_h_count;
++ }
++ 
++ 
++ int dfsquota(char *path, int *quota, int *used)
++ {
++   struct afsFid fidp;
++   struct vldbentry fl_entry;
++   unsigned32 status, status2;
++   unsigned_char_t *string_binding;
++   rpc_binding_handle_t ftserver_h;
++   struct ftserver_status ft_status;
++   struct afsHyper hyper;
++   
++   if (flserver_h_count == 0)
++     if (!bind_flservers())
++       if (!bind_flservers())
++         {
++           syslog(LOG_NOTICE, "dfsquota - unable to bind to flserver");
++           return 0;
++         }
++   
++   if (!path_to_fid(path, &fidp))
++     {
++       syslog(LOG_NOTICE, "dfsquota - path_to_fid failed for %s", path);
++       return 0;
++     }
++ 
++   if (status = VL_GetEntryByID(flserver_h[0], &fidp.Volume, -1, &fl_entry))
++     {
++       syslog(LOG_NOTICE, "dfsquota - flserver call failed - %d", status);
++       return 0;
++     }
++ 
++   rpc_string_binding_compose(NULL, "ncadg_ip_udp",
++                              inet_ntoa(((struct sockaddr_in *)(&fl_entry.siteAddr[0]))->sin_addr),
++                              NULL, NULL, &string_binding, &status);
++ 
++   if (status)
++     return 0;
++   
++   rpc_binding_from_string_binding(string_binding, &ftserver_h, &status);
++   rpc_string_free(&string_binding, &status2);
++   
++   if (status)
++     return 0;
++ 
++   status = FTSERVER_GetOneVolStatus(ftserver_h, &fidp.Volume,
++                                     fl_entry.sitePartition[0], 0, &ft_status);
++ 
++   rpc_binding_free(&ftserver_h, &status2);
++ 
++   if (status)
++     {
++       syslog(LOG_NOTICE, "dfsquota - ftserver call failed - %d", status);
++       return 0;
++     }
++ 
++   hset(hyper, ft_status.vsd.visQuotaLimit);
++   hrightshift(hyper, 10);
++   hget32(*quota, hyper);
++ 
++   hset(hyper, ft_status.vsd.visQuotaUsage);
++   hrightshift(hyper, 10);
++   hget32(*used, hyper);
++   
++   return 1;
++ }
++ 
++ void dfsmode(char *path, struct maccess *ma, struct dir *dir)
++ {
++     if (!access(path, R_OK | W_OK | X_OK))
++       {
++ 	ma->ma_user = AR_UREAD | AR_UWRITE | AR_USEARCH | AR_UOWN;
++ 	ma->ma_owner = AR_UREAD | AR_UWRITE | AR_USEARCH;
++       }
++     else if (!access(path, R_OK | X_OK))
++       {
++ 	ma->ma_user = AR_UREAD | AR_USEARCH;
++ 	ma->ma_owner = AR_UREAD | AR_USEARCH;
++     }
++     else
++       {
++ 	ma->ma_user = ma->ma_owner = 0;
++ 	if (!access(path, R_OK))
++ 	  {
++ 	    ma->ma_user |= AR_UREAD;
++ 	    ma->ma_owner |= AR_UREAD;
++ 	  }
++ 	if (!access(path, X_OK))
++ 	  {
++ 	    ma->ma_user |= AR_USEARCH;
++ 	    ma->ma_owner |= AR_USEARCH;
++ 	  }
++ 	if (!access(path, W_OK))
++ 	  {
++ 	    ma->ma_user |= AR_UWRITE|AR_UOWN;
++ 	    ma->ma_owner |= AR_UWRITE;
++ 	  }
++       }
++ }
++ 
++ #endif
+diff -r -c netatalk-1.4b2/etc/afpd/directory.c netatalk-1.4b2-dce-0.8/etc/afpd/directory.c
+*** netatalk-1.4b2/etc/afpd/directory.c	Thu Jul 25 13:13:44 1996
+--- netatalk-1.4b2-dce-0.8/etc/afpd/directory.c	Wed Apr  9 15:58:02 1997
+***************
+*** 269,274 ****
+--- 269,278 ----
+      return( 0 );
+  }
+  
++ #ifdef DFS
++ extern void dfsmode(char *path, struct maccess *ma, struct dir *dir);
++ #endif
++ 
+  getdirparams( bitmap, upath, dir, st, buf, buflen )
+      u_short		bitmap;
+      char		*upath;
+***************
+*** 409,414 ****
+--- 413,421 ----
+  #ifdef AFS
+  	    afsmode( upath, &ma, dir );
+  #endif AFS
++ #ifdef DFS
++ 	    dfsmode( upath, &ma, dir );
++ #endif DFS
+  	    bcopy( &ma, data, sizeof( int ));
+  	    data += sizeof( int );
+  	    break;
+diff -r -c netatalk-1.4b2/etc/afpd/volume.c netatalk-1.4b2-dce-0.8/etc/afpd/volume.c
+*** netatalk-1.4b2/etc/afpd/volume.c	Tue Oct 22 13:29:04 1996
+--- netatalk-1.4b2-dce-0.8/etc/afpd/volume.c	Wed Apr  9 15:47:23 1997
+***************
+*** 509,523 ****
+--- 509,539 ----
+      return( AFP_OK );
+  }
+  
++ #ifdef DFS
++ extern int dfsquota(char *path, int *quota, int *used);
++ #endif
++ 
+  getvolspace( vol, bfree, btotal )
+      struct vol	*vol;
+      u_long	*bfree, *btotal;
+  {
+      int		spaceflag, rc;
+      u_long	qfree, qtotal;
++ #ifdef DFS
++     int quota, used;
++ #endif
+  
+      spaceflag = AFPVOL_GVSMASK & vol->v_flags;
+  
++ #ifdef DFS
++     if (dfsquota(vol->v_path, &quota, &used))
++       {
++         *bfree = (quota - used) * 1024;
++         *btotal = quota * 1024;
++         return (AFP_OK);
++       }
++ #endif
++     
+  #ifdef AFS
+      if ( spaceflag == AFPVOL_NONE || spaceflag == AFPVOL_AFSGVS ) {
+  	if ( afs_getvolspace( vol, bfree, btotal ) == AFP_OK ) {

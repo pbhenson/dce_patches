@@ -1,0 +1,5451 @@
+diff -d -c -r netatalk-1.5pre6/acconfig.h netatalk-1.5pre6-dce-2.5/acconfig.h
+*** netatalk-1.5pre6/acconfig.h	Tue Apr 10 11:06:57 2001
+--- netatalk-1.5pre6-dce-2.5/acconfig.h	Tue Jul  3 16:39:38 2001
+***************
+*** 41,43 ****
+--- 41,48 ----
+  #undef USE_MOUNT_H
+  #undef USE_OLD_RQUOTA
+  #undef USE_UFS_QUOTA_H
++ #undef WITH_DCE
++ #undef WITH_DCE_ENCRYPTED
++ #undef WITH_DCE_REFRESH
++ #undef WITH_DCE_IBM_KLUDGE
++ #undef WITH_DFS
+diff -d -c -r netatalk-1.5pre6/config.h.in netatalk-1.5pre6-dce-2.5/config.h.in
+*** netatalk-1.5pre6/config.h.in	Thu Apr 12 06:27:26 2001
+--- netatalk-1.5pre6-dce-2.5/config.h.in	Fri Jul  6 11:17:26 2001
+***************
+*** 107,112 ****
+--- 107,117 ----
+  #undef USE_MOUNT_H
+  #undef USE_OLD_RQUOTA
+  #undef USE_UFS_QUOTA_H
++ #undef WITH_DCE
++ #undef WITH_DCE_ENCRYPTED
++ #undef WITH_DCE_REFRESH
++ #undef WITH_DCE_IBM_KLUDGE
++ #undef WITH_DFS
+  
+  /* Define if you have the access function.  */
+  #undef HAVE_ACCESS
+***************
+*** 204,280 ****
+  /* Define if you have the <unistd.h> header file.  */
+  #undef HAVE_UNISTD_H
+  
+- /* Define if you have the abs library (-labs).  */
+- #undef HAVE_LIBABS
+- 
+- /* Define if you have the audit library (-laudit).  */
+- #undef HAVE_LIBAUDIT
+- 
+- /* Define if you have the auth library (-lauth).  */
+- #undef HAVE_LIBAUTH
+- 
+- /* Define if you have the cmd library (-lcmd).  */
+- #undef HAVE_LIBCMD
+- 
+- /* Define if you have the com_err library (-lcom_err).  */
+- #undef HAVE_LIBCOM_ERR
+- 
+- /* Define if you have the crypt library (-lcrypt).  */
+- #undef HAVE_LIBCRYPT
+- 
+  /* Define if you have the crypto library (-lcrypto).  */
+  #undef HAVE_LIBCRYPTO
+  
+- /* Define if you have the d library (-ld).  */
+- #undef HAVE_LIBD
+- 
+- /* Define if you have the db library (-ldb).  */
+- #undef HAVE_LIBDB
+- 
+  /* Define if you have the des library (-ldes).  */
+  #undef HAVE_LIBDES
+  
+  /* Define if you have the dl library (-ldl).  */
+  #undef HAVE_LIBDL
+  
+- /* Define if you have the kauth library (-lkauth).  */
+- #undef HAVE_LIBKAUTH
+- 
+- /* Define if you have the krb library (-lkrb).  */
+- #undef HAVE_LIBKRB
+- 
+- /* Define if you have the lwp library (-llwp).  */
+- #undef HAVE_LIBLWP
+- 
+- /* Define if you have the n library (-ln).  */
+- #undef HAVE_LIBN
+- 
+  /* Define if you have the nsl library (-lnsl).  */
+  #undef HAVE_LIBNSL
+  
+- /* Define if you have the prot library (-lprot).  */
+- #undef HAVE_LIBPROT
+- 
+- /* Define if you have the resolv library (-lresolv).  */
+- #undef HAVE_LIBRESOLV
+- 
+- /* Define if you have the rpcsvc library (-lrpcsvc).  */
+- #undef HAVE_LIBRPCSVC
+- 
+- /* Define if you have the rx library (-lrx).  */
+- #undef HAVE_LIBRX
+- 
+- /* Define if you have the rxkad library (-lrxkad).  */
+- #undef HAVE_LIBRXKAD
+- 
+  /* Define if you have the socket library (-lsocket).  */
+  #undef HAVE_LIBSOCKET
+- 
+- /* Define if you have the sys library (-lsys).  */
+- #undef HAVE_LIBSYS
+- 
+- /* Define if you have the ubik library (-lubik).  */
+- #undef HAVE_LIBUBIK
+  
+  /* Name of package */
+  #undef PACKAGE
+--- 209,228 ----
+diff -d -c -r netatalk-1.5pre6/configure netatalk-1.5pre6-dce-2.5/configure
+*** netatalk-1.5pre6/configure	Thu Apr 12 06:27:42 2001
+--- netatalk-1.5pre6-dce-2.5/configure	Fri Jul  6 11:15:43 2001
+***************
+*** 70,75 ****
+--- 70,90 ----
+  ac_help="$ac_help
+    --with-uams-path=path   path to UAMs [default=$ac_default_prefix/etc/uams]"
+  ac_help="$ac_help
++   --with-dce     Include DCE plaintext authentication support
++   --without-dce  Don't include DCE plaintext authentication support (default)"
++ ac_help="$ac_help
++   --with-dce-encrypted     Include DCE encrypted authentication support
++   --without-dce-encrypted  Don't include DCE encrypted authentication support (default)"
++ ac_help="$ac_help
++   --with-dce-refresh     Include DCE context refresh support
++   --without-dce-refresh  Don't include DCE context refresh support (default)"
++ ac_help="$ac_help
++   --with-dce-ibm-kludge  Work around broken IBM DCE security API
++   --without-dce-ibm-kludge Don't work around broken IBM DCE security API (default)"
++ ac_help="$ac_help
++   --with-dfs  Include DFS support
++   --without-dfs Don't include DFS support (default)"
++ ac_help="$ac_help
+    --enable-fhs            use Filesystem Hierarchy Standard (FHS) compatibility"
+  ac_help="$ac_help
+    --with-ssl-dir=PATH     specify path to openssl installation (must contain
+***************
+*** 637,643 ****
+  fi
+  
+  echo $ac_n "checking host system type""... $ac_c" 1>&6
+! echo "configure:641: checking host system type" >&5
+  
+  host_alias=$host
+  case "$host_alias" in
+--- 652,658 ----
+  fi
+  
+  echo $ac_n "checking host system type""... $ac_c" 1>&6
+! echo "configure:656: checking host system type" >&5
+  
+  host_alias=$host
+  case "$host_alias" in
+***************
+*** 658,664 ****
+  echo "$ac_t""$host" 1>&6
+  
+  echo $ac_n "checking target system type""... $ac_c" 1>&6
+! echo "configure:662: checking target system type" >&5
+  
+  target_alias=$target
+  case "$target_alias" in
+--- 673,679 ----
+  echo "$ac_t""$host" 1>&6
+  
+  echo $ac_n "checking target system type""... $ac_c" 1>&6
+! echo "configure:677: checking target system type" >&5
+  
+  target_alias=$target
+  case "$target_alias" in
+***************
+*** 676,682 ****
+  echo "$ac_t""$target" 1>&6
+  
+  echo $ac_n "checking build system type""... $ac_c" 1>&6
+! echo "configure:680: checking build system type" >&5
+  
+  build_alias=$build
+  case "$build_alias" in
+--- 691,697 ----
+  echo "$ac_t""$target" 1>&6
+  
+  echo $ac_n "checking build system type""... $ac_c" 1>&6
+! echo "configure:695: checking build system type" >&5
+  
+  build_alias=$build
+  case "$build_alias" in
+***************
+*** 710,716 ****
+  # SVR4 /usr/ucb/install, which tries to use the nonexistent group "staff"
+  # ./install, which can be erroneously created by make from ./install.sh.
+  echo $ac_n "checking for a BSD compatible install""... $ac_c" 1>&6
+! echo "configure:714: checking for a BSD compatible install" >&5
+  if test -z "$INSTALL"; then
+  if eval "test \"`echo '$''{'ac_cv_path_install'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+--- 725,731 ----
+  # SVR4 /usr/ucb/install, which tries to use the nonexistent group "staff"
+  # ./install, which can be erroneously created by make from ./install.sh.
+  echo $ac_n "checking for a BSD compatible install""... $ac_c" 1>&6
+! echo "configure:729: checking for a BSD compatible install" >&5
+  if test -z "$INSTALL"; then
+  if eval "test \"`echo '$''{'ac_cv_path_install'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+***************
+*** 763,769 ****
+  test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
+  
+  echo $ac_n "checking whether build environment is sane""... $ac_c" 1>&6
+! echo "configure:767: checking whether build environment is sane" >&5
+  # Just in case
+  sleep 1
+  echo timestamp > conftestfile
+--- 778,784 ----
+  test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
+  
+  echo $ac_n "checking whether build environment is sane""... $ac_c" 1>&6
+! echo "configure:782: checking whether build environment is sane" >&5
+  # Just in case
+  sleep 1
+  echo timestamp > conftestfile
+***************
+*** 820,826 ****
+  test "$program_transform_name" = "" && program_transform_name="s,x,x,"
+  
+  echo $ac_n "checking whether ${MAKE-make} sets \${MAKE}""... $ac_c" 1>&6
+! echo "configure:824: checking whether ${MAKE-make} sets \${MAKE}" >&5
+  set dummy ${MAKE-make}; ac_make=`echo "$2" | sed 'y%./+-%__p_%'`
+  if eval "test \"`echo '$''{'ac_cv_prog_make_${ac_make}_set'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+--- 835,841 ----
+  test "$program_transform_name" = "" && program_transform_name="s,x,x,"
+  
+  echo $ac_n "checking whether ${MAKE-make} sets \${MAKE}""... $ac_c" 1>&6
+! echo "configure:839: checking whether ${MAKE-make} sets \${MAKE}" >&5
+  set dummy ${MAKE-make}; ac_make=`echo "$2" | sed 'y%./+-%__p_%'`
+  if eval "test \"`echo '$''{'ac_cv_prog_make_${ac_make}_set'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+***************
+*** 866,872 ****
+  
+  missing_dir=`cd $ac_aux_dir && pwd`
+  echo $ac_n "checking for working aclocal""... $ac_c" 1>&6
+! echo "configure:870: checking for working aclocal" >&5
+  # Run test in a subshell; some versions of sh will print an error if
+  # an executable is not found, even if stderr is redirected.
+  # Redirect stdin to placate older versions of autoconf.  Sigh.
+--- 881,887 ----
+  
+  missing_dir=`cd $ac_aux_dir && pwd`
+  echo $ac_n "checking for working aclocal""... $ac_c" 1>&6
+! echo "configure:885: checking for working aclocal" >&5
+  # Run test in a subshell; some versions of sh will print an error if
+  # an executable is not found, even if stderr is redirected.
+  # Redirect stdin to placate older versions of autoconf.  Sigh.
+***************
+*** 879,885 ****
+  fi
+  
+  echo $ac_n "checking for working autoconf""... $ac_c" 1>&6
+! echo "configure:883: checking for working autoconf" >&5
+  # Run test in a subshell; some versions of sh will print an error if
+  # an executable is not found, even if stderr is redirected.
+  # Redirect stdin to placate older versions of autoconf.  Sigh.
+--- 894,900 ----
+  fi
+  
+  echo $ac_n "checking for working autoconf""... $ac_c" 1>&6
+! echo "configure:898: checking for working autoconf" >&5
+  # Run test in a subshell; some versions of sh will print an error if
+  # an executable is not found, even if stderr is redirected.
+  # Redirect stdin to placate older versions of autoconf.  Sigh.
+***************
+*** 892,898 ****
+  fi
+  
+  echo $ac_n "checking for working automake""... $ac_c" 1>&6
+! echo "configure:896: checking for working automake" >&5
+  # Run test in a subshell; some versions of sh will print an error if
+  # an executable is not found, even if stderr is redirected.
+  # Redirect stdin to placate older versions of autoconf.  Sigh.
+--- 907,913 ----
+  fi
+  
+  echo $ac_n "checking for working automake""... $ac_c" 1>&6
+! echo "configure:911: checking for working automake" >&5
+  # Run test in a subshell; some versions of sh will print an error if
+  # an executable is not found, even if stderr is redirected.
+  # Redirect stdin to placate older versions of autoconf.  Sigh.
+***************
+*** 905,911 ****
+  fi
+  
+  echo $ac_n "checking for working autoheader""... $ac_c" 1>&6
+! echo "configure:909: checking for working autoheader" >&5
+  # Run test in a subshell; some versions of sh will print an error if
+  # an executable is not found, even if stderr is redirected.
+  # Redirect stdin to placate older versions of autoconf.  Sigh.
+--- 920,926 ----
+  fi
+  
+  echo $ac_n "checking for working autoheader""... $ac_c" 1>&6
+! echo "configure:924: checking for working autoheader" >&5
+  # Run test in a subshell; some versions of sh will print an error if
+  # an executable is not found, even if stderr is redirected.
+  # Redirect stdin to placate older versions of autoconf.  Sigh.
+***************
+*** 918,924 ****
+  fi
+  
+  echo $ac_n "checking for working makeinfo""... $ac_c" 1>&6
+! echo "configure:922: checking for working makeinfo" >&5
+  # Run test in a subshell; some versions of sh will print an error if
+  # an executable is not found, even if stderr is redirected.
+  # Redirect stdin to placate older versions of autoconf.  Sigh.
+--- 933,939 ----
+  fi
+  
+  echo $ac_n "checking for working makeinfo""... $ac_c" 1>&6
+! echo "configure:937: checking for working makeinfo" >&5
+  # Run test in a subshell; some versions of sh will print an error if
+  # an executable is not found, even if stderr is redirected.
+  # Redirect stdin to placate older versions of autoconf.  Sigh.
+***************
+*** 1006,1012 ****
+  # Extract the first word of "ranlib", so it can be a program name with args.
+  set dummy ranlib; ac_word=$2
+  echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+! echo "configure:1010: checking for $ac_word" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_RANLIB'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+--- 1021,1027 ----
+  # Extract the first word of "ranlib", so it can be a program name with args.
+  set dummy ranlib; ac_word=$2
+  echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+! echo "configure:1025: checking for $ac_word" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_RANLIB'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+***************
+*** 1036,1042 ****
+  # Extract the first word of "gcc", so it can be a program name with args.
+  set dummy gcc; ac_word=$2
+  echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+! echo "configure:1040: checking for $ac_word" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_CC'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+--- 1051,1057 ----
+  # Extract the first word of "gcc", so it can be a program name with args.
+  set dummy gcc; ac_word=$2
+  echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+! echo "configure:1055: checking for $ac_word" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_CC'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+***************
+*** 1066,1072 ****
+    # Extract the first word of "cc", so it can be a program name with args.
+  set dummy cc; ac_word=$2
+  echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+! echo "configure:1070: checking for $ac_word" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_CC'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+--- 1081,1087 ----
+    # Extract the first word of "cc", so it can be a program name with args.
+  set dummy cc; ac_word=$2
+  echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+! echo "configure:1085: checking for $ac_word" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_CC'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+***************
+*** 1117,1123 ****
+        # Extract the first word of "cl", so it can be a program name with args.
+  set dummy cl; ac_word=$2
+  echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+! echo "configure:1121: checking for $ac_word" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_CC'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+--- 1132,1138 ----
+        # Extract the first word of "cl", so it can be a program name with args.
+  set dummy cl; ac_word=$2
+  echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+! echo "configure:1136: checking for $ac_word" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_CC'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+***************
+*** 1149,1155 ****
+  fi
+  
+  echo $ac_n "checking whether the C compiler ($CC $CFLAGS $LDFLAGS) works""... $ac_c" 1>&6
+! echo "configure:1153: checking whether the C compiler ($CC $CFLAGS $LDFLAGS) works" >&5
+  
+  ac_ext=c
+  # CFLAGS is not in ac_cpp because -g, -O, etc. are not valid cpp options.
+--- 1164,1170 ----
+  fi
+  
+  echo $ac_n "checking whether the C compiler ($CC $CFLAGS $LDFLAGS) works""... $ac_c" 1>&6
+! echo "configure:1168: checking whether the C compiler ($CC $CFLAGS $LDFLAGS) works" >&5
+  
+  ac_ext=c
+  # CFLAGS is not in ac_cpp because -g, -O, etc. are not valid cpp options.
+***************
+*** 1160,1171 ****
+  
+  cat > conftest.$ac_ext << EOF
+  
+! #line 1164 "configure"
+  #include "confdefs.h"
+  
+  main(){return(0);}
+  EOF
+! if { (eval echo configure:1169: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    ac_cv_prog_cc_works=yes
+    # If we can't run a trivial program, we are probably using a cross compiler.
+    if (./conftest; exit) 2>/dev/null; then
+--- 1175,1186 ----
+  
+  cat > conftest.$ac_ext << EOF
+  
+! #line 1179 "configure"
+  #include "confdefs.h"
+  
+  main(){return(0);}
+  EOF
+! if { (eval echo configure:1184: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    ac_cv_prog_cc_works=yes
+    # If we can't run a trivial program, we are probably using a cross compiler.
+    if (./conftest; exit) 2>/dev/null; then
+***************
+*** 1191,1202 ****
+    { echo "configure: error: installation or configuration problem: C compiler cannot create executables." 1>&2; exit 1; }
+  fi
+  echo $ac_n "checking whether the C compiler ($CC $CFLAGS $LDFLAGS) is a cross-compiler""... $ac_c" 1>&6
+! echo "configure:1195: checking whether the C compiler ($CC $CFLAGS $LDFLAGS) is a cross-compiler" >&5
+  echo "$ac_t""$ac_cv_prog_cc_cross" 1>&6
+  cross_compiling=$ac_cv_prog_cc_cross
+  
+  echo $ac_n "checking whether we are using GNU C""... $ac_c" 1>&6
+! echo "configure:1200: checking whether we are using GNU C" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_gcc'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+--- 1206,1217 ----
+    { echo "configure: error: installation or configuration problem: C compiler cannot create executables." 1>&2; exit 1; }
+  fi
+  echo $ac_n "checking whether the C compiler ($CC $CFLAGS $LDFLAGS) is a cross-compiler""... $ac_c" 1>&6
+! echo "configure:1210: checking whether the C compiler ($CC $CFLAGS $LDFLAGS) is a cross-compiler" >&5
+  echo "$ac_t""$ac_cv_prog_cc_cross" 1>&6
+  cross_compiling=$ac_cv_prog_cc_cross
+  
+  echo $ac_n "checking whether we are using GNU C""... $ac_c" 1>&6
+! echo "configure:1215: checking whether we are using GNU C" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_gcc'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+***************
+*** 1205,1211 ****
+    yes;
+  #endif
+  EOF
+! if { ac_try='${CC-cc} -E conftest.c'; { (eval echo configure:1209: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }; } | egrep yes >/dev/null 2>&1; then
+    ac_cv_prog_gcc=yes
+  else
+    ac_cv_prog_gcc=no
+--- 1220,1226 ----
+    yes;
+  #endif
+  EOF
+! if { ac_try='${CC-cc} -E conftest.c'; { (eval echo configure:1224: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }; } | egrep yes >/dev/null 2>&1; then
+    ac_cv_prog_gcc=yes
+  else
+    ac_cv_prog_gcc=no
+***************
+*** 1224,1230 ****
+  ac_save_CFLAGS="$CFLAGS"
+  CFLAGS=
+  echo $ac_n "checking whether ${CC-cc} accepts -g""... $ac_c" 1>&6
+! echo "configure:1228: checking whether ${CC-cc} accepts -g" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_cc_g'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+--- 1239,1245 ----
+  ac_save_CFLAGS="$CFLAGS"
+  CFLAGS=
+  echo $ac_n "checking whether ${CC-cc} accepts -g""... $ac_c" 1>&6
+! echo "configure:1243: checking whether ${CC-cc} accepts -g" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_cc_g'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+***************
+*** 1267,1273 ****
+  if test "$ac_cv_prog_gcc" = yes; then
+    # Check if gcc -print-prog-name=ld gives a path.
+    echo $ac_n "checking for ld used by GCC""... $ac_c" 1>&6
+! echo "configure:1271: checking for ld used by GCC" >&5
+    ac_prog=`($CC -print-prog-name=ld) 2>&5`
+    case "$ac_prog" in
+      # Accept absolute paths.
+--- 1282,1288 ----
+  if test "$ac_cv_prog_gcc" = yes; then
+    # Check if gcc -print-prog-name=ld gives a path.
+    echo $ac_n "checking for ld used by GCC""... $ac_c" 1>&6
+! echo "configure:1286: checking for ld used by GCC" >&5
+    ac_prog=`($CC -print-prog-name=ld) 2>&5`
+    case "$ac_prog" in
+      # Accept absolute paths.
+***************
+*** 1291,1300 ****
+    esac
+  elif test "$with_gnu_ld" = yes; then
+    echo $ac_n "checking for GNU ld""... $ac_c" 1>&6
+! echo "configure:1295: checking for GNU ld" >&5
+  else
+    echo $ac_n "checking for non-GNU ld""... $ac_c" 1>&6
+! echo "configure:1298: checking for non-GNU ld" >&5
+  fi
+  if eval "test \"`echo '$''{'ac_cv_path_LD'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+--- 1306,1315 ----
+    esac
+  elif test "$with_gnu_ld" = yes; then
+    echo $ac_n "checking for GNU ld""... $ac_c" 1>&6
+! echo "configure:1310: checking for GNU ld" >&5
+  else
+    echo $ac_n "checking for non-GNU ld""... $ac_c" 1>&6
+! echo "configure:1313: checking for non-GNU ld" >&5
+  fi
+  if eval "test \"`echo '$''{'ac_cv_path_LD'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+***************
+*** 1329,1335 ****
+  fi
+  test -z "$LD" && { echo "configure: error: no acceptable ld found in \$PATH" 1>&2; exit 1; }
+  echo $ac_n "checking if the linker ($LD) is GNU ld""... $ac_c" 1>&6
+! echo "configure:1333: checking if the linker ($LD) is GNU ld" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_gnu_ld'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+--- 1344,1350 ----
+  fi
+  test -z "$LD" && { echo "configure: error: no acceptable ld found in \$PATH" 1>&2; exit 1; }
+  echo $ac_n "checking if the linker ($LD) is GNU ld""... $ac_c" 1>&6
+! echo "configure:1348: checking if the linker ($LD) is GNU ld" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_gnu_ld'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+***************
+*** 1345,1351 ****
+  
+  
+  echo $ac_n "checking for BSD-compatible nm""... $ac_c" 1>&6
+! echo "configure:1349: checking for BSD-compatible nm" >&5
+  if eval "test \"`echo '$''{'ac_cv_path_NM'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+--- 1360,1366 ----
+  
+  
+  echo $ac_n "checking for BSD-compatible nm""... $ac_c" 1>&6
+! echo "configure:1364: checking for BSD-compatible nm" >&5
+  if eval "test \"`echo '$''{'ac_cv_path_NM'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+***************
+*** 1381,1387 ****
+  echo "$ac_t""$NM" 1>&6
+  
+  echo $ac_n "checking whether ln -s works""... $ac_c" 1>&6
+! echo "configure:1385: checking whether ln -s works" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_LN_S'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+--- 1396,1402 ----
+  echo "$ac_t""$NM" 1>&6
+  
+  echo $ac_n "checking whether ln -s works""... $ac_c" 1>&6
+! echo "configure:1400: checking whether ln -s works" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_LN_S'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+***************
+*** 1435,1442 ****
+  case "$lt_target" in
+  *-*-irix6*)
+    # Find out which ABI we are using.
+!   echo '#line 1439 "configure"' > conftest.$ac_ext
+!   if { (eval echo configure:1440: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+      case "`/usr/bin/file conftest.o`" in
+      *32-bit*)
+        LD="${LD-ld} -32"
+--- 1450,1457 ----
+  case "$lt_target" in
+  *-*-irix6*)
+    # Find out which ABI we are using.
+!   echo '#line 1454 "configure"' > conftest.$ac_ext
+!   if { (eval echo configure:1455: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+      case "`/usr/bin/file conftest.o`" in
+      *32-bit*)
+        LD="${LD-ld} -32"
+***************
+*** 1457,1475 ****
+    SAVE_CFLAGS="$CFLAGS"
+    CFLAGS="$CFLAGS -belf"
+    echo $ac_n "checking whether the C compiler needs -belf""... $ac_c" 1>&6
+! echo "configure:1461: checking whether the C compiler needs -belf" >&5
+  if eval "test \"`echo '$''{'lt_cv_cc_needs_belf'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 1466 "configure"
+  #include "confdefs.h"
+  
+  int main() {
+  
+  ; return 0; }
+  EOF
+! if { (eval echo configure:1473: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    lt_cv_cc_needs_belf=yes
+  else
+--- 1472,1490 ----
+    SAVE_CFLAGS="$CFLAGS"
+    CFLAGS="$CFLAGS -belf"
+    echo $ac_n "checking whether the C compiler needs -belf""... $ac_c" 1>&6
+! echo "configure:1476: checking whether the C compiler needs -belf" >&5
+  if eval "test \"`echo '$''{'lt_cv_cc_needs_belf'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 1481 "configure"
+  #include "confdefs.h"
+  
+  int main() {
+  
+  ; return 0; }
+  EOF
+! if { (eval echo configure:1488: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    lt_cv_cc_needs_belf=yes
+  else
+***************
+*** 1573,1584 ****
+  
+  
+  
+! for ac_prog in gawk mawk nawk awk
+  do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+  set dummy $ac_prog; ac_word=$2
+  echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+! echo "configure:1582: checking for $ac_word" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_AWK'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+--- 1588,1599 ----
+  
+  
+  
+! for ac_prog in mawk gawk nawk awk
+  do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+  set dummy $ac_prog; ac_word=$2
+  echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+! echo "configure:1597: checking for $ac_word" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_AWK'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+***************
+*** 1610,1616 ****
+  # Extract the first word of "gcc", so it can be a program name with args.
+  set dummy gcc; ac_word=$2
+  echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+! echo "configure:1614: checking for $ac_word" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_CC'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+--- 1625,1631 ----
+  # Extract the first word of "gcc", so it can be a program name with args.
+  set dummy gcc; ac_word=$2
+  echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+! echo "configure:1629: checking for $ac_word" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_CC'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+***************
+*** 1640,1646 ****
+    # Extract the first word of "cc", so it can be a program name with args.
+  set dummy cc; ac_word=$2
+  echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+! echo "configure:1644: checking for $ac_word" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_CC'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+--- 1655,1661 ----
+    # Extract the first word of "cc", so it can be a program name with args.
+  set dummy cc; ac_word=$2
+  echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+! echo "configure:1659: checking for $ac_word" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_CC'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+***************
+*** 1691,1697 ****
+        # Extract the first word of "cl", so it can be a program name with args.
+  set dummy cl; ac_word=$2
+  echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+! echo "configure:1695: checking for $ac_word" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_CC'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+--- 1706,1712 ----
+        # Extract the first word of "cl", so it can be a program name with args.
+  set dummy cl; ac_word=$2
+  echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+! echo "configure:1710: checking for $ac_word" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_CC'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+***************
+*** 1723,1729 ****
+  fi
+  
+  echo $ac_n "checking whether the C compiler ($CC $CFLAGS $LDFLAGS) works""... $ac_c" 1>&6
+! echo "configure:1727: checking whether the C compiler ($CC $CFLAGS $LDFLAGS) works" >&5
+  
+  ac_ext=c
+  # CFLAGS is not in ac_cpp because -g, -O, etc. are not valid cpp options.
+--- 1738,1744 ----
+  fi
+  
+  echo $ac_n "checking whether the C compiler ($CC $CFLAGS $LDFLAGS) works""... $ac_c" 1>&6
+! echo "configure:1742: checking whether the C compiler ($CC $CFLAGS $LDFLAGS) works" >&5
+  
+  ac_ext=c
+  # CFLAGS is not in ac_cpp because -g, -O, etc. are not valid cpp options.
+***************
+*** 1734,1745 ****
+  
+  cat > conftest.$ac_ext << EOF
+  
+! #line 1738 "configure"
+  #include "confdefs.h"
+  
+  main(){return(0);}
+  EOF
+! if { (eval echo configure:1743: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    ac_cv_prog_cc_works=yes
+    # If we can't run a trivial program, we are probably using a cross compiler.
+    if (./conftest; exit) 2>/dev/null; then
+--- 1749,1760 ----
+  
+  cat > conftest.$ac_ext << EOF
+  
+! #line 1753 "configure"
+  #include "confdefs.h"
+  
+  main(){return(0);}
+  EOF
+! if { (eval echo configure:1758: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    ac_cv_prog_cc_works=yes
+    # If we can't run a trivial program, we are probably using a cross compiler.
+    if (./conftest; exit) 2>/dev/null; then
+***************
+*** 1765,1776 ****
+    { echo "configure: error: installation or configuration problem: C compiler cannot create executables." 1>&2; exit 1; }
+  fi
+  echo $ac_n "checking whether the C compiler ($CC $CFLAGS $LDFLAGS) is a cross-compiler""... $ac_c" 1>&6
+! echo "configure:1769: checking whether the C compiler ($CC $CFLAGS $LDFLAGS) is a cross-compiler" >&5
+  echo "$ac_t""$ac_cv_prog_cc_cross" 1>&6
+  cross_compiling=$ac_cv_prog_cc_cross
+  
+  echo $ac_n "checking whether we are using GNU C""... $ac_c" 1>&6
+! echo "configure:1774: checking whether we are using GNU C" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_gcc'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+--- 1780,1791 ----
+    { echo "configure: error: installation or configuration problem: C compiler cannot create executables." 1>&2; exit 1; }
+  fi
+  echo $ac_n "checking whether the C compiler ($CC $CFLAGS $LDFLAGS) is a cross-compiler""... $ac_c" 1>&6
+! echo "configure:1784: checking whether the C compiler ($CC $CFLAGS $LDFLAGS) is a cross-compiler" >&5
+  echo "$ac_t""$ac_cv_prog_cc_cross" 1>&6
+  cross_compiling=$ac_cv_prog_cc_cross
+  
+  echo $ac_n "checking whether we are using GNU C""... $ac_c" 1>&6
+! echo "configure:1789: checking whether we are using GNU C" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_gcc'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+***************
+*** 1779,1785 ****
+    yes;
+  #endif
+  EOF
+! if { ac_try='${CC-cc} -E conftest.c'; { (eval echo configure:1783: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }; } | egrep yes >/dev/null 2>&1; then
+    ac_cv_prog_gcc=yes
+  else
+    ac_cv_prog_gcc=no
+--- 1794,1800 ----
+    yes;
+  #endif
+  EOF
+! if { ac_try='${CC-cc} -E conftest.c'; { (eval echo configure:1798: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }; } | egrep yes >/dev/null 2>&1; then
+    ac_cv_prog_gcc=yes
+  else
+    ac_cv_prog_gcc=no
+***************
+*** 1798,1804 ****
+  ac_save_CFLAGS="$CFLAGS"
+  CFLAGS=
+  echo $ac_n "checking whether ${CC-cc} accepts -g""... $ac_c" 1>&6
+! echo "configure:1802: checking whether ${CC-cc} accepts -g" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_cc_g'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+--- 1813,1819 ----
+  ac_save_CFLAGS="$CFLAGS"
+  CFLAGS=
+  echo $ac_n "checking whether ${CC-cc} accepts -g""... $ac_c" 1>&6
+! echo "configure:1817: checking whether ${CC-cc} accepts -g" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_cc_g'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+***************
+*** 1841,1847 ****
+  # SVR4 /usr/ucb/install, which tries to use the nonexistent group "staff"
+  # ./install, which can be erroneously created by make from ./install.sh.
+  echo $ac_n "checking for a BSD compatible install""... $ac_c" 1>&6
+! echo "configure:1845: checking for a BSD compatible install" >&5
+  if test -z "$INSTALL"; then
+  if eval "test \"`echo '$''{'ac_cv_path_install'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+--- 1856,1862 ----
+  # SVR4 /usr/ucb/install, which tries to use the nonexistent group "staff"
+  # ./install, which can be erroneously created by make from ./install.sh.
+  echo $ac_n "checking for a BSD compatible install""... $ac_c" 1>&6
+! echo "configure:1860: checking for a BSD compatible install" >&5
+  if test -z "$INSTALL"; then
+  if eval "test \"`echo '$''{'ac_cv_path_install'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+***************
+*** 1894,1900 ****
+  test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
+  
+  echo $ac_n "checking whether ln -s works""... $ac_c" 1>&6
+! echo "configure:1898: checking whether ln -s works" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_LN_S'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+--- 1909,1915 ----
+  test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
+  
+  echo $ac_n "checking whether ln -s works""... $ac_c" 1>&6
+! echo "configure:1913: checking whether ln -s works" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_LN_S'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+***************
+*** 1915,1921 ****
+  fi
+  
+  echo $ac_n "checking whether ${MAKE-make} sets \${MAKE}""... $ac_c" 1>&6
+! echo "configure:1919: checking whether ${MAKE-make} sets \${MAKE}" >&5
+  set dummy ${MAKE-make}; ac_make=`echo "$2" | sed 'y%./+-%__p_%'`
+  if eval "test \"`echo '$''{'ac_cv_prog_make_${ac_make}_set'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+--- 1930,1936 ----
+  fi
+  
+  echo $ac_n "checking whether ${MAKE-make} sets \${MAKE}""... $ac_c" 1>&6
+! echo "configure:1934: checking whether ${MAKE-make} sets \${MAKE}" >&5
+  set dummy ${MAKE-make}; ac_make=`echo "$2" | sed 'y%./+-%__p_%'`
+  if eval "test \"`echo '$''{'ac_cv_prog_make_${ac_make}_set'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+***************
+*** 2022,2373 ****
+  
+  
+  
+- echo $ac_n "checking for main in -labs""... $ac_c" 1>&6
+- echo "configure:2027: checking for main in -labs" >&5
+- ac_lib_var=`echo abs'_'main | sed 'y%./+-%__p_%'`
+- if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+-   echo $ac_n "(cached) $ac_c" 1>&6
+- else
+-   ac_save_LIBS="$LIBS"
+- LIBS="-labs  $LIBS"
+- cat > conftest.$ac_ext <<EOF
+- #line 2035 "configure"
+- #include "confdefs.h"
+- 
+- int main() {
+- main()
+- ; return 0; }
+- EOF
+- if { (eval echo configure:2042: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=yes"
+- else
+-   echo "configure: failed program was:" >&5
+-   cat conftest.$ac_ext >&5
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=no"
+- fi
+- rm -f conftest*
+- LIBS="$ac_save_LIBS"
+- 
+- fi
+- if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+-   echo "$ac_t""yes" 1>&6
+-     ac_tr_lib=HAVE_LIB`echo abs | sed -e 's/[^a-zA-Z0-9_]/_/g' \
+-     -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+-   cat >> confdefs.h <<EOF
+- #define $ac_tr_lib 1
+- EOF
+- 
+-   LIBS="-labs $LIBS"
+- 
+- else
+-   echo "$ac_t""no" 1>&6
+- fi
+- 
+- echo $ac_n "checking for main in -laudit""... $ac_c" 1>&6
+- echo "configure:2070: checking for main in -laudit" >&5
+- ac_lib_var=`echo audit'_'main | sed 'y%./+-%__p_%'`
+- if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+-   echo $ac_n "(cached) $ac_c" 1>&6
+- else
+-   ac_save_LIBS="$LIBS"
+- LIBS="-laudit  $LIBS"
+- cat > conftest.$ac_ext <<EOF
+- #line 2078 "configure"
+- #include "confdefs.h"
+- 
+- int main() {
+- main()
+- ; return 0; }
+- EOF
+- if { (eval echo configure:2085: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=yes"
+- else
+-   echo "configure: failed program was:" >&5
+-   cat conftest.$ac_ext >&5
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=no"
+- fi
+- rm -f conftest*
+- LIBS="$ac_save_LIBS"
+- 
+- fi
+- if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+-   echo "$ac_t""yes" 1>&6
+-     ac_tr_lib=HAVE_LIB`echo audit | sed -e 's/[^a-zA-Z0-9_]/_/g' \
+-     -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+-   cat >> confdefs.h <<EOF
+- #define $ac_tr_lib 1
+- EOF
+- 
+-   LIBS="-laudit $LIBS"
+- 
+- else
+-   echo "$ac_t""no" 1>&6
+- fi
+- 
+- echo $ac_n "checking for main in -lauth""... $ac_c" 1>&6
+- echo "configure:2113: checking for main in -lauth" >&5
+- ac_lib_var=`echo auth'_'main | sed 'y%./+-%__p_%'`
+- if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+-   echo $ac_n "(cached) $ac_c" 1>&6
+- else
+-   ac_save_LIBS="$LIBS"
+- LIBS="-lauth  $LIBS"
+- cat > conftest.$ac_ext <<EOF
+- #line 2121 "configure"
+- #include "confdefs.h"
+- 
+- int main() {
+- main()
+- ; return 0; }
+- EOF
+- if { (eval echo configure:2128: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=yes"
+- else
+-   echo "configure: failed program was:" >&5
+-   cat conftest.$ac_ext >&5
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=no"
+- fi
+- rm -f conftest*
+- LIBS="$ac_save_LIBS"
+- 
+- fi
+- if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+-   echo "$ac_t""yes" 1>&6
+-     ac_tr_lib=HAVE_LIB`echo auth | sed -e 's/[^a-zA-Z0-9_]/_/g' \
+-     -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+-   cat >> confdefs.h <<EOF
+- #define $ac_tr_lib 1
+- EOF
+- 
+-   LIBS="-lauth $LIBS"
+- 
+- else
+-   echo "$ac_t""no" 1>&6
+- fi
+- 
+- echo $ac_n "checking for main in -lcmd""... $ac_c" 1>&6
+- echo "configure:2156: checking for main in -lcmd" >&5
+- ac_lib_var=`echo cmd'_'main | sed 'y%./+-%__p_%'`
+- if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+-   echo $ac_n "(cached) $ac_c" 1>&6
+- else
+-   ac_save_LIBS="$LIBS"
+- LIBS="-lcmd  $LIBS"
+- cat > conftest.$ac_ext <<EOF
+- #line 2164 "configure"
+- #include "confdefs.h"
+- 
+- int main() {
+- main()
+- ; return 0; }
+- EOF
+- if { (eval echo configure:2171: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=yes"
+- else
+-   echo "configure: failed program was:" >&5
+-   cat conftest.$ac_ext >&5
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=no"
+- fi
+- rm -f conftest*
+- LIBS="$ac_save_LIBS"
+- 
+- fi
+- if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+-   echo "$ac_t""yes" 1>&6
+-     ac_tr_lib=HAVE_LIB`echo cmd | sed -e 's/[^a-zA-Z0-9_]/_/g' \
+-     -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+-   cat >> confdefs.h <<EOF
+- #define $ac_tr_lib 1
+- EOF
+- 
+-   LIBS="-lcmd $LIBS"
+- 
+- else
+-   echo "$ac_t""no" 1>&6
+- fi
+- 
+- echo $ac_n "checking for main in -lcom_err""... $ac_c" 1>&6
+- echo "configure:2199: checking for main in -lcom_err" >&5
+- ac_lib_var=`echo com_err'_'main | sed 'y%./+-%__p_%'`
+- if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+-   echo $ac_n "(cached) $ac_c" 1>&6
+- else
+-   ac_save_LIBS="$LIBS"
+- LIBS="-lcom_err  $LIBS"
+- cat > conftest.$ac_ext <<EOF
+- #line 2207 "configure"
+- #include "confdefs.h"
+- 
+- int main() {
+- main()
+- ; return 0; }
+- EOF
+- if { (eval echo configure:2214: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=yes"
+- else
+-   echo "configure: failed program was:" >&5
+-   cat conftest.$ac_ext >&5
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=no"
+- fi
+- rm -f conftest*
+- LIBS="$ac_save_LIBS"
+- 
+- fi
+- if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+-   echo "$ac_t""yes" 1>&6
+-     ac_tr_lib=HAVE_LIB`echo com_err | sed -e 's/[^a-zA-Z0-9_]/_/g' \
+-     -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+-   cat >> confdefs.h <<EOF
+- #define $ac_tr_lib 1
+- EOF
+- 
+-   LIBS="-lcom_err $LIBS"
+- 
+- else
+-   echo "$ac_t""no" 1>&6
+- fi
+- 
+- echo $ac_n "checking for main in -lcrypt""... $ac_c" 1>&6
+- echo "configure:2242: checking for main in -lcrypt" >&5
+- ac_lib_var=`echo crypt'_'main | sed 'y%./+-%__p_%'`
+- if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+-   echo $ac_n "(cached) $ac_c" 1>&6
+- else
+-   ac_save_LIBS="$LIBS"
+- LIBS="-lcrypt  $LIBS"
+- cat > conftest.$ac_ext <<EOF
+- #line 2250 "configure"
+- #include "confdefs.h"
+- 
+- int main() {
+- main()
+- ; return 0; }
+- EOF
+- if { (eval echo configure:2257: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=yes"
+- else
+-   echo "configure: failed program was:" >&5
+-   cat conftest.$ac_ext >&5
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=no"
+- fi
+- rm -f conftest*
+- LIBS="$ac_save_LIBS"
+- 
+- fi
+- if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+-   echo "$ac_t""yes" 1>&6
+-     ac_tr_lib=HAVE_LIB`echo crypt | sed -e 's/[^a-zA-Z0-9_]/_/g' \
+-     -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+-   cat >> confdefs.h <<EOF
+- #define $ac_tr_lib 1
+- EOF
+- 
+-   LIBS="-lcrypt $LIBS"
+- 
+- else
+-   echo "$ac_t""no" 1>&6
+- fi
+- 
+- echo $ac_n "checking for main in -ld""... $ac_c" 1>&6
+- echo "configure:2285: checking for main in -ld" >&5
+- ac_lib_var=`echo d'_'main | sed 'y%./+-%__p_%'`
+- if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+-   echo $ac_n "(cached) $ac_c" 1>&6
+- else
+-   ac_save_LIBS="$LIBS"
+- LIBS="-ld  $LIBS"
+- cat > conftest.$ac_ext <<EOF
+- #line 2293 "configure"
+- #include "confdefs.h"
+- 
+- int main() {
+- main()
+- ; return 0; }
+- EOF
+- if { (eval echo configure:2300: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=yes"
+- else
+-   echo "configure: failed program was:" >&5
+-   cat conftest.$ac_ext >&5
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=no"
+- fi
+- rm -f conftest*
+- LIBS="$ac_save_LIBS"
+- 
+- fi
+- if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+-   echo "$ac_t""yes" 1>&6
+-     ac_tr_lib=HAVE_LIB`echo d | sed -e 's/[^a-zA-Z0-9_]/_/g' \
+-     -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+-   cat >> confdefs.h <<EOF
+- #define $ac_tr_lib 1
+- EOF
+- 
+-   LIBS="-ld $LIBS"
+- 
+- else
+-   echo "$ac_t""no" 1>&6
+- fi
+- 
+- echo $ac_n "checking for main in -ldb""... $ac_c" 1>&6
+- echo "configure:2328: checking for main in -ldb" >&5
+- ac_lib_var=`echo db'_'main | sed 'y%./+-%__p_%'`
+- if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+-   echo $ac_n "(cached) $ac_c" 1>&6
+- else
+-   ac_save_LIBS="$LIBS"
+- LIBS="-ldb  $LIBS"
+- cat > conftest.$ac_ext <<EOF
+- #line 2336 "configure"
+- #include "confdefs.h"
+- 
+- int main() {
+- main()
+- ; return 0; }
+- EOF
+- if { (eval echo configure:2343: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=yes"
+- else
+-   echo "configure: failed program was:" >&5
+-   cat conftest.$ac_ext >&5
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=no"
+- fi
+- rm -f conftest*
+- LIBS="$ac_save_LIBS"
+- 
+- fi
+- if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+-   echo "$ac_t""yes" 1>&6
+-     ac_tr_lib=HAVE_LIB`echo db | sed -e 's/[^a-zA-Z0-9_]/_/g' \
+-     -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+-   cat >> confdefs.h <<EOF
+- #define $ac_tr_lib 1
+- EOF
+- 
+-   LIBS="-ldb $LIBS"
+- 
+- else
+-   echo "$ac_t""no" 1>&6
+- fi
+- 
+  echo $ac_n "checking for main in -ldl""... $ac_c" 1>&6
+! echo "configure:2371: checking for main in -ldl" >&5
+  ac_lib_var=`echo dl'_'main | sed 'y%./+-%__p_%'`
+  if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+--- 2037,2044 ----
+  
+  
+  
+  echo $ac_n "checking for main in -ldl""... $ac_c" 1>&6
+! echo "configure:2042: checking for main in -ldl" >&5
+  ac_lib_var=`echo dl'_'main | sed 'y%./+-%__p_%'`
+  if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+***************
+*** 2375,2388 ****
+    ac_save_LIBS="$LIBS"
+  LIBS="-ldl  $LIBS"
+  cat > conftest.$ac_ext <<EOF
+! #line 2379 "configure"
+  #include "confdefs.h"
+  
+  int main() {
+  main()
+  ; return 0; }
+  EOF
+! if { (eval echo configure:2386: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_lib_$ac_lib_var=yes"
+  else
+--- 2046,2059 ----
+    ac_save_LIBS="$LIBS"
+  LIBS="-ldl  $LIBS"
+  cat > conftest.$ac_ext <<EOF
+! #line 2050 "configure"
+  #include "confdefs.h"
+  
+  int main() {
+  main()
+  ; return 0; }
+  EOF
+! if { (eval echo configure:2057: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_lib_$ac_lib_var=yes"
+  else
+***************
+*** 2409,2588 ****
+    echo "$ac_t""no" 1>&6
+  fi
+  
+- echo $ac_n "checking for main in -lkauth""... $ac_c" 1>&6
+- echo "configure:2414: checking for main in -lkauth" >&5
+- ac_lib_var=`echo kauth'_'main | sed 'y%./+-%__p_%'`
+- if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+-   echo $ac_n "(cached) $ac_c" 1>&6
+- else
+-   ac_save_LIBS="$LIBS"
+- LIBS="-lkauth  $LIBS"
+- cat > conftest.$ac_ext <<EOF
+- #line 2422 "configure"
+- #include "confdefs.h"
+- 
+- int main() {
+- main()
+- ; return 0; }
+- EOF
+- if { (eval echo configure:2429: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=yes"
+- else
+-   echo "configure: failed program was:" >&5
+-   cat conftest.$ac_ext >&5
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=no"
+- fi
+- rm -f conftest*
+- LIBS="$ac_save_LIBS"
+- 
+- fi
+- if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+-   echo "$ac_t""yes" 1>&6
+-     ac_tr_lib=HAVE_LIB`echo kauth | sed -e 's/[^a-zA-Z0-9_]/_/g' \
+-     -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+-   cat >> confdefs.h <<EOF
+- #define $ac_tr_lib 1
+- EOF
+- 
+-   LIBS="-lkauth $LIBS"
+- 
+- else
+-   echo "$ac_t""no" 1>&6
+- fi
+- 
+- echo $ac_n "checking for main in -lkrb""... $ac_c" 1>&6
+- echo "configure:2457: checking for main in -lkrb" >&5
+- ac_lib_var=`echo krb'_'main | sed 'y%./+-%__p_%'`
+- if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+-   echo $ac_n "(cached) $ac_c" 1>&6
+- else
+-   ac_save_LIBS="$LIBS"
+- LIBS="-lkrb  $LIBS"
+- cat > conftest.$ac_ext <<EOF
+- #line 2465 "configure"
+- #include "confdefs.h"
+- 
+- int main() {
+- main()
+- ; return 0; }
+- EOF
+- if { (eval echo configure:2472: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=yes"
+- else
+-   echo "configure: failed program was:" >&5
+-   cat conftest.$ac_ext >&5
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=no"
+- fi
+- rm -f conftest*
+- LIBS="$ac_save_LIBS"
+- 
+- fi
+- if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+-   echo "$ac_t""yes" 1>&6
+-     ac_tr_lib=HAVE_LIB`echo krb | sed -e 's/[^a-zA-Z0-9_]/_/g' \
+-     -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+-   cat >> confdefs.h <<EOF
+- #define $ac_tr_lib 1
+- EOF
+- 
+-   LIBS="-lkrb $LIBS"
+- 
+- else
+-   echo "$ac_t""no" 1>&6
+- fi
+- 
+- echo $ac_n "checking for main in -llwp""... $ac_c" 1>&6
+- echo "configure:2500: checking for main in -llwp" >&5
+- ac_lib_var=`echo lwp'_'main | sed 'y%./+-%__p_%'`
+- if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+-   echo $ac_n "(cached) $ac_c" 1>&6
+- else
+-   ac_save_LIBS="$LIBS"
+- LIBS="-llwp  $LIBS"
+- cat > conftest.$ac_ext <<EOF
+- #line 2508 "configure"
+- #include "confdefs.h"
+- 
+- int main() {
+- main()
+- ; return 0; }
+- EOF
+- if { (eval echo configure:2515: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=yes"
+- else
+-   echo "configure: failed program was:" >&5
+-   cat conftest.$ac_ext >&5
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=no"
+- fi
+- rm -f conftest*
+- LIBS="$ac_save_LIBS"
+- 
+- fi
+- if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+-   echo "$ac_t""yes" 1>&6
+-     ac_tr_lib=HAVE_LIB`echo lwp | sed -e 's/[^a-zA-Z0-9_]/_/g' \
+-     -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+-   cat >> confdefs.h <<EOF
+- #define $ac_tr_lib 1
+- EOF
+- 
+-   LIBS="-llwp $LIBS"
+- 
+- else
+-   echo "$ac_t""no" 1>&6
+- fi
+- 
+- echo $ac_n "checking for main in -ln""... $ac_c" 1>&6
+- echo "configure:2543: checking for main in -ln" >&5
+- ac_lib_var=`echo n'_'main | sed 'y%./+-%__p_%'`
+- if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+-   echo $ac_n "(cached) $ac_c" 1>&6
+- else
+-   ac_save_LIBS="$LIBS"
+- LIBS="-ln  $LIBS"
+- cat > conftest.$ac_ext <<EOF
+- #line 2551 "configure"
+- #include "confdefs.h"
+- 
+- int main() {
+- main()
+- ; return 0; }
+- EOF
+- if { (eval echo configure:2558: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=yes"
+- else
+-   echo "configure: failed program was:" >&5
+-   cat conftest.$ac_ext >&5
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=no"
+- fi
+- rm -f conftest*
+- LIBS="$ac_save_LIBS"
+- 
+- fi
+- if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+-   echo "$ac_t""yes" 1>&6
+-     ac_tr_lib=HAVE_LIB`echo n | sed -e 's/[^a-zA-Z0-9_]/_/g' \
+-     -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+-   cat >> confdefs.h <<EOF
+- #define $ac_tr_lib 1
+- EOF
+- 
+-   LIBS="-ln $LIBS"
+- 
+- else
+-   echo "$ac_t""no" 1>&6
+- fi
+- 
+  echo $ac_n "checking for main in -lnsl""... $ac_c" 1>&6
+! echo "configure:2586: checking for main in -lnsl" >&5
+  ac_lib_var=`echo nsl'_'main | sed 'y%./+-%__p_%'`
+  if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+--- 2080,2087 ----
+    echo "$ac_t""no" 1>&6
+  fi
+  
+  echo $ac_n "checking for main in -lnsl""... $ac_c" 1>&6
+! echo "configure:2085: checking for main in -lnsl" >&5
+  ac_lib_var=`echo nsl'_'main | sed 'y%./+-%__p_%'`
+  if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+***************
+*** 2590,2603 ****
+    ac_save_LIBS="$LIBS"
+  LIBS="-lnsl  $LIBS"
+  cat > conftest.$ac_ext <<EOF
+! #line 2594 "configure"
+  #include "confdefs.h"
+  
+  int main() {
+  main()
+  ; return 0; }
+  EOF
+! if { (eval echo configure:2601: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_lib_$ac_lib_var=yes"
+  else
+--- 2089,2102 ----
+    ac_save_LIBS="$LIBS"
+  LIBS="-lnsl  $LIBS"
+  cat > conftest.$ac_ext <<EOF
+! #line 2093 "configure"
+  #include "confdefs.h"
+  
+  int main() {
+  main()
+  ; return 0; }
+  EOF
+! if { (eval echo configure:2100: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_lib_$ac_lib_var=yes"
+  else
+***************
+*** 2624,2846 ****
+    echo "$ac_t""no" 1>&6
+  fi
+  
+- echo $ac_n "checking for main in -lprot""... $ac_c" 1>&6
+- echo "configure:2629: checking for main in -lprot" >&5
+- ac_lib_var=`echo prot'_'main | sed 'y%./+-%__p_%'`
+- if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+-   echo $ac_n "(cached) $ac_c" 1>&6
+- else
+-   ac_save_LIBS="$LIBS"
+- LIBS="-lprot  $LIBS"
+- cat > conftest.$ac_ext <<EOF
+- #line 2637 "configure"
+- #include "confdefs.h"
+- 
+- int main() {
+- main()
+- ; return 0; }
+- EOF
+- if { (eval echo configure:2644: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=yes"
+- else
+-   echo "configure: failed program was:" >&5
+-   cat conftest.$ac_ext >&5
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=no"
+- fi
+- rm -f conftest*
+- LIBS="$ac_save_LIBS"
+- 
+- fi
+- if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+-   echo "$ac_t""yes" 1>&6
+-     ac_tr_lib=HAVE_LIB`echo prot | sed -e 's/[^a-zA-Z0-9_]/_/g' \
+-     -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+-   cat >> confdefs.h <<EOF
+- #define $ac_tr_lib 1
+- EOF
+- 
+-   LIBS="-lprot $LIBS"
+- 
+- else
+-   echo "$ac_t""no" 1>&6
+- fi
+- 
+- echo $ac_n "checking for main in -lresolv""... $ac_c" 1>&6
+- echo "configure:2672: checking for main in -lresolv" >&5
+- ac_lib_var=`echo resolv'_'main | sed 'y%./+-%__p_%'`
+- if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+-   echo $ac_n "(cached) $ac_c" 1>&6
+- else
+-   ac_save_LIBS="$LIBS"
+- LIBS="-lresolv  $LIBS"
+- cat > conftest.$ac_ext <<EOF
+- #line 2680 "configure"
+- #include "confdefs.h"
+- 
+- int main() {
+- main()
+- ; return 0; }
+- EOF
+- if { (eval echo configure:2687: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=yes"
+- else
+-   echo "configure: failed program was:" >&5
+-   cat conftest.$ac_ext >&5
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=no"
+- fi
+- rm -f conftest*
+- LIBS="$ac_save_LIBS"
+- 
+- fi
+- if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+-   echo "$ac_t""yes" 1>&6
+-     ac_tr_lib=HAVE_LIB`echo resolv | sed -e 's/[^a-zA-Z0-9_]/_/g' \
+-     -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+-   cat >> confdefs.h <<EOF
+- #define $ac_tr_lib 1
+- EOF
+- 
+-   LIBS="-lresolv $LIBS"
+- 
+- else
+-   echo "$ac_t""no" 1>&6
+- fi
+- 
+- echo $ac_n "checking for main in -lrpcsvc""... $ac_c" 1>&6
+- echo "configure:2715: checking for main in -lrpcsvc" >&5
+- ac_lib_var=`echo rpcsvc'_'main | sed 'y%./+-%__p_%'`
+- if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+-   echo $ac_n "(cached) $ac_c" 1>&6
+- else
+-   ac_save_LIBS="$LIBS"
+- LIBS="-lrpcsvc  $LIBS"
+- cat > conftest.$ac_ext <<EOF
+- #line 2723 "configure"
+- #include "confdefs.h"
+- 
+- int main() {
+- main()
+- ; return 0; }
+- EOF
+- if { (eval echo configure:2730: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=yes"
+- else
+-   echo "configure: failed program was:" >&5
+-   cat conftest.$ac_ext >&5
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=no"
+- fi
+- rm -f conftest*
+- LIBS="$ac_save_LIBS"
+- 
+- fi
+- if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+-   echo "$ac_t""yes" 1>&6
+-     ac_tr_lib=HAVE_LIB`echo rpcsvc | sed -e 's/[^a-zA-Z0-9_]/_/g' \
+-     -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+-   cat >> confdefs.h <<EOF
+- #define $ac_tr_lib 1
+- EOF
+- 
+-   LIBS="-lrpcsvc $LIBS"
+- 
+- else
+-   echo "$ac_t""no" 1>&6
+- fi
+- 
+- echo $ac_n "checking for main in -lrx""... $ac_c" 1>&6
+- echo "configure:2758: checking for main in -lrx" >&5
+- ac_lib_var=`echo rx'_'main | sed 'y%./+-%__p_%'`
+- if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+-   echo $ac_n "(cached) $ac_c" 1>&6
+- else
+-   ac_save_LIBS="$LIBS"
+- LIBS="-lrx  $LIBS"
+- cat > conftest.$ac_ext <<EOF
+- #line 2766 "configure"
+- #include "confdefs.h"
+- 
+- int main() {
+- main()
+- ; return 0; }
+- EOF
+- if { (eval echo configure:2773: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=yes"
+- else
+-   echo "configure: failed program was:" >&5
+-   cat conftest.$ac_ext >&5
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=no"
+- fi
+- rm -f conftest*
+- LIBS="$ac_save_LIBS"
+- 
+- fi
+- if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+-   echo "$ac_t""yes" 1>&6
+-     ac_tr_lib=HAVE_LIB`echo rx | sed -e 's/[^a-zA-Z0-9_]/_/g' \
+-     -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+-   cat >> confdefs.h <<EOF
+- #define $ac_tr_lib 1
+- EOF
+- 
+-   LIBS="-lrx $LIBS"
+- 
+- else
+-   echo "$ac_t""no" 1>&6
+- fi
+- 
+- echo $ac_n "checking for main in -lrxkad""... $ac_c" 1>&6
+- echo "configure:2801: checking for main in -lrxkad" >&5
+- ac_lib_var=`echo rxkad'_'main | sed 'y%./+-%__p_%'`
+- if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+-   echo $ac_n "(cached) $ac_c" 1>&6
+- else
+-   ac_save_LIBS="$LIBS"
+- LIBS="-lrxkad  $LIBS"
+- cat > conftest.$ac_ext <<EOF
+- #line 2809 "configure"
+- #include "confdefs.h"
+- 
+- int main() {
+- main()
+- ; return 0; }
+- EOF
+- if { (eval echo configure:2816: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=yes"
+- else
+-   echo "configure: failed program was:" >&5
+-   cat conftest.$ac_ext >&5
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=no"
+- fi
+- rm -f conftest*
+- LIBS="$ac_save_LIBS"
+- 
+- fi
+- if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+-   echo "$ac_t""yes" 1>&6
+-     ac_tr_lib=HAVE_LIB`echo rxkad | sed -e 's/[^a-zA-Z0-9_]/_/g' \
+-     -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+-   cat >> confdefs.h <<EOF
+- #define $ac_tr_lib 1
+- EOF
+- 
+-   LIBS="-lrxkad $LIBS"
+- 
+- else
+-   echo "$ac_t""no" 1>&6
+- fi
+- 
+  echo $ac_n "checking for main in -lsocket""... $ac_c" 1>&6
+! echo "configure:2844: checking for main in -lsocket" >&5
+  ac_lib_var=`echo socket'_'main | sed 'y%./+-%__p_%'`
+  if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+--- 2123,2130 ----
+    echo "$ac_t""no" 1>&6
+  fi
+  
+  echo $ac_n "checking for main in -lsocket""... $ac_c" 1>&6
+! echo "configure:2128: checking for main in -lsocket" >&5
+  ac_lib_var=`echo socket'_'main | sed 'y%./+-%__p_%'`
+  if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+***************
+*** 2848,2861 ****
+    ac_save_LIBS="$LIBS"
+  LIBS="-lsocket  $LIBS"
+  cat > conftest.$ac_ext <<EOF
+! #line 2852 "configure"
+  #include "confdefs.h"
+  
+  int main() {
+  main()
+  ; return 0; }
+  EOF
+! if { (eval echo configure:2859: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_lib_$ac_lib_var=yes"
+  else
+--- 2132,2145 ----
+    ac_save_LIBS="$LIBS"
+  LIBS="-lsocket  $LIBS"
+  cat > conftest.$ac_ext <<EOF
+! #line 2136 "configure"
+  #include "confdefs.h"
+  
+  int main() {
+  main()
+  ; return 0; }
+  EOF
+! if { (eval echo configure:2143: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_lib_$ac_lib_var=yes"
+  else
+***************
+*** 2882,2973 ****
+    echo "$ac_t""no" 1>&6
+  fi
+  
+- echo $ac_n "checking for main in -lsys""... $ac_c" 1>&6
+- echo "configure:2887: checking for main in -lsys" >&5
+- ac_lib_var=`echo sys'_'main | sed 'y%./+-%__p_%'`
+- if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+-   echo $ac_n "(cached) $ac_c" 1>&6
+- else
+-   ac_save_LIBS="$LIBS"
+- LIBS="-lsys  $LIBS"
+- cat > conftest.$ac_ext <<EOF
+- #line 2895 "configure"
+- #include "confdefs.h"
+- 
+- int main() {
+- main()
+- ; return 0; }
+- EOF
+- if { (eval echo configure:2902: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=yes"
+- else
+-   echo "configure: failed program was:" >&5
+-   cat conftest.$ac_ext >&5
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=no"
+- fi
+- rm -f conftest*
+- LIBS="$ac_save_LIBS"
+- 
+- fi
+- if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+-   echo "$ac_t""yes" 1>&6
+-     ac_tr_lib=HAVE_LIB`echo sys | sed -e 's/[^a-zA-Z0-9_]/_/g' \
+-     -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+-   cat >> confdefs.h <<EOF
+- #define $ac_tr_lib 1
+- EOF
+- 
+-   LIBS="-lsys $LIBS"
+- 
+- else
+-   echo "$ac_t""no" 1>&6
+- fi
+- 
+- echo $ac_n "checking for main in -lubik""... $ac_c" 1>&6
+- echo "configure:2930: checking for main in -lubik" >&5
+- ac_lib_var=`echo ubik'_'main | sed 'y%./+-%__p_%'`
+- if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+-   echo $ac_n "(cached) $ac_c" 1>&6
+- else
+-   ac_save_LIBS="$LIBS"
+- LIBS="-lubik  $LIBS"
+- cat > conftest.$ac_ext <<EOF
+- #line 2938 "configure"
+- #include "confdefs.h"
+- 
+- int main() {
+- main()
+- ; return 0; }
+- EOF
+- if { (eval echo configure:2945: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=yes"
+- else
+-   echo "configure: failed program was:" >&5
+-   cat conftest.$ac_ext >&5
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=no"
+- fi
+- rm -f conftest*
+- LIBS="$ac_save_LIBS"
+- 
+- fi
+- if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+-   echo "$ac_t""yes" 1>&6
+-     ac_tr_lib=HAVE_LIB`echo ubik | sed -e 's/[^a-zA-Z0-9_]/_/g' \
+-     -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+-   cat >> confdefs.h <<EOF
+- #define $ac_tr_lib 1
+- EOF
+- 
+-   LIBS="-lubik $LIBS"
+- 
+- else
+-   echo "$ac_t""no" 1>&6
+- fi
+- 
+  
+  #
+  # Check presence of some functions
+--- 2166,2171 ----
+***************
+*** 2978,2989 ****
+  for ac_func in access
+  do
+  echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
+! echo "configure:2982: checking for $ac_func" >&5
+  if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 2987 "configure"
+  #include "confdefs.h"
+  /* System header to define __stub macros and hopefully few prototypes,
+      which can conflict with char $ac_func(); below.  */
+--- 2176,2187 ----
+  for ac_func in access
+  do
+  echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
+! echo "configure:2180: checking for $ac_func" >&5
+  if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 2185 "configure"
+  #include "confdefs.h"
+  /* System header to define __stub macros and hopefully few prototypes,
+      which can conflict with char $ac_func(); below.  */
+***************
+*** 3006,3012 ****
+  
+  ; return 0; }
+  EOF
+! if { (eval echo configure:3010: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_func_$ac_func=yes"
+  else
+--- 2204,2210 ----
+  
+  ; return 0; }
+  EOF
+! if { (eval echo configure:2208: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_func_$ac_func=yes"
+  else
+***************
+*** 3036,3047 ****
+  do
+  ac_safe=`echo "$ac_hdr" | sed 'y%./+-%__p_%'`
+  echo $ac_n "checking for $ac_hdr that defines DIR""... $ac_c" 1>&6
+! echo "configure:3040: checking for $ac_hdr that defines DIR" >&5
+  if eval "test \"`echo '$''{'ac_cv_header_dirent_$ac_safe'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3045 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #include <$ac_hdr>
+--- 2234,2245 ----
+  do
+  ac_safe=`echo "$ac_hdr" | sed 'y%./+-%__p_%'`
+  echo $ac_n "checking for $ac_hdr that defines DIR""... $ac_c" 1>&6
+! echo "configure:2238: checking for $ac_hdr that defines DIR" >&5
+  if eval "test \"`echo '$''{'ac_cv_header_dirent_$ac_safe'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 2243 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #include <$ac_hdr>
+***************
+*** 3049,3055 ****
+  DIR *dirp = 0;
+  ; return 0; }
+  EOF
+! if { (eval echo configure:3053: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+    rm -rf conftest*
+    eval "ac_cv_header_dirent_$ac_safe=yes"
+  else
+--- 2247,2253 ----
+  DIR *dirp = 0;
+  ; return 0; }
+  EOF
+! if { (eval echo configure:2251: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+    rm -rf conftest*
+    eval "ac_cv_header_dirent_$ac_safe=yes"
+  else
+***************
+*** 3074,3080 ****
+  # Two versions of opendir et al. are in -ldir and -lx on SCO Xenix.
+  if test $ac_header_dirent = dirent.h; then
+  echo $ac_n "checking for opendir in -ldir""... $ac_c" 1>&6
+! echo "configure:3078: checking for opendir in -ldir" >&5
+  ac_lib_var=`echo dir'_'opendir | sed 'y%./+-%__p_%'`
+  if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+--- 2272,2278 ----
+  # Two versions of opendir et al. are in -ldir and -lx on SCO Xenix.
+  if test $ac_header_dirent = dirent.h; then
+  echo $ac_n "checking for opendir in -ldir""... $ac_c" 1>&6
+! echo "configure:2276: checking for opendir in -ldir" >&5
+  ac_lib_var=`echo dir'_'opendir | sed 'y%./+-%__p_%'`
+  if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+***************
+*** 3082,3088 ****
+    ac_save_LIBS="$LIBS"
+  LIBS="-ldir  $LIBS"
+  cat > conftest.$ac_ext <<EOF
+! #line 3086 "configure"
+  #include "confdefs.h"
+  /* Override any gcc2 internal prototype to avoid an error.  */
+  /* We use char because int might match the return type of a gcc2
+--- 2280,2286 ----
+    ac_save_LIBS="$LIBS"
+  LIBS="-ldir  $LIBS"
+  cat > conftest.$ac_ext <<EOF
+! #line 2284 "configure"
+  #include "confdefs.h"
+  /* Override any gcc2 internal prototype to avoid an error.  */
+  /* We use char because int might match the return type of a gcc2
+***************
+*** 3093,3099 ****
+  opendir()
+  ; return 0; }
+  EOF
+! if { (eval echo configure:3097: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_lib_$ac_lib_var=yes"
+  else
+--- 2291,2297 ----
+  opendir()
+  ; return 0; }
+  EOF
+! if { (eval echo configure:2295: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_lib_$ac_lib_var=yes"
+  else
+***************
+*** 3115,3121 ****
+  
+  else
+  echo $ac_n "checking for opendir in -lx""... $ac_c" 1>&6
+! echo "configure:3119: checking for opendir in -lx" >&5
+  ac_lib_var=`echo x'_'opendir | sed 'y%./+-%__p_%'`
+  if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+--- 2313,2319 ----
+  
+  else
+  echo $ac_n "checking for opendir in -lx""... $ac_c" 1>&6
+! echo "configure:2317: checking for opendir in -lx" >&5
+  ac_lib_var=`echo x'_'opendir | sed 'y%./+-%__p_%'`
+  if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+***************
+*** 3123,3129 ****
+    ac_save_LIBS="$LIBS"
+  LIBS="-lx  $LIBS"
+  cat > conftest.$ac_ext <<EOF
+! #line 3127 "configure"
+  #include "confdefs.h"
+  /* Override any gcc2 internal prototype to avoid an error.  */
+  /* We use char because int might match the return type of a gcc2
+--- 2321,2327 ----
+    ac_save_LIBS="$LIBS"
+  LIBS="-lx  $LIBS"
+  cat > conftest.$ac_ext <<EOF
+! #line 2325 "configure"
+  #include "confdefs.h"
+  /* Override any gcc2 internal prototype to avoid an error.  */
+  /* We use char because int might match the return type of a gcc2
+***************
+*** 3134,3140 ****
+  opendir()
+  ; return 0; }
+  EOF
+! if { (eval echo configure:3138: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_lib_$ac_lib_var=yes"
+  else
+--- 2332,2338 ----
+  opendir()
+  ; return 0; }
+  EOF
+! if { (eval echo configure:2336: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_lib_$ac_lib_var=yes"
+  else
+***************
+*** 3157,3163 ****
+  fi
+  
+  echo $ac_n "checking how to run the C preprocessor""... $ac_c" 1>&6
+! echo "configure:3161: checking how to run the C preprocessor" >&5
+  # On Suns, sometimes $CPP names a directory.
+  if test -n "$CPP" && test -d "$CPP"; then
+    CPP=
+--- 2355,2361 ----
+  fi
+  
+  echo $ac_n "checking how to run the C preprocessor""... $ac_c" 1>&6
+! echo "configure:2359: checking how to run the C preprocessor" >&5
+  # On Suns, sometimes $CPP names a directory.
+  if test -n "$CPP" && test -d "$CPP"; then
+    CPP=
+***************
+*** 3172,3184 ****
+    # On the NeXT, cc -E runs the code through the compiler's parser,
+    # not just through cpp.
+    cat > conftest.$ac_ext <<EOF
+! #line 3176 "configure"
+  #include "confdefs.h"
+  #include <assert.h>
+  Syntax Error
+  EOF
+  ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+! { (eval echo configure:3182: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+  ac_err=`grep -v '^ *+' conftest.out | grep -v "^conftest.${ac_ext}\$"`
+  if test -z "$ac_err"; then
+    :
+--- 2370,2382 ----
+    # On the NeXT, cc -E runs the code through the compiler's parser,
+    # not just through cpp.
+    cat > conftest.$ac_ext <<EOF
+! #line 2374 "configure"
+  #include "confdefs.h"
+  #include <assert.h>
+  Syntax Error
+  EOF
+  ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+! { (eval echo configure:2380: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+  ac_err=`grep -v '^ *+' conftest.out | grep -v "^conftest.${ac_ext}\$"`
+  if test -z "$ac_err"; then
+    :
+***************
+*** 3189,3201 ****
+    rm -rf conftest*
+    CPP="${CC-cc} -E -traditional-cpp"
+    cat > conftest.$ac_ext <<EOF
+! #line 3193 "configure"
+  #include "confdefs.h"
+  #include <assert.h>
+  Syntax Error
+  EOF
+  ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+! { (eval echo configure:3199: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+  ac_err=`grep -v '^ *+' conftest.out | grep -v "^conftest.${ac_ext}\$"`
+  if test -z "$ac_err"; then
+    :
+--- 2387,2399 ----
+    rm -rf conftest*
+    CPP="${CC-cc} -E -traditional-cpp"
+    cat > conftest.$ac_ext <<EOF
+! #line 2391 "configure"
+  #include "confdefs.h"
+  #include <assert.h>
+  Syntax Error
+  EOF
+  ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+! { (eval echo configure:2397: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+  ac_err=`grep -v '^ *+' conftest.out | grep -v "^conftest.${ac_ext}\$"`
+  if test -z "$ac_err"; then
+    :
+***************
+*** 3206,3218 ****
+    rm -rf conftest*
+    CPP="${CC-cc} -nologo -E"
+    cat > conftest.$ac_ext <<EOF
+! #line 3210 "configure"
+  #include "confdefs.h"
+  #include <assert.h>
+  Syntax Error
+  EOF
+  ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+! { (eval echo configure:3216: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+  ac_err=`grep -v '^ *+' conftest.out | grep -v "^conftest.${ac_ext}\$"`
+  if test -z "$ac_err"; then
+    :
+--- 2404,2416 ----
+    rm -rf conftest*
+    CPP="${CC-cc} -nologo -E"
+    cat > conftest.$ac_ext <<EOF
+! #line 2408 "configure"
+  #include "confdefs.h"
+  #include <assert.h>
+  Syntax Error
+  EOF
+  ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+! { (eval echo configure:2414: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+  ac_err=`grep -v '^ *+' conftest.out | grep -v "^conftest.${ac_ext}\$"`
+  if test -z "$ac_err"; then
+    :
+***************
+*** 3237,3248 ****
+  echo "$ac_t""$CPP" 1>&6
+  
+  echo $ac_n "checking for ANSI C header files""... $ac_c" 1>&6
+! echo "configure:3241: checking for ANSI C header files" >&5
+  if eval "test \"`echo '$''{'ac_cv_header_stdc'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3246 "configure"
+  #include "confdefs.h"
+  #include <stdlib.h>
+  #include <stdarg.h>
+--- 2435,2446 ----
+  echo "$ac_t""$CPP" 1>&6
+  
+  echo $ac_n "checking for ANSI C header files""... $ac_c" 1>&6
+! echo "configure:2439: checking for ANSI C header files" >&5
+  if eval "test \"`echo '$''{'ac_cv_header_stdc'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 2444 "configure"
+  #include "confdefs.h"
+  #include <stdlib.h>
+  #include <stdarg.h>
+***************
+*** 3250,3256 ****
+  #include <float.h>
+  EOF
+  ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+! { (eval echo configure:3254: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+  ac_err=`grep -v '^ *+' conftest.out | grep -v "^conftest.${ac_ext}\$"`
+  if test -z "$ac_err"; then
+    rm -rf conftest*
+--- 2448,2454 ----
+  #include <float.h>
+  EOF
+  ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+! { (eval echo configure:2452: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+  ac_err=`grep -v '^ *+' conftest.out | grep -v "^conftest.${ac_ext}\$"`
+  if test -z "$ac_err"; then
+    rm -rf conftest*
+***************
+*** 3267,3273 ****
+  if test $ac_cv_header_stdc = yes; then
+    # SunOS 4.x string.h does not declare mem*, contrary to ANSI.
+  cat > conftest.$ac_ext <<EOF
+! #line 3271 "configure"
+  #include "confdefs.h"
+  #include <string.h>
+  EOF
+--- 2465,2471 ----
+  if test $ac_cv_header_stdc = yes; then
+    # SunOS 4.x string.h does not declare mem*, contrary to ANSI.
+  cat > conftest.$ac_ext <<EOF
+! #line 2469 "configure"
+  #include "confdefs.h"
+  #include <string.h>
+  EOF
+***************
+*** 3285,3291 ****
+  if test $ac_cv_header_stdc = yes; then
+    # ISC 2.0.2 stdlib.h does not declare free, contrary to ANSI.
+  cat > conftest.$ac_ext <<EOF
+! #line 3289 "configure"
+  #include "confdefs.h"
+  #include <stdlib.h>
+  EOF
+--- 2483,2489 ----
+  if test $ac_cv_header_stdc = yes; then
+    # ISC 2.0.2 stdlib.h does not declare free, contrary to ANSI.
+  cat > conftest.$ac_ext <<EOF
+! #line 2487 "configure"
+  #include "confdefs.h"
+  #include <stdlib.h>
+  EOF
+***************
+*** 3306,3312 ****
+    :
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3310 "configure"
+  #include "confdefs.h"
+  #include <ctype.h>
+  #define ISLOWER(c) ('a' <= (c) && (c) <= 'z')
+--- 2504,2510 ----
+    :
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 2508 "configure"
+  #include "confdefs.h"
+  #include <ctype.h>
+  #define ISLOWER(c) ('a' <= (c) && (c) <= 'z')
+***************
+*** 3317,3323 ****
+  exit (0); }
+  
+  EOF
+! if { (eval echo configure:3321: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+  then
+    :
+  else
+--- 2515,2521 ----
+  exit (0); }
+  
+  EOF
+! if { (eval echo configure:2519: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+  then
+    :
+  else
+***************
+*** 3341,3352 ****
+  fi
+  
+  echo $ac_n "checking for sys/wait.h that is POSIX.1 compatible""... $ac_c" 1>&6
+! echo "configure:3345: checking for sys/wait.h that is POSIX.1 compatible" >&5
+  if eval "test \"`echo '$''{'ac_cv_header_sys_wait_h'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3350 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #include <sys/wait.h>
+--- 2539,2550 ----
+  fi
+  
+  echo $ac_n "checking for sys/wait.h that is POSIX.1 compatible""... $ac_c" 1>&6
+! echo "configure:2543: checking for sys/wait.h that is POSIX.1 compatible" >&5
+  if eval "test \"`echo '$''{'ac_cv_header_sys_wait_h'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 2548 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #include <sys/wait.h>
+***************
+*** 3362,3368 ****
+  s = WIFEXITED (s) ? WEXITSTATUS (s) : 1;
+  ; return 0; }
+  EOF
+! if { (eval echo configure:3366: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+    rm -rf conftest*
+    ac_cv_header_sys_wait_h=yes
+  else
+--- 2560,2566 ----
+  s = WIFEXITED (s) ? WEXITSTATUS (s) : 1;
+  ; return 0; }
+  EOF
+! if { (eval echo configure:2564: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+    rm -rf conftest*
+    ac_cv_header_sys_wait_h=yes
+  else
+***************
+*** 3386,3402 ****
+  do
+  ac_safe=`echo "$ac_hdr" | sed 'y%./+-%__p_%'`
+  echo $ac_n "checking for $ac_hdr""... $ac_c" 1>&6
+! echo "configure:3390: checking for $ac_hdr" >&5
+  if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3395 "configure"
+  #include "confdefs.h"
+  #include <$ac_hdr>
+  EOF
+  ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+! { (eval echo configure:3400: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+  ac_err=`grep -v '^ *+' conftest.out | grep -v "^conftest.${ac_ext}\$"`
+  if test -z "$ac_err"; then
+    rm -rf conftest*
+--- 2584,2600 ----
+  do
+  ac_safe=`echo "$ac_hdr" | sed 'y%./+-%__p_%'`
+  echo $ac_n "checking for $ac_hdr""... $ac_c" 1>&6
+! echo "configure:2588: checking for $ac_hdr" >&5
+  if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 2593 "configure"
+  #include "confdefs.h"
+  #include <$ac_hdr>
+  EOF
+  ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+! { (eval echo configure:2598: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+  ac_err=`grep -v '^ *+' conftest.out | grep -v "^conftest.${ac_ext}\$"`
+  if test -z "$ac_err"; then
+    rm -rf conftest*
+***************
+*** 3424,3440 ****
+  
+  ac_safe=`echo "sys/cdefs.h" | sed 'y%./+-%__p_%'`
+  echo $ac_n "checking for sys/cdefs.h""... $ac_c" 1>&6
+! echo "configure:3428: checking for sys/cdefs.h" >&5
+  if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3433 "configure"
+  #include "confdefs.h"
+  #include <sys/cdefs.h>
+  EOF
+  ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+! { (eval echo configure:3438: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+  ac_err=`grep -v '^ *+' conftest.out | grep -v "^conftest.${ac_ext}\$"`
+  if test -z "$ac_err"; then
+    rm -rf conftest*
+--- 2622,2638 ----
+  
+  ac_safe=`echo "sys/cdefs.h" | sed 'y%./+-%__p_%'`
+  echo $ac_n "checking for sys/cdefs.h""... $ac_c" 1>&6
+! echo "configure:2626: checking for sys/cdefs.h" >&5
+  if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 2631 "configure"
+  #include "confdefs.h"
+  #include <sys/cdefs.h>
+  EOF
+  ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+! { (eval echo configure:2636: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+  ac_err=`grep -v '^ *+' conftest.out | grep -v "^conftest.${ac_ext}\$"`
+  if test -z "$ac_err"; then
+    rm -rf conftest*
+***************
+*** 3484,3495 ****
+  
+  
+  echo $ac_n "checking for working const""... $ac_c" 1>&6
+! echo "configure:3488: checking for working const" >&5
+  if eval "test \"`echo '$''{'ac_cv_c_const'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3493 "configure"
+  #include "confdefs.h"
+  
+  int main() {
+--- 2682,2693 ----
+  
+  
+  echo $ac_n "checking for working const""... $ac_c" 1>&6
+! echo "configure:2686: checking for working const" >&5
+  if eval "test \"`echo '$''{'ac_cv_c_const'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 2691 "configure"
+  #include "confdefs.h"
+  
+  int main() {
+***************
+*** 3538,3544 ****
+  
+  ; return 0; }
+  EOF
+! if { (eval echo configure:3542: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+    rm -rf conftest*
+    ac_cv_c_const=yes
+  else
+--- 2736,2742 ----
+  
+  ; return 0; }
+  EOF
+! if { (eval echo configure:2740: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+    rm -rf conftest*
+    ac_cv_c_const=yes
+  else
+***************
+*** 3559,3570 ****
+  fi
+  
+  echo $ac_n "checking for uid_t in sys/types.h""... $ac_c" 1>&6
+! echo "configure:3563: checking for uid_t in sys/types.h" >&5
+  if eval "test \"`echo '$''{'ac_cv_type_uid_t'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3568 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  EOF
+--- 2757,2768 ----
+  fi
+  
+  echo $ac_n "checking for uid_t in sys/types.h""... $ac_c" 1>&6
+! echo "configure:2761: checking for uid_t in sys/types.h" >&5
+  if eval "test \"`echo '$''{'ac_cv_type_uid_t'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 2766 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  EOF
+***************
+*** 3593,3613 ****
+  fi
+  
+  echo $ac_n "checking for inline""... $ac_c" 1>&6
+! echo "configure:3597: checking for inline" >&5
+  if eval "test \"`echo '$''{'ac_cv_c_inline'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    ac_cv_c_inline=no
+  for ac_kw in inline __inline__ __inline; do
+    cat > conftest.$ac_ext <<EOF
+! #line 3604 "configure"
+  #include "confdefs.h"
+  
+  int main() {
+  } $ac_kw foo() {
+  ; return 0; }
+  EOF
+! if { (eval echo configure:3611: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+    rm -rf conftest*
+    ac_cv_c_inline=$ac_kw; break
+  else
+--- 2791,2811 ----
+  fi
+  
+  echo $ac_n "checking for inline""... $ac_c" 1>&6
+! echo "configure:2795: checking for inline" >&5
+  if eval "test \"`echo '$''{'ac_cv_c_inline'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    ac_cv_c_inline=no
+  for ac_kw in inline __inline__ __inline; do
+    cat > conftest.$ac_ext <<EOF
+! #line 2802 "configure"
+  #include "confdefs.h"
+  
+  int main() {
+  } $ac_kw foo() {
+  ; return 0; }
+  EOF
+! if { (eval echo configure:2809: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+    rm -rf conftest*
+    ac_cv_c_inline=$ac_kw; break
+  else
+***************
+*** 3633,3644 ****
+  esac
+  
+  echo $ac_n "checking for mode_t""... $ac_c" 1>&6
+! echo "configure:3637: checking for mode_t" >&5
+  if eval "test \"`echo '$''{'ac_cv_type_mode_t'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3642 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #if STDC_HEADERS
+--- 2831,2842 ----
+  esac
+  
+  echo $ac_n "checking for mode_t""... $ac_c" 1>&6
+! echo "configure:2835: checking for mode_t" >&5
+  if eval "test \"`echo '$''{'ac_cv_type_mode_t'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 2840 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #if STDC_HEADERS
+***************
+*** 3666,3677 ****
+  fi
+  
+  echo $ac_n "checking for off_t""... $ac_c" 1>&6
+! echo "configure:3670: checking for off_t" >&5
+  if eval "test \"`echo '$''{'ac_cv_type_off_t'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3675 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #if STDC_HEADERS
+--- 2864,2875 ----
+  fi
+  
+  echo $ac_n "checking for off_t""... $ac_c" 1>&6
+! echo "configure:2868: checking for off_t" >&5
+  if eval "test \"`echo '$''{'ac_cv_type_off_t'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 2873 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #if STDC_HEADERS
+***************
+*** 3699,3710 ****
+  fi
+  
+  echo $ac_n "checking for pid_t""... $ac_c" 1>&6
+! echo "configure:3703: checking for pid_t" >&5
+  if eval "test \"`echo '$''{'ac_cv_type_pid_t'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3708 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #if STDC_HEADERS
+--- 2897,2908 ----
+  fi
+  
+  echo $ac_n "checking for pid_t""... $ac_c" 1>&6
+! echo "configure:2901: checking for pid_t" >&5
+  if eval "test \"`echo '$''{'ac_cv_type_pid_t'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 2906 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #if STDC_HEADERS
+***************
+*** 3732,3743 ****
+  fi
+  
+  echo $ac_n "checking for size_t""... $ac_c" 1>&6
+! echo "configure:3736: checking for size_t" >&5
+  if eval "test \"`echo '$''{'ac_cv_type_size_t'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3741 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #if STDC_HEADERS
+--- 2930,2941 ----
+  fi
+  
+  echo $ac_n "checking for size_t""... $ac_c" 1>&6
+! echo "configure:2934: checking for size_t" >&5
+  if eval "test \"`echo '$''{'ac_cv_type_size_t'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 2939 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #if STDC_HEADERS
+***************
+*** 3765,3776 ****
+  fi
+  
+  echo $ac_n "checking for st_rdev in struct stat""... $ac_c" 1>&6
+! echo "configure:3769: checking for st_rdev in struct stat" >&5
+  if eval "test \"`echo '$''{'ac_cv_struct_st_rdev'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3774 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #include <sys/stat.h>
+--- 2963,2974 ----
+  fi
+  
+  echo $ac_n "checking for st_rdev in struct stat""... $ac_c" 1>&6
+! echo "configure:2967: checking for st_rdev in struct stat" >&5
+  if eval "test \"`echo '$''{'ac_cv_struct_st_rdev'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 2972 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #include <sys/stat.h>
+***************
+*** 3778,3784 ****
+  struct stat s; s.st_rdev;
+  ; return 0; }
+  EOF
+! if { (eval echo configure:3782: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+    rm -rf conftest*
+    ac_cv_struct_st_rdev=yes
+  else
+--- 2976,2982 ----
+  struct stat s; s.st_rdev;
+  ; return 0; }
+  EOF
+! if { (eval echo configure:2980: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+    rm -rf conftest*
+    ac_cv_struct_st_rdev=yes
+  else
+***************
+*** 3799,3810 ****
+  fi
+  
+  echo $ac_n "checking whether time.h and sys/time.h may both be included""... $ac_c" 1>&6
+! echo "configure:3803: checking whether time.h and sys/time.h may both be included" >&5
+  if eval "test \"`echo '$''{'ac_cv_header_time'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3808 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #include <sys/time.h>
+--- 2997,3008 ----
+  fi
+  
+  echo $ac_n "checking whether time.h and sys/time.h may both be included""... $ac_c" 1>&6
+! echo "configure:3001: checking whether time.h and sys/time.h may both be included" >&5
+  if eval "test \"`echo '$''{'ac_cv_header_time'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3006 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #include <sys/time.h>
+***************
+*** 3813,3819 ****
+  struct tm *tp;
+  ; return 0; }
+  EOF
+! if { (eval echo configure:3817: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+    rm -rf conftest*
+    ac_cv_header_time=yes
+  else
+--- 3011,3017 ----
+  struct tm *tp;
+  ; return 0; }
+  EOF
+! if { (eval echo configure:3015: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+    rm -rf conftest*
+    ac_cv_header_time=yes
+  else
+***************
+*** 3834,3845 ****
+  fi
+  
+  echo $ac_n "checking whether struct tm is in sys/time.h or time.h""... $ac_c" 1>&6
+! echo "configure:3838: checking whether struct tm is in sys/time.h or time.h" >&5
+  if eval "test \"`echo '$''{'ac_cv_struct_tm'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3843 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #include <time.h>
+--- 3032,3043 ----
+  fi
+  
+  echo $ac_n "checking whether struct tm is in sys/time.h or time.h""... $ac_c" 1>&6
+! echo "configure:3036: checking whether struct tm is in sys/time.h or time.h" >&5
+  if eval "test \"`echo '$''{'ac_cv_struct_tm'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3041 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #include <time.h>
+***************
+*** 3847,3853 ****
+  struct tm *tp; tp->tm_sec;
+  ; return 0; }
+  EOF
+! if { (eval echo configure:3851: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+    rm -rf conftest*
+    ac_cv_struct_tm=time.h
+  else
+--- 3045,3051 ----
+  struct tm *tp; tp->tm_sec;
+  ; return 0; }
+  EOF
+! if { (eval echo configure:3049: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+    rm -rf conftest*
+    ac_cv_struct_tm=time.h
+  else
+***************
+*** 3869,3875 ****
+  
+  
+  echo $ac_n "checking type of array argument to getgroups""... $ac_c" 1>&6
+! echo "configure:3873: checking type of array argument to getgroups" >&5
+  if eval "test \"`echo '$''{'ac_cv_type_getgroups'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+--- 3067,3073 ----
+  
+  
+  echo $ac_n "checking type of array argument to getgroups""... $ac_c" 1>&6
+! echo "configure:3071: checking type of array argument to getgroups" >&5
+  if eval "test \"`echo '$''{'ac_cv_type_getgroups'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+***************
+*** 3877,3883 ****
+    ac_cv_type_getgroups=cross
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3881 "configure"
+  #include "confdefs.h"
+  
+  /* Thanks to Mike Rendell for this test.  */
+--- 3075,3081 ----
+    ac_cv_type_getgroups=cross
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3079 "configure"
+  #include "confdefs.h"
+  
+  /* Thanks to Mike Rendell for this test.  */
+***************
+*** 3902,3908 ****
+  }
+  
+  EOF
+! if { (eval echo configure:3906: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+  then
+      ac_cv_type_getgroups=gid_t
+  else
+--- 3100,3106 ----
+  }
+  
+  EOF
+! if { (eval echo configure:3104: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+  then
+      ac_cv_type_getgroups=gid_t
+  else
+***************
+*** 3916,3922 ****
+  
+  if test $ac_cv_type_getgroups = cross; then
+          cat > conftest.$ac_ext <<EOF
+! #line 3920 "configure"
+  #include "confdefs.h"
+  #include <unistd.h>
+  EOF
+--- 3114,3120 ----
+  
+  if test $ac_cv_type_getgroups = cross; then
+          cat > conftest.$ac_ext <<EOF
+! #line 3118 "configure"
+  #include "confdefs.h"
+  #include <unistd.h>
+  EOF
+***************
+*** 3941,3953 ****
+  
+  if test $ac_cv_prog_gcc = yes; then
+      echo $ac_n "checking whether ${CC-cc} needs -traditional""... $ac_c" 1>&6
+! echo "configure:3945: checking whether ${CC-cc} needs -traditional" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_gcc_traditional'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+      ac_pattern="Autoconf.*'x'"
+    cat > conftest.$ac_ext <<EOF
+! #line 3951 "configure"
+  #include "confdefs.h"
+  #include <sgtty.h>
+  Autoconf TIOCGETP
+--- 3139,3151 ----
+  
+  if test $ac_cv_prog_gcc = yes; then
+      echo $ac_n "checking whether ${CC-cc} needs -traditional""... $ac_c" 1>&6
+! echo "configure:3143: checking whether ${CC-cc} needs -traditional" >&5
+  if eval "test \"`echo '$''{'ac_cv_prog_gcc_traditional'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+      ac_pattern="Autoconf.*'x'"
+    cat > conftest.$ac_ext <<EOF
+! #line 3149 "configure"
+  #include "confdefs.h"
+  #include <sgtty.h>
+  Autoconf TIOCGETP
+***************
+*** 3965,3971 ****
+  
+    if test $ac_cv_prog_gcc_traditional = no; then
+      cat > conftest.$ac_ext <<EOF
+! #line 3969 "configure"
+  #include "confdefs.h"
+  #include <termio.h>
+  Autoconf TCGETA
+--- 3163,3169 ----
+  
+    if test $ac_cv_prog_gcc_traditional = no; then
+      cat > conftest.$ac_ext <<EOF
+! #line 3167 "configure"
+  #include "confdefs.h"
+  #include <termio.h>
+  Autoconf TCGETA
+***************
+*** 3987,3993 ****
+  fi
+  
+  echo $ac_n "checking for 8-bit clean memcmp""... $ac_c" 1>&6
+! echo "configure:3991: checking for 8-bit clean memcmp" >&5
+  if eval "test \"`echo '$''{'ac_cv_func_memcmp_clean'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+--- 3185,3191 ----
+  fi
+  
+  echo $ac_n "checking for 8-bit clean memcmp""... $ac_c" 1>&6
+! echo "configure:3189: checking for 8-bit clean memcmp" >&5
+  if eval "test \"`echo '$''{'ac_cv_func_memcmp_clean'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+***************
+*** 3995,4001 ****
+    ac_cv_func_memcmp_clean=no
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3999 "configure"
+  #include "confdefs.h"
+  
+  main()
+--- 3193,3199 ----
+    ac_cv_func_memcmp_clean=no
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3197 "configure"
+  #include "confdefs.h"
+  
+  main()
+***************
+*** 4005,4011 ****
+  }
+  
+  EOF
+! if { (eval echo configure:4009: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+  then
+    ac_cv_func_memcmp_clean=yes
+  else
+--- 3203,3209 ----
+  }
+  
+  EOF
+! if { (eval echo configure:3207: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+  then
+    ac_cv_func_memcmp_clean=yes
+  else
+***************
+*** 4023,4041 ****
+  test $ac_cv_func_memcmp_clean = no && LIBOBJS="$LIBOBJS memcmp.${ac_objext}"
+  
+  echo $ac_n "checking whether sys/types.h defines makedev""... $ac_c" 1>&6
+! echo "configure:4027: checking whether sys/types.h defines makedev" >&5
+  if eval "test \"`echo '$''{'ac_cv_header_sys_types_h_makedev'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 4032 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  int main() {
+  return makedev(0, 0);
+  ; return 0; }
+  EOF
+! if { (eval echo configure:4039: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    ac_cv_header_sys_types_h_makedev=yes
+  else
+--- 3221,3239 ----
+  test $ac_cv_func_memcmp_clean = no && LIBOBJS="$LIBOBJS memcmp.${ac_objext}"
+  
+  echo $ac_n "checking whether sys/types.h defines makedev""... $ac_c" 1>&6
+! echo "configure:3225: checking whether sys/types.h defines makedev" >&5
+  if eval "test \"`echo '$''{'ac_cv_header_sys_types_h_makedev'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3230 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  int main() {
+  return makedev(0, 0);
+  ; return 0; }
+  EOF
+! if { (eval echo configure:3237: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    ac_cv_header_sys_types_h_makedev=yes
+  else
+***************
+*** 4053,4069 ****
+  if test $ac_cv_header_sys_types_h_makedev = no; then
+  ac_safe=`echo "sys/mkdev.h" | sed 'y%./+-%__p_%'`
+  echo $ac_n "checking for sys/mkdev.h""... $ac_c" 1>&6
+! echo "configure:4057: checking for sys/mkdev.h" >&5
+  if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 4062 "configure"
+  #include "confdefs.h"
+  #include <sys/mkdev.h>
+  EOF
+  ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+! { (eval echo configure:4067: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+  ac_err=`grep -v '^ *+' conftest.out | grep -v "^conftest.${ac_ext}\$"`
+  if test -z "$ac_err"; then
+    rm -rf conftest*
+--- 3251,3267 ----
+  if test $ac_cv_header_sys_types_h_makedev = no; then
+  ac_safe=`echo "sys/mkdev.h" | sed 'y%./+-%__p_%'`
+  echo $ac_n "checking for sys/mkdev.h""... $ac_c" 1>&6
+! echo "configure:3255: checking for sys/mkdev.h" >&5
+  if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3260 "configure"
+  #include "confdefs.h"
+  #include <sys/mkdev.h>
+  EOF
+  ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+! { (eval echo configure:3265: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+  ac_err=`grep -v '^ *+' conftest.out | grep -v "^conftest.${ac_ext}\$"`
+  if test -z "$ac_err"; then
+    rm -rf conftest*
+***************
+*** 4091,4107 ****
+    if test $ac_cv_header_sys_mkdev_h = no; then
+  ac_safe=`echo "sys/sysmacros.h" | sed 'y%./+-%__p_%'`
+  echo $ac_n "checking for sys/sysmacros.h""... $ac_c" 1>&6
+! echo "configure:4095: checking for sys/sysmacros.h" >&5
+  if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 4100 "configure"
+  #include "confdefs.h"
+  #include <sys/sysmacros.h>
+  EOF
+  ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+! { (eval echo configure:4105: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+  ac_err=`grep -v '^ *+' conftest.out | grep -v "^conftest.${ac_ext}\$"`
+  if test -z "$ac_err"; then
+    rm -rf conftest*
+--- 3289,3305 ----
+    if test $ac_cv_header_sys_mkdev_h = no; then
+  ac_safe=`echo "sys/sysmacros.h" | sed 'y%./+-%__p_%'`
+  echo $ac_n "checking for sys/sysmacros.h""... $ac_c" 1>&6
+! echo "configure:3293: checking for sys/sysmacros.h" >&5
+  if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3298 "configure"
+  #include "confdefs.h"
+  #include <sys/sysmacros.h>
+  EOF
+  ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+! { (eval echo configure:3303: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+  ac_err=`grep -v '^ *+' conftest.out | grep -v "^conftest.${ac_ext}\$"`
+  if test -z "$ac_err"; then
+    rm -rf conftest*
+***************
+*** 4132,4148 ****
+  do
+  ac_safe=`echo "$ac_hdr" | sed 'y%./+-%__p_%'`
+  echo $ac_n "checking for $ac_hdr""... $ac_c" 1>&6
+! echo "configure:4136: checking for $ac_hdr" >&5
+  if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 4141 "configure"
+  #include "confdefs.h"
+  #include <$ac_hdr>
+  EOF
+  ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+! { (eval echo configure:4146: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+  ac_err=`grep -v '^ *+' conftest.out | grep -v "^conftest.${ac_ext}\$"`
+  if test -z "$ac_err"; then
+    rm -rf conftest*
+--- 3330,3346 ----
+  do
+  ac_safe=`echo "$ac_hdr" | sed 'y%./+-%__p_%'`
+  echo $ac_n "checking for $ac_hdr""... $ac_c" 1>&6
+! echo "configure:3334: checking for $ac_hdr" >&5
+  if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3339 "configure"
+  #include "confdefs.h"
+  #include <$ac_hdr>
+  EOF
+  ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+! { (eval echo configure:3344: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+  ac_err=`grep -v '^ *+' conftest.out | grep -v "^conftest.${ac_ext}\$"`
+  if test -z "$ac_err"; then
+    rm -rf conftest*
+***************
+*** 4171,4182 ****
+  for ac_func in getpagesize
+  do
+  echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
+! echo "configure:4175: checking for $ac_func" >&5
+  if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 4180 "configure"
+  #include "confdefs.h"
+  /* System header to define __stub macros and hopefully few prototypes,
+      which can conflict with char $ac_func(); below.  */
+--- 3369,3380 ----
+  for ac_func in getpagesize
+  do
+  echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
+! echo "configure:3373: checking for $ac_func" >&5
+  if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3378 "configure"
+  #include "confdefs.h"
+  /* System header to define __stub macros and hopefully few prototypes,
+      which can conflict with char $ac_func(); below.  */
+***************
+*** 4199,4205 ****
+  
+  ; return 0; }
+  EOF
+! if { (eval echo configure:4203: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_func_$ac_func=yes"
+  else
+--- 3397,3403 ----
+  
+  ; return 0; }
+  EOF
+! if { (eval echo configure:3401: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_func_$ac_func=yes"
+  else
+***************
+*** 4224,4230 ****
+  done
+  
+  echo $ac_n "checking for working mmap""... $ac_c" 1>&6
+! echo "configure:4228: checking for working mmap" >&5
+  if eval "test \"`echo '$''{'ac_cv_func_mmap_fixed_mapped'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+--- 3422,3428 ----
+  done
+  
+  echo $ac_n "checking for working mmap""... $ac_c" 1>&6
+! echo "configure:3426: checking for working mmap" >&5
+  if eval "test \"`echo '$''{'ac_cv_func_mmap_fixed_mapped'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+***************
+*** 4232,4238 ****
+    ac_cv_func_mmap_fixed_mapped=no
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 4236 "configure"
+  #include "confdefs.h"
+  
+  /* Thanks to Mike Haertel and Jim Avera for this test.
+--- 3430,3436 ----
+    ac_cv_func_mmap_fixed_mapped=no
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3434 "configure"
+  #include "confdefs.h"
+  
+  /* Thanks to Mike Haertel and Jim Avera for this test.
+***************
+*** 4372,4378 ****
+  }
+  
+  EOF
+! if { (eval echo configure:4376: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+  then
+    ac_cv_func_mmap_fixed_mapped=yes
+  else
+--- 3570,3576 ----
+  }
+  
+  EOF
+! if { (eval echo configure:3574: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+  then
+    ac_cv_func_mmap_fixed_mapped=yes
+  else
+***************
+*** 4395,4406 ****
+  fi
+  
+  echo $ac_n "checking return type of signal handlers""... $ac_c" 1>&6
+! echo "configure:4399: checking return type of signal handlers" >&5
+  if eval "test \"`echo '$''{'ac_cv_type_signal'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 4404 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #include <signal.h>
+--- 3593,3604 ----
+  fi
+  
+  echo $ac_n "checking return type of signal handlers""... $ac_c" 1>&6
+! echo "configure:3597: checking return type of signal handlers" >&5
+  if eval "test \"`echo '$''{'ac_cv_type_signal'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3602 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #include <signal.h>
+***************
+*** 4417,4423 ****
+  int i;
+  ; return 0; }
+  EOF
+! if { (eval echo configure:4421: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+    rm -rf conftest*
+    ac_cv_type_signal=void
+  else
+--- 3615,3621 ----
+  int i;
+  ; return 0; }
+  EOF
+! if { (eval echo configure:3619: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>&5; }; then
+    rm -rf conftest*
+    ac_cv_type_signal=void
+  else
+***************
+*** 4436,4442 ****
+  
+  
+  echo $ac_n "checking whether utime accepts a null argument""... $ac_c" 1>&6
+! echo "configure:4440: checking whether utime accepts a null argument" >&5
+  if eval "test \"`echo '$''{'ac_cv_func_utime_null'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+--- 3634,3640 ----
+  
+  
+  echo $ac_n "checking whether utime accepts a null argument""... $ac_c" 1>&6
+! echo "configure:3638: checking whether utime accepts a null argument" >&5
+  if eval "test \"`echo '$''{'ac_cv_func_utime_null'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+***************
+*** 4446,4452 ****
+    ac_cv_func_utime_null=no
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 4450 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #include <sys/stat.h>
+--- 3644,3650 ----
+    ac_cv_func_utime_null=no
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3648 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #include <sys/stat.h>
+***************
+*** 4457,4463 ****
+  && t.st_mtime - s.st_mtime < 120));
+  }
+  EOF
+! if { (eval echo configure:4461: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+  then
+    ac_cv_func_utime_null=yes
+  else
+--- 3655,3661 ----
+  && t.st_mtime - s.st_mtime < 120));
+  }
+  EOF
+! if { (eval echo configure:3659: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+  then
+    ac_cv_func_utime_null=yes
+  else
+***************
+*** 4481,4487 ****
+  fi
+  
+  echo $ac_n "checking for wait3 that fills in rusage""... $ac_c" 1>&6
+! echo "configure:4485: checking for wait3 that fills in rusage" >&5
+  if eval "test \"`echo '$''{'ac_cv_func_wait3_rusage'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+--- 3679,3685 ----
+  fi
+  
+  echo $ac_n "checking for wait3 that fills in rusage""... $ac_c" 1>&6
+! echo "configure:3683: checking for wait3 that fills in rusage" >&5
+  if eval "test \"`echo '$''{'ac_cv_func_wait3_rusage'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+***************
+*** 4489,4495 ****
+    ac_cv_func_wait3_rusage=no
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 4493 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #include <sys/time.h>
+--- 3687,3693 ----
+    ac_cv_func_wait3_rusage=no
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3691 "configure"
+  #include "confdefs.h"
+  #include <sys/types.h>
+  #include <sys/time.h>
+***************
+*** 4520,4526 ****
+    }
+  }
+  EOF
+! if { (eval echo configure:4524: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+  then
+    ac_cv_func_wait3_rusage=yes
+  else
+--- 3718,3724 ----
+    }
+  }
+  EOF
+! if { (eval echo configure:3722: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+  then
+    ac_cv_func_wait3_rusage=yes
+  else
+***************
+*** 4545,4556 ****
+  for ac_func in getcwd gethostname gettimeofday getusershell mkdir rmdir select socket strdup strstr strtoul setpgrp
+  do
+  echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
+! echo "configure:4549: checking for $ac_func" >&5
+  if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 4554 "configure"
+  #include "confdefs.h"
+  /* System header to define __stub macros and hopefully few prototypes,
+      which can conflict with char $ac_func(); below.  */
+--- 3743,3754 ----
+  for ac_func in getcwd gethostname gettimeofday getusershell mkdir rmdir select socket strdup strstr strtoul setpgrp
+  do
+  echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
+! echo "configure:3747: checking for $ac_func" >&5
+  if eval "test \"`echo '$''{'ac_cv_func_$ac_func'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3752 "configure"
+  #include "confdefs.h"
+  /* System header to define __stub macros and hopefully few prototypes,
+      which can conflict with char $ac_func(); below.  */
+***************
+*** 4573,4579 ****
+  
+  ; return 0; }
+  EOF
+! if { (eval echo configure:4577: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_func_$ac_func=yes"
+  else
+--- 3771,3777 ----
+  
+  ; return 0; }
+  EOF
+! if { (eval echo configure:3775: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_func_$ac_func=yes"
+  else
+***************
+*** 4598,4604 ****
+  done
+  
+  echo $ac_n "checking whether setpgrp takes no argument""... $ac_c" 1>&6
+! echo "configure:4602: checking whether setpgrp takes no argument" >&5
+  if eval "test \"`echo '$''{'ac_cv_func_setpgrp_void'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+--- 3796,3802 ----
+  done
+  
+  echo $ac_n "checking whether setpgrp takes no argument""... $ac_c" 1>&6
+! echo "configure:3800: checking whether setpgrp takes no argument" >&5
+  if eval "test \"`echo '$''{'ac_cv_func_setpgrp_void'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+***************
+*** 4606,4612 ****
+    { echo "configure: error: cannot check setpgrp if cross compiling" 1>&2; exit 1; }
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 4610 "configure"
+  #include "confdefs.h"
+  
+  #ifdef HAVE_UNISTD_H
+--- 3804,3810 ----
+    { echo "configure: error: cannot check setpgrp if cross compiling" 1>&2; exit 1; }
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 3808 "configure"
+  #include "confdefs.h"
+  
+  #ifdef HAVE_UNISTD_H
+***************
+*** 4626,4632 ****
+  }
+  
+  EOF
+! if { (eval echo configure:4630: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+  then
+    ac_cv_func_setpgrp_void=no
+  else
+--- 3824,3830 ----
+  }
+  
+  EOF
+! if { (eval echo configure:3828: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+  then
+    ac_cv_func_setpgrp_void=no
+  else
+***************
+*** 4715,4721 ****
+    withval="$with_cracklib"
+    cracklib="$withval"
+  	echo $ac_n "checking for main in -lcrack""... $ac_c" 1>&6
+! echo "configure:4719: checking for main in -lcrack" >&5
+  ac_lib_var=`echo crack'_'main | sed 'y%./+-%__p_%'`
+  if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+--- 3913,3919 ----
+    withval="$with_cracklib"
+    cracklib="$withval"
+  	echo $ac_n "checking for main in -lcrack""... $ac_c" 1>&6
+! echo "configure:3917: checking for main in -lcrack" >&5
+  ac_lib_var=`echo crack'_'main | sed 'y%./+-%__p_%'`
+  if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+***************
+*** 4723,4736 ****
+    ac_save_LIBS="$LIBS"
+  LIBS="-lcrack  $LIBS"
+  cat > conftest.$ac_ext <<EOF
+! #line 4727 "configure"
+  #include "confdefs.h"
+  
+  int main() {
+  main()
+  ; return 0; }
+  EOF
+! if { (eval echo configure:4734: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_lib_$ac_lib_var=yes"
+  else
+--- 3921,3934 ----
+    ac_save_LIBS="$LIBS"
+  LIBS="-lcrack  $LIBS"
+  cat > conftest.$ac_ext <<EOF
+! #line 3925 "configure"
+  #include "confdefs.h"
+  
+  int main() {
+  main()
+  ; return 0; }
+  EOF
+! if { (eval echo configure:3932: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_lib_$ac_lib_var=yes"
+  else
+***************
+*** 4872,4932 ****
+  fi
+  
+  
+- echo $ac_n "checking for pam_start in -lpam""... $ac_c" 1>&6
+- echo "configure:4877: checking for pam_start in -lpam" >&5
+- ac_lib_var=`echo pam'_'pam_start | sed 'y%./+-%__p_%'`
+- if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+-   echo $ac_n "(cached) $ac_c" 1>&6
+- else
+-   ac_save_LIBS="$LIBS"
+- LIBS="-lpam  $LIBS"
+- cat > conftest.$ac_ext <<EOF
+- #line 4885 "configure"
+- #include "confdefs.h"
+- /* Override any gcc2 internal prototype to avoid an error.  */
+- /* We use char because int might match the return type of a gcc2
+-     builtin and then its argument prototype would still apply.  */
+- char pam_start();
+- 
+- int main() {
+- pam_start()
+- ; return 0; }
+- EOF
+- if { (eval echo configure:4896: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=yes"
+- else
+-   echo "configure: failed program was:" >&5
+-   cat conftest.$ac_ext >&5
+-   rm -rf conftest*
+-   eval "ac_cv_lib_$ac_lib_var=no"
+- fi
+- rm -f conftest*
+- LIBS="$ac_save_LIBS"
+- 
+- fi
+- if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
+-   echo "$ac_t""yes" 1>&6
+-   cat >> confdefs.h <<\EOF
+- #define USE_PAM 1
+- EOF
+- 
+- 	LIBS="$LIBS -lpam"
+- 	compile_pam=yes
+- 
+- else
+-   echo "$ac_t""no" 1>&6
+- fi
+- 
+- 
+- 
+- if test x$compile_pam = xyes; then
+-   BUILD_PAM_TRUE=
+-   BUILD_PAM_FALSE='#'
+- else
+-   BUILD_PAM_TRUE='#'
+-   BUILD_PAM_FALSE=
+- fi
+  
+  # Check whether --with-pam or --without-pam was given.
+  if test "${with_pam+set}" = set; then
+--- 4070,4075 ----
+***************
+*** 4985,4991 ****
+  if test "${with_tcp_wrappers+set}" = set; then
+    withval="$with_tcp_wrappers"
+    echo $ac_n "checking for hosts_access in -lwrap""... $ac_c" 1>&6
+! echo "configure:4989: checking for hosts_access in -lwrap" >&5
+  ac_lib_var=`echo wrap'_'hosts_access | sed 'y%./+-%__p_%'`
+  if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+--- 4128,4134 ----
+  if test "${with_tcp_wrappers+set}" = set; then
+    withval="$with_tcp_wrappers"
+    echo $ac_n "checking for hosts_access in -lwrap""... $ac_c" 1>&6
+! echo "configure:4132: checking for hosts_access in -lwrap" >&5
+  ac_lib_var=`echo wrap'_'hosts_access | sed 'y%./+-%__p_%'`
+  if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+***************
+*** 4993,4999 ****
+    ac_save_LIBS="$LIBS"
+  LIBS="-lwrap  $LIBS"
+  cat > conftest.$ac_ext <<EOF
+! #line 4997 "configure"
+  #include "confdefs.h"
+  /* Override any gcc2 internal prototype to avoid an error.  */
+  /* We use char because int might match the return type of a gcc2
+--- 4136,4142 ----
+    ac_save_LIBS="$LIBS"
+  LIBS="-lwrap  $LIBS"
+  cat > conftest.$ac_ext <<EOF
+! #line 4140 "configure"
+  #include "confdefs.h"
+  /* Override any gcc2 internal prototype to avoid an error.  */
+  /* We use char because int might match the return type of a gcc2
+***************
+*** 5004,5010 ****
+  hosts_access()
+  ; return 0; }
+  EOF
+! if { (eval echo configure:5008: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_lib_$ac_lib_var=yes"
+  else
+--- 4147,4153 ----
+  hosts_access()
+  ; return 0; }
+  EOF
+! if { (eval echo configure:4151: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_lib_$ac_lib_var=yes"
+  else
+***************
+*** 5090,5095 ****
+--- 4233,4373 ----
+  
+  
+  
++ #################################################
++ # check for DCE plaintext authentication support
++ echo $ac_n "checking whether to use DCE plaintext authentication""... $ac_c" 1>&6
++ echo "configure:4240: checking whether to use DCE plaintext authentication" >&5
++ # Check whether --with-dce or --without-dce was given.
++ if test "${with_dce+set}" = set; then
++   withval="$with_dce"
++    case "$withval" in
++   yes)
++     echo "$ac_t""yes" 1>&6
++     cat >> confdefs.h <<\EOF
++ #define WITH_DCE 1
++ EOF
++ 
++     LIBS="$LIBS -ldce -lpthread"
++     CFLAGS="$CFLAGS -D_REENTRANT"
++     ;;
++   *)
++     echo "$ac_t""no" 1>&6
++     ;;
++   esac 
++ else
++   echo "$ac_t""no" 1>&6
++ 
++ fi
++ 
++ 
++ 
++ #################################################
++ # check for DCE encrypted authentication support
++ echo $ac_n "checking whether to use DCE encrypted authentication""... $ac_c" 1>&6
++ echo "configure:4268: checking whether to use DCE encrypted authentication" >&5
++ # Check whether --with-dce-encrypted or --without-dce-encrypted was given.
++ if test "${with_dce_encrypted+set}" = set; then
++   withval="$with_dce_encrypted"
++    case "$withval" in
++   yes)
++     echo "$ac_t""yes" 1>&6
++     cat >> confdefs.h <<\EOF
++ #define WITH_DCE_ENCRYPTED 1
++ EOF
++ 
++     LIBS="$LIBS -lsec_auth"
++     ;;
++   *)
++     echo "$ac_t""no" 1>&6
++     ;;
++   esac 
++ else
++   echo "$ac_t""no" 1>&6
++ 
++ fi
++ 
++ 
++ 
++ #################################################
++ # check for DCE context refresh support
++ echo $ac_n "checking whether to use DCE context refresh""... $ac_c" 1>&6
++ echo "configure:4295: checking whether to use DCE context refresh" >&5
++ # Check whether --with-dce-refresh or --without-dce-refresh was given.
++ if test "${with_dce_refresh+set}" = set; then
++   withval="$with_dce_refresh"
++    case "$withval" in
++   yes)
++     echo "$ac_t""yes" 1>&6
++     cat >> confdefs.h <<\EOF
++ #define WITH_DCE_REFRESH 1
++ EOF
++ 
++     ;;
++   *)
++     echo "$ac_t""no" 1>&6
++     ;;
++   esac 
++ else
++   echo "$ac_t""no" 1>&6
++ 
++ fi
++ 
++ 
++ 
++ #################################################
++ # check for DCE IBM kludge support
++ echo $ac_n "checking whether to work around broken IBM DCE security API""... $ac_c" 1>&6
++ echo "configure:4321: checking whether to work around broken IBM DCE security API" >&5
++ # Check whether --with-dce-ibm-kludge or --without-dce-ibm-kludge was given.
++ if test "${with_dce_ibm_kludge+set}" = set; then
++   withval="$with_dce_ibm_kludge"
++    case "$withval" in
++   yes)
++     echo "$ac_t""yes" 1>&6
++     cat >> confdefs.h <<\EOF
++ #define WITH_DCE_IBM_KLUDGE 1
++ EOF
++ 
++     ;;
++   *)
++     echo "$ac_t""no" 1>&6
++     ;;
++   esac 
++ else
++   echo "$ac_t""no" 1>&6
++ 
++ fi
++ 
++ 
++ 
++ #################################################
++ # check for DFS support
++ echo $ac_n "checking whether to use DFS""... $ac_c" 1>&6
++ echo "configure:4347: checking whether to use DFS" >&5
++ # Check whether --with-dfs or --without-dfs was given.
++ if test "${with_dfs+set}" = set; then
++   withval="$with_dfs"
++    case "$withval" in
++   yes)
++     echo "$ac_t""yes" 1>&6
++     cat >> confdefs.h <<\EOF
++ #define WITH_DFS 1
++ EOF
++ 
++     LIBS="$LIBS -ldcedfs"
++     ;;
++   *)
++     echo "$ac_t""no" 1>&6
++     ;;
++   esac 
++ else
++   echo "$ac_t""no" 1>&6
++ 
++ fi
++ 
++ 
++ 
++ 
+  # Check whether --enable-fhs or --disable-fhs was given.
+  if test "${enable_fhs+set}" = set; then
+    enableval="$enable_fhs"
+***************
+*** 5116,5122 ****
+  
+  echo "$ac_t""setting configuration files location to $CONFIG_DIR" 1>&6
+  
+- ***** UAMS_PATH
+  cat >> confdefs.h <<EOF
+  #define UAMS_PATH "${uams_path}"
+  EOF
+--- 4394,4399 ----
+***************
+*** 5168,5184 ****
+  
+  		ac_safe=`echo "sys/quota.h" | sed 'y%./+-%__p_%'`
+  echo $ac_n "checking for sys/quota.h""... $ac_c" 1>&6
+! echo "configure:5172: checking for sys/quota.h" >&5
+  if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 5177 "configure"
+  #include "confdefs.h"
+  #include <sys/quota.h>
+  EOF
+  ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+! { (eval echo configure:5182: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+  ac_err=`grep -v '^ *+' conftest.out | grep -v "^conftest.${ac_ext}\$"`
+  if test -z "$ac_err"; then
+    rm -rf conftest*
+--- 4445,4461 ----
+  
+  		ac_safe=`echo "sys/quota.h" | sed 'y%./+-%__p_%'`
+  echo $ac_n "checking for sys/quota.h""... $ac_c" 1>&6
+! echo "configure:4449: checking for sys/quota.h" >&5
+  if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+  else
+    cat > conftest.$ac_ext <<EOF
+! #line 4454 "configure"
+  #include "confdefs.h"
+  #include <sys/quota.h>
+  EOF
+  ac_try="$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+! { (eval echo configure:4459: \"$ac_try\") 1>&5; (eval $ac_try) 2>&5; }
+  ac_err=`grep -v '^ *+' conftest.out | grep -v "^conftest.${ac_ext}\$"`
+  if test -z "$ac_err"; then
+    rm -rf conftest*
+***************
+*** 5405,5411 ****
+  		fi
+  
+  				echo $ac_n "checking for main in -lcrypto""... $ac_c" 1>&6
+! echo "configure:5409: checking for main in -lcrypto" >&5
+  ac_lib_var=`echo crypto'_'main | sed 'y%./+-%__p_%'`
+  if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+--- 4682,4688 ----
+  		fi
+  
+  				echo $ac_n "checking for main in -lcrypto""... $ac_c" 1>&6
+! echo "configure:4686: checking for main in -lcrypto" >&5
+  ac_lib_var=`echo crypto'_'main | sed 'y%./+-%__p_%'`
+  if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+***************
+*** 5413,5426 ****
+    ac_save_LIBS="$LIBS"
+  LIBS="-lcrypto  $LIBS"
+  cat > conftest.$ac_ext <<EOF
+! #line 5417 "configure"
+  #include "confdefs.h"
+  
+  int main() {
+  main()
+  ; return 0; }
+  EOF
+! if { (eval echo configure:5424: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_lib_$ac_lib_var=yes"
+  else
+--- 4690,4703 ----
+    ac_save_LIBS="$LIBS"
+  LIBS="-lcrypto  $LIBS"
+  cat > conftest.$ac_ext <<EOF
+! #line 4694 "configure"
+  #include "confdefs.h"
+  
+  int main() {
+  main()
+  ; return 0; }
+  EOF
+! if { (eval echo configure:4701: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_lib_$ac_lib_var=yes"
+  else
+***************
+*** 5448,5454 ****
+  fi
+  
+  						echo $ac_n "checking for main in -ldes""... $ac_c" 1>&6
+! echo "configure:5452: checking for main in -ldes" >&5
+  ac_lib_var=`echo des'_'main | sed 'y%./+-%__p_%'`
+  if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+--- 4725,4731 ----
+  fi
+  
+  						echo $ac_n "checking for main in -ldes""... $ac_c" 1>&6
+! echo "configure:4729: checking for main in -ldes" >&5
+  ac_lib_var=`echo des'_'main | sed 'y%./+-%__p_%'`
+  if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
+    echo $ac_n "(cached) $ac_c" 1>&6
+***************
+*** 5456,5469 ****
+    ac_save_LIBS="$LIBS"
+  LIBS="-ldes  $LIBS"
+  cat > conftest.$ac_ext <<EOF
+! #line 5460 "configure"
+  #include "confdefs.h"
+  
+  int main() {
+  main()
+  ; return 0; }
+  EOF
+! if { (eval echo configure:5467: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_lib_$ac_lib_var=yes"
+  else
+--- 4733,4746 ----
+    ac_save_LIBS="$LIBS"
+  LIBS="-ldes  $LIBS"
+  cat > conftest.$ac_ext <<EOF
+! #line 4737 "configure"
+  #include "confdefs.h"
+  
+  int main() {
+  main()
+  ; return 0; }
+  EOF
+! if { (eval echo configure:4744: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+    rm -rf conftest*
+    eval "ac_cv_lib_$ac_lib_var=yes"
+  else
+***************
+*** 5859,5866 ****
+  s%@AWK@%$AWK%g
+  s%@CPP@%$CPP%g
+  s%@LIBOBJS@%$LIBOBJS%g
+- s%@BUILD_PAM_TRUE@%$BUILD_PAM_TRUE%g
+- s%@BUILD_PAM_FALSE@%$BUILD_PAM_FALSE%g
+  s%@CONFIG_DIR@%$CONFIG_DIR%g
+  s%@UAMS_PATH@%$UAMS_PATH%g
+  s%@LDSHAREDFLAGS@%$LDSHAREDFLAGS%g
+--- 5136,5141 ----
+diff -d -c -r netatalk-1.5pre6/configure.in netatalk-1.5pre6-dce-2.5/configure.in
+*** netatalk-1.5pre6/configure.in	Tue Apr 10 11:57:50 2001
+--- netatalk-1.5pre6-dce-2.5/configure.in	Fri Jul  6 11:15:28 2001
+***************
+*** 28,76 ****
+  
+  dnl Checks for libraries.
+  dnl Replace `main' with a function in -labs:
+! AC_CHECK_LIB(abs, main)
+  dnl Replace `main' with a function in -laudit:
+! AC_CHECK_LIB(audit, main)
+  dnl Replace `main' with a function in -lauth:
+! AC_CHECK_LIB(auth, main)
+  dnl Replace `main' with a function in -lcmd:
+! AC_CHECK_LIB(cmd, main)
+  dnl Replace `main' with a function in -lcom_err:
+! AC_CHECK_LIB(com_err, main)
+  dnl Replace `main' with a function in -lcrypt:
+! AC_CHECK_LIB(crypt, main)
+  dnl Replace `main' with a function in -ld:
+! AC_CHECK_LIB(d, main)
+  dnl Replace `main' with a function in -ldb:
+! AC_CHECK_LIB(db, main)
+  dnl Replace `main' with a function in -ldl:
+  AC_CHECK_LIB(dl, main)
+  dnl Replace `main' with a function in -lkauth:
+! AC_CHECK_LIB(kauth, main)
+  dnl Replace `main' with a function in -lkrb:
+! AC_CHECK_LIB(krb, main)
+  dnl Replace `main' with a function in -llwp:
+! AC_CHECK_LIB(lwp, main)
+  dnl Replace `main' with a function in -ln:
+! AC_CHECK_LIB(n, main)
+  dnl Replace `main' with a function in -lnsl:
+  AC_CHECK_LIB(nsl, main)
+  dnl Replace `main' with a function in -lprot:
+! AC_CHECK_LIB(prot, main)
+  dnl Replace `main' with a function in -lresolv:
+! AC_CHECK_LIB(resolv, main)
+  dnl Replace `main' with a function in -lrpcsvc:
+! AC_CHECK_LIB(rpcsvc, main)
+  dnl Replace `main' with a function in -lrx:
+! AC_CHECK_LIB(rx, main)
+  dnl Replace `main' with a function in -lrxkad:
+! AC_CHECK_LIB(rxkad, main)
+  dnl Replace `main' with a function in -lsocket:
+  AC_CHECK_LIB(socket, main)
+  dnl Replace `main' with a function in -lsys:
+! AC_CHECK_LIB(sys, main)
+  dnl Replace `main' with a function in -lubik:
+! AC_CHECK_LIB(ubik, main)
+  
+  #
+  # Check presence of some functions
+--- 28,76 ----
+  
+  dnl Checks for libraries.
+  dnl Replace `main' with a function in -labs:
+! dnl AC_CHECK_LIB(abs, main)
+  dnl Replace `main' with a function in -laudit:
+! dnl AC_CHECK_LIB(audit, main)
+  dnl Replace `main' with a function in -lauth:
+! dnl AC_CHECK_LIB(auth, main)
+  dnl Replace `main' with a function in -lcmd:
+! dnl AC_CHECK_LIB(cmd, main)
+  dnl Replace `main' with a function in -lcom_err:
+! dnl AC_CHECK_LIB(com_err, main)
+  dnl Replace `main' with a function in -lcrypt:
+! dnl AC_CHECK_LIB(crypt, main)
+  dnl Replace `main' with a function in -ld:
+! dnl AC_CHECK_LIB(d, main)
+  dnl Replace `main' with a function in -ldb:
+! dnl AC_CHECK_LIB(db, main)
+  dnl Replace `main' with a function in -ldl:
+  AC_CHECK_LIB(dl, main)
+  dnl Replace `main' with a function in -lkauth:
+! dnl AC_CHECK_LIB(kauth, main)
+  dnl Replace `main' with a function in -lkrb:
+! dnl AC_CHECK_LIB(krb, main)
+  dnl Replace `main' with a function in -llwp:
+! dnl AC_CHECK_LIB(lwp, main)
+  dnl Replace `main' with a function in -ln:
+! dnl AC_CHECK_LIB(n, main)
+  dnl Replace `main' with a function in -lnsl:
+  AC_CHECK_LIB(nsl, main)
+  dnl Replace `main' with a function in -lprot:
+! dnl AC_CHECK_LIB(prot, main)
+  dnl Replace `main' with a function in -lresolv:
+! dnl AC_CHECK_LIB(resolv, main)
+  dnl Replace `main' with a function in -lrpcsvc:
+! dnl AC_CHECK_LIB(rpcsvc, main)
+  dnl Replace `main' with a function in -lrx:
+! dnl AC_CHECK_LIB(rx, main)
+  dnl Replace `main' with a function in -lrxkad:
+! dnl AC_CHECK_LIB(rxkad, main)
+  dnl Replace `main' with a function in -lsocket:
+  AC_CHECK_LIB(socket, main)
+  dnl Replace `main' with a function in -lsys:
+! dnl AC_CHECK_LIB(sys, main)
+  dnl Replace `main' with a function in -lubik:
+! dnl AC_CHECK_LIB(ubik, main)
+  
+  #
+  # Check presence of some functions
+***************
+*** 253,264 ****
+  		AC_SUBST(SERVERTEXT)
+  )
+  
+! AC_CHECK_LIB(pam, pam_start,
+! 	AC_DEFINE(USE_PAM, 1)
+! 	LIBS="$LIBS -lpam"
+! 	compile_pam=yes
+! )
+! AM_CONDITIONAL(BUILD_PAM, test x$compile_pam = xyes)
+  
+  AC_ARG_WITH(pam,
+  	[  --with-pam              enable password authentication modules support],
+--- 253,264 ----
+  		AC_SUBST(SERVERTEXT)
+  )
+  
+! dnl AC_CHECK_LIB(pam, pam_start,
+! dnl 	AC_DEFINE(USE_PAM, 1)
+! dnl 	LIBS="$LIBS -lpam"
+! dnl 	compile_pam=yes
+! dnl )
+! dnl AM_CONDITIONAL(BUILD_PAM, test x$compile_pam = xyes)
+  
+  AC_ARG_WITH(pam,
+  	[  --with-pam              enable password authentication modules support],
+***************
+*** 341,346 ****
+--- 341,446 ----
+  	uams_path="${config_dir}/uams"
+  )
+  
++ 
++ #################################################
++ # check for DCE plaintext authentication support
++ AC_MSG_CHECKING(whether to use DCE plaintext authentication)
++ AC_ARG_WITH(dce,
++ [  --with-dce     Include DCE plaintext authentication support
++   --without-dce  Don't include DCE plaintext authentication support (default)],
++ [ case "$withval" in
++   yes)
++     AC_MSG_RESULT(yes)
++     AC_DEFINE(WITH_DCE)
++     LIBS="$LIBS -ldce -lpthread"
++     CFLAGS="$CFLAGS -D_REENTRANT"
++     ;;
++   *)
++     AC_MSG_RESULT(no)
++     ;;
++   esac ],
++   AC_MSG_RESULT(no)
++ )
++ 
++ 
++ #################################################
++ # check for DCE encrypted authentication support
++ AC_MSG_CHECKING(whether to use DCE encrypted authentication)
++ AC_ARG_WITH(dce-encrypted,
++ [  --with-dce-encrypted     Include DCE encrypted authentication support
++   --without-dce-encrypted  Don't include DCE encrypted authentication support (default)],
++ [ case "$withval" in
++   yes)
++     AC_MSG_RESULT(yes)
++     AC_DEFINE(WITH_DCE_ENCRYPTED)
++     LIBS="$LIBS -lsec_auth"
++     ;;
++   *)
++     AC_MSG_RESULT(no)
++     ;;
++   esac ],
++   AC_MSG_RESULT(no)
++ )
++ 
++ 
++ #################################################
++ # check for DCE context refresh support
++ AC_MSG_CHECKING(whether to use DCE context refresh)
++ AC_ARG_WITH(dce-refresh,
++ [  --with-dce-refresh     Include DCE context refresh support
++   --without-dce-refresh  Don't include DCE context refresh support (default)],
++ [ case "$withval" in
++   yes)
++     AC_MSG_RESULT(yes)
++     AC_DEFINE(WITH_DCE_REFRESH)
++     ;;
++   *)
++     AC_MSG_RESULT(no)
++     ;;
++   esac ],
++   AC_MSG_RESULT(no)
++ )
++ 
++ 
++ #################################################
++ # check for DCE IBM kludge support
++ AC_MSG_CHECKING(whether to work around broken IBM DCE security API)
++ AC_ARG_WITH(dce-ibm-kludge,
++ [  --with-dce-ibm-kludge  Work around broken IBM DCE security API
++   --without-dce-ibm-kludge Don't work around broken IBM DCE security API (default)],
++ [ case "$withval" in
++   yes)
++     AC_MSG_RESULT(yes)
++     AC_DEFINE(WITH_DCE_IBM_KLUDGE)
++     ;;
++   *)
++     AC_MSG_RESULT(no)
++     ;;
++   esac ],
++   AC_MSG_RESULT(no)
++ )
++ 
++ 
++ #################################################
++ # check for DFS support
++ AC_MSG_CHECKING(whether to use DFS)
++ AC_ARG_WITH(dfs,
++ [  --with-dfs  Include DFS support
++   --without-dfs Don't include DFS support (default)],
++ [ case "$withval" in
++   yes)
++     AC_MSG_RESULT(yes)
++     AC_DEFINE(WITH_DFS)
++     LIBS="$LIBS -ldcedfs"
++     ;;
++   *)
++     AC_MSG_RESULT(no)
++     ;;
++   esac ],
++   AC_MSG_RESULT(no)
++ )
++ 
++ 
+  dnl --------------------------------------------------------------------------
+  dnl FHS stuff has to be done last because it overrides other defaults
+  dnl --------------------------------------------------------------------------
+***************
+*** 368,374 ****
+  AC_SUBST(CONFIG_DIR)
+  AC_MSG_RESULT([setting configuration files location to $CONFIG_DIR])
+  
+! ***** UAMS_PATH
+  AC_DEFINE_UNQUOTED(UAMS_PATH, "${uams_path}",
+  	[path to UAMs [default=$ac_default_prefix/etc/uams]])
+  UAMS_PATH="${uams_path}"
+--- 468,474 ----
+  AC_SUBST(CONFIG_DIR)
+  AC_MSG_RESULT([setting configuration files location to $CONFIG_DIR])
+  
+! dnl ***** UAMS_PATH
+  AC_DEFINE_UNQUOTED(UAMS_PATH, "${uams_path}",
+  	[path to UAMs [default=$ac_default_prefix/etc/uams]])
+  UAMS_PATH="${uams_path}"
+diff -d -c -r netatalk-1.5pre6/doc/README.DCEDFS netatalk-1.5pre6-dce-2.5/doc/README.DCEDFS
+*** netatalk-1.5pre6/doc/README.DCEDFS	Fri Aug  3 11:30:31 2001
+--- netatalk-1.5pre6-dce-2.5/doc/README.DCEDFS	Fri Aug  3 11:28:58 2001
+***************
+*** 0 ****
+--- 1,140 ----
++ netatalk-1.5pre6 DCE/DFS patch (version 2.5)
++ --------------------------------------------
++ 
++ This patch adds support for DCE authentication (using either plaintext
++ or encrypted passwords) and DFS filesets to netatalk. Since you're
++ reading this file, I trust you've already applied the patch to the
++ netatalk source, and are ready to configure/compile.
++ 
++ There are five configure options available:
++ 
++ 
++ --with-dce
++ 
++   This option enables support for DCE authentication using
++   plaintext passwords.
++ 
++ 
++ --with-dce-encrypted
++ 
++   This option, when used along with --with-dce, adds support for DCE
++   authentication using encrypted passwords. It requires the sec_auth
++   package, available from:
++ 
++   http://www.csupomona.edu/~henson/www/projects/sec_auth/
++ 
++   This option will also update necessary data for encrypted password
++   support when a plaintext password login is is successful.
++ 
++ 
++ --with-dce-refresh
++ 
++   Include support for automatically refreshing DCE credentials.
++   This requires storing the password in memory, so is a security
++   vs. convenience tradeoff.
++ 
++ 
++ --with-dce-ibm-kludge
++ 
++   Include a workaround for the broken sec_login_valid_and_cert_ident()
++   call in newer versions of IBM DCE, including DCE 3.1 for Solaris 7/8
++   and AIX, and some earlier versions of DCE for AIX. If credentials
++   are stored some place other than /opt/dcelocal/var/security/creds
++   on your platform, edit the file etc/afpd/dcedfs.c and update the
++   DCE_CREDS_DIR definition.
++ 
++ 
++ --with-dfs
++ 
++   This option adds support for DFS fileset quota reporting and
++   ACL interpretation. This option requires the availability of a DFS
++   API development kit.  Kits for Solaris and AIX are available from
++ 
++     http://www.transarc.ibm.com/Product/EFS/DFS/libdcedfs/
++ 
++   Note that as distributed, the kit names the library libdfs. netatalk
++   expects this library to be named libdcedfs. Rename it, symlink it,
++   or update the netatalk Makefile.
++ 
++ 
++ Note that either your OS must support DCE as a naming service, or you need
++ to replicate your registry in local files. Solaris users can use my
++ nss_dce package to integrate DCE into the Solaris naming services switch:
++ 
++     http://www.csupomona.edu/~henson/www/projects/nss_dce/
++ 
++ 
++ Changes
++ -------
++ 
++ 2.5 - Updated for netatalk-1.5pre6.
++ 
++     - Added --with-dce-refresh option.
++ 
++     - Added --with-ibm-kludge option.
++ 
++ 
++ 2.2 - Updated encrypted password authentication support to be compliant
++       with sec_auth 1.0 API.
++ 
++     - Improved encrypted password fault tolerance when multiple sec_auth
++       servers are available.
++ 
++ 
++ 2.0 - Updated to support the asun-enhanced version of netatalk.
++ 
++     - Added support for encrypted password authentication.
++ 
++     - Fixed potential deadlock when forking.
++ 
++     - Fixed incorrect inheritance of parent directory permissions when
++       using DFS.
++ 
++ 
++ 1.2 - If DFS is enabled, don't call chmod, because it mangles DFS ACLs.
++ 
++ 
++ 1.1 - If an RPC error occurs during an flserver call, the binding
++       handle must be reset before it will work again.
++ 
++ 
++ 1.0 - Improved flserver load balancing and exception handling. Previous
++       versions of this patch would only communicate with the first
++       flserver found, and die horribly on any errors. Now, requests are
++       distributed over all available flservers, and flserver errors are
++       handled more gracefully.
++ 
++     - Added support for longer passwords. netatalk normally truncates
++       passwords to 8 characters. DCE, of course, can handle much longer
++       passwords, and with the appropriate UAM (for example, the Digital
++       VMS UAM), a Macintosh client can send them.
++ 
++ 
++ 0.8 - Fixed incorrect assumption that the object UUID of the flserver was
++       constant. The UUID is now determined at runtime.
++ 
++     - Added code to report correct access permissions on a directory in
++       DFS.
++ 
++ 
++ 0.5 - First publicly released version.
++ 
++ 
++ ---------------------------------------------------------------------------
++    Copyright (C) 1997-2001 Paul B. Henson <henson@acm.org>
++ 
++    This patch is free software; you can redistribute it and/or modify
++    it under the terms of the GNU General Public License as published by
++    the Free Software Foundation; either version 1, or (at your option)
++    any later version.
++ 
++    This patch is distributed in the hope that it will be useful,
++    but WITHOUT ANY WARRANTY; without even the implied warranty of
++    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++    GNU General Public License for more details.
++ 
++    For a copy of the GNU General Public License, write to the Free
++    Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
++ 
++    The GNU General Public License is, as of this writing, also available
++    at http://www.gnu.org/copyleft/gpl.html
+diff -d -c -r netatalk-1.5pre6/etc/afpd/Makefile.in netatalk-1.5pre6-dce-2.5/etc/afpd/Makefile.in
+*** netatalk-1.5pre6/etc/afpd/Makefile.in	Thu Apr 12 06:27:34 2001
+--- netatalk-1.5pre6-dce-2.5/etc/afpd/Makefile.in	Fri Jul  6 11:15:42 2001
+***************
+*** 110,116 ****
+  afpd_OBJECTS =  unix.o ofork.o main.o switch.o auth.o volume.o \
+  directory.o file.o enumerate.o desktop.o filedir.o fork.o appl.o \
+  gettok.o status.o afp_options.o afp_asp.o afp_dsi.o messages.o \
+! afp_config.o nfsquota.o codepage.o quota.o uam.o afs.o uid.o
+  afpd_DEPENDENCIES =  $(top_builddir)/libatalk/libatalk.la
+  COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+  LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+--- 110,116 ----
+  afpd_OBJECTS =  unix.o ofork.o main.o switch.o auth.o volume.o \
+  directory.o file.o enumerate.o desktop.o filedir.o fork.o appl.o \
+  gettok.o status.o afp_options.o afp_asp.o afp_dsi.o messages.o \
+! afp_config.o nfsquota.o codepage.o quota.o uam.o afs.o uid.o dcedfs.o
+  afpd_DEPENDENCIES =  $(top_builddir)/libatalk/libatalk.la
+  COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+  LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+diff -d -c -r netatalk-1.5pre6/etc/afpd/auth.c netatalk-1.5pre6-dce-2.5/etc/afpd/auth.c
+*** netatalk-1.5pre6/etc/afpd/auth.c	Fri Dec  1 02:00:36 2000
+--- netatalk-1.5pre6-dce-2.5/etc/afpd/auth.c	Thu Jul  5 17:00:32 2001
+***************
+*** 290,295 ****
+--- 290,300 ----
+       int        ibuflen, *rbuflen;
+  {
+    syslog(LOG_INFO, "logout %s", obj->username);
++ 
++ #ifdef WITH_DCE
++   dce_logout();
++ #endif
++ 
+    obj->exit(0);
+  }
+  
+diff -d -c -r netatalk-1.5pre6/etc/afpd/dcedfs.c netatalk-1.5pre6-dce-2.5/etc/afpd/dcedfs.c
+*** netatalk-1.5pre6/etc/afpd/dcedfs.c	Fri Jul  6 11:51:31 2001
+--- netatalk-1.5pre6-dce-2.5/etc/afpd/dcedfs.c	Fri Jul  6 09:47:45 2001
+***************
+*** 0 ****
+--- 1,731 ----
++ /*
++  * DCE/DFS support for Netatalk
++  *
++  * Paul Henson <henson@acm.org>
++  * California State Polytechnic University, Pomona
++  *
++  * Copyright (c) 1997-1999 Paul Henson -- see README.DCEDFS file for details
++  *
++  */
++ #include "config.h"
++ 
++ #ifdef WITH_DCE
++ 
++ #define DCE_CREDS_DIR "/opt/dcelocal/var/security/creds"
++ 
++ #include <syslog.h>
++ #include <pwd.h>
++ #include <stdlib.h>
++ #include <strings.h>
++ #include <sys/param.h>
++ #include <dce/dce_error.h>
++ #include <dce/rpc.h>
++ #include <dce/secsts.h>
++ #include <dce/sec_login.h>
++ #include <dce/pthread.h>
++ #include <dce/rgybase.h>
++ 
++ sec_login_handle_t dce_login_context = NULL;
++ 
++ #ifdef WITH_DCE_REFRESH
++ static sec_passwd_des_key_t dce_refresh_deskey;
++ sec_passwd_str_t dce_refresh_plaintext;
++ sec_passwd_type_t dce_passwd_type;
++ #endif
++ 
++ void dce_logout() {
++ 
++   error_status_t dce_st;
++ 
++   if (dce_login_context)
++     sec_login_purge_context(&dce_login_context, &dce_st);
++ }
++ 
++ #ifdef WITH_DCE_REFRESH
++ 
++ pthread_addr_t dce_refresh_context() {
++   
++   signed32 expiration_time;
++   time_t now;
++   struct timespec sleep_interval;
++   error_status_t dce_st;
++   dce_error_string_t dce_error;
++   int dce_error_st;
++   sec_login_auth_src_t auth_src;
++   unsigned32 kvno_worked;
++   boolean32 reset_passwd;
++   sec_passwd_str_t tmp_pw;
++   sec_passwd_rec_t passwd_rec;
++ 
++   while (1) {
++     now = time(NULL);
++ 
++     sec_login_get_expiration(dce_login_context, &expiration_time, &dce_st);
++     if (dce_st && (dce_st != sec_login_s_not_certified)) {
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "refresh_context: sec_login_get_expiration failed - %s (%d)\n", dce_error, dce_st);
++       expiration_time = now + 20 * 60;
++     }
++ 
++     sleep_interval.tv_sec = expiration_time - now - 10 * 60;
++     sleep_interval.tv_nsec = 0;
++     
++     pthread_delay_np(&sleep_interval);
++     
++     sec_login_refresh_identity(dce_login_context, &dce_st);
++     if (dce_st) {
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "refresh_context: sec_login_refresh_identity failed - %s (%d)\n", dce_error, dce_st);
++     }
++       
++     if (dce_passwd_type == sec_passwd_plain) {
++       passwd_rec.key.key_type = sec_passwd_plain;
++       strncpy( (char *)tmp_pw, dce_refresh_plaintext, sec_passwd_str_max_len);
++       tmp_pw[sec_passwd_str_max_len] = '\0';
++       passwd_rec.key.tagged_union.plain = &(tmp_pw[0]);
++     }
++     else {
++       passwd_rec.key.key_type = sec_passwd_des;
++       memcpy(passwd_rec.key.tagged_union.des_key, dce_refresh_deskey, sec_passwd_c_des_key_size);
++     }
++ 
++     sec_login_validate_identity(dce_login_context, &passwd_rec, &reset_passwd, &auth_src, &dce_st);
++     if (dce_st) {
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "refresh_context: sec_login_validate_identity failed - %s (%d)\n", dce_error, dce_st);
++     }
++   }              
++ }
++ #endif
++ 
++ #ifdef WITH_DCE_ENCRYPTED
++ 
++ #include <sec_auth.h>
++ 
++ int dce_randnum_login(struct passwd *pwd, char challenge[8], char response[8]) {
++ 
++   error_status_t dce_st;
++   dce_error_string_t dce_error;
++   int dce_error_st;
++   sec_login_auth_src_t auth_src;
++   sec_passwd_rec_t pw_entry;
++   boolean32 reset_passwd;
++   sec_passwd_str_t tmp_pw;
++   rpc_ns_handle_t lookup_context;
++   rpc_binding_vector_t *binding_vec;
++   rpc_binding_handle_t handle;
++   unsigned_char_t *server_princ_name;
++   sec_rgy_name_t princ_name;
++ 
++ #ifdef WITH_DCE_REFRESH
++   pthread_t refresh_thread;
++ #endif
++   
++   rpc_ns_binding_lookup_begin(rpc_c_ns_syntax_default, SEC_AUTH_RPC_GROUP_NAME,
++ 			      SEC_AUTH_C_IFSPEC, NULL, 5, &lookup_context,
++ 			      &dce_st);
++   
++   if (dce_st) {
++     dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++     syslog(LOG_NOTICE, "dce_randnum_login: rpc_ns_binding_lookup_begin failed - %s\n", dce_error);
++     return 0;
++   }
++ 
++   rpc_ns_binding_lookup_next(lookup_context, &binding_vec, &dce_st);
++ 
++   if (dce_st) {
++     dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++     syslog(LOG_NOTICE, "dce_randnum_login: rpc_ns_binding_lookup_next failed - %s\n", dce_error);
++     return 0;
++   }
++  
++   rpc_ns_binding_lookup_done(&lookup_context, &dce_st);
++ 
++   if (dce_st) {
++     dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++     syslog(LOG_NOTICE, "dce_randnum_login: rpc_ns_binding_lookup_done failed - %s\n", dce_error);
++     return 0;
++   }
++ 
++   while (1) {
++     rpc_ns_binding_select(binding_vec, &handle, &dce_st);
++     
++     if (dce_st)	{
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "dce_randnum_login: rpc_ns_binding_select failed - %s\n", dce_error);
++       rpc_binding_vector_free(&binding_vec, &dce_st);
++       return 0;
++     }
++       
++     rpc_ep_resolve_binding(handle, SEC_AUTH_C_IFSPEC, &dce_st);
++ 
++     if (dce_st)	{
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "dce_randnum_login: rpc_ep_resolve_binding failed - %s\n", dce_error);
++       rpc_binding_free(&handle, &dce_st);
++       continue;
++     }
++   
++     rpc_mgmt_inq_server_princ_name(handle, rpc_c_authn_dce_secret, &server_princ_name, &dce_st);
++     if (dce_st)	{
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "dce_randnum_login: rpc_mgmt_inq_server_princ_name failed - %s\n", dce_error);
++       rpc_binding_free(&handle, &dce_st);
++       continue;
++     }
++ 
++     sec_id_parse_name(sec_rgy_default_handle, server_princ_name, NULL, NULL, princ_name, NULL, &dce_st);
++     if (dce_st)	{
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "dce_randnum_login: sec_id_parse_name failed - %s\n", dce_error);
++       rpc_binding_free(&handle, &dce_st);
++       continue;
++     }
++ 
++     {
++       int is_member = sec_rgy_pgo_is_member(sec_rgy_default_handle, sec_rgy_domain_group, "sec_auth", princ_name, &dce_st);
++       if (dce_st) {
++ 	dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++ 	syslog(LOG_NOTICE, "dce_randnum_login: sec_rgy_pgo_is_member failed - %s\n", dce_error);
++ 	rpc_binding_free(&handle, &dce_st);
++ 	continue;
++       }
++ 	
++       if (!is_member) {
++ 	syslog(LOG_NOTICE, "dce_randnum_login: %s not valid sec_auth server\n", princ_name);
++ 	rpc_binding_free(&handle, &dce_st);
++ 	continue;
++       }
++     }
++       
++     rpc_binding_set_auth_info(handle, server_princ_name,
++ 			      rpc_c_protect_level_pkt_privacy, rpc_c_authn_dce_secret,
++ 			      NULL, rpc_c_authz_name, &dce_st);
++     if (dce_st)	{
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "dce_randnum_login: rpc_binding_set_auth_info failed - %s\n", dce_error);
++       rpc_binding_free(&handle, &dce_st);
++       continue;
++     }
++   
++     sec_auth_apple_randnum(handle, pwd->pw_name, challenge, response, (idl_byte *)&pw_entry.key.tagged_union.des_key, &dce_st);
++     if (dce_st == error_status_ok) {
++       rpc_binding_vector_free(&binding_vec, &dce_st);
++       rpc_binding_free(&handle, &dce_st);
++       break;
++     }
++     else if (dce_st == sec_rgy_passwd_invalid || dce_st == sec_rgy_not_authorized || dce_st == sec_rgy_not_implemented)	{
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "dce_randnum_login: sec_auth failed for %s - %s\n", pwd->pw_name, dce_error);
++       rpc_binding_free(&handle, &dce_st);
++       rpc_binding_vector_free(&binding_vec, &dce_st);
++       return 0;
++     }
++     else {
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "dce_randnum_login: sec_auth failed for %s - %s\n", pwd->pw_name, dce_error);
++       rpc_binding_free(&handle, &dce_st);
++     }
++   }
++ 
++   if (!sec_login_setup_identity(pwd->pw_name, sec_login_no_flags, &dce_login_context, &dce_st)) {
++     dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++     syslog(LOG_NOTICE, "dce_randnum_login: sec_login_setup_identity failed for %s - %s\n", pwd->pw_name, dce_error);
++     return 0;
++   }
++ 
++   pw_entry.pepper = NULL;
++   pw_entry.key.key_type = sec_passwd_des;
++   pw_entry.version_number = sec_passwd_c_version_none;
++   
++ #ifdef WITH_DCE_REFRESH
++   dce_passwd_type = sec_passwd_des;
++   memcpy(dce_refresh_deskey, pw_entry.key.tagged_union.des_key, sec_passwd_c_des_key_size);
++ #endif  
++   
++   if (!sec_login_valid_and_cert_ident(dce_login_context, &pw_entry, &reset_passwd, &auth_src, &dce_st)) {
++     dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++     syslog(LOG_NOTICE, "dce_randnum_login: sec_login_valid_and_cert_ident failed for %s - %s\n", pwd->pw_name, dce_error);
++     return 0;
++   }
++ 
++   if (auth_src != sec_login_auth_src_network) {
++     sec_login_purge_context(&dce_login_context, &dce_st);
++     syslog(LOG_NOTICE, "dce_randnum_login: no network credentials for %s\n", pwd->pw_name);
++     return 0;
++   }
++ 
++   sec_login_set_context(dce_login_context, &dce_st);
++   if (dce_st) {
++     dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++     syslog(LOG_NOTICE, "dce_randnum_login: sec_login_set_context failed for %s - %s\n", pwd->pw_name, dce_error);
++     sec_login_purge_context(&dce_login_context, &dce_st);
++     return 0;
++   }
++ 
++ #ifdef WITH_DCE_IBM_KLUDGE
++   {
++     char path[MAXPATHLEN];
++     char *krb5ccname;
++     char *pag_str;
++     unsigned long pag;
++     
++     if (krb5ccname = getenv("KRB5CCNAME"))
++       if (pag_str = strrchr(krb5ccname, '_')) {
++ 	pag = strtol(pag_str+1, NULL, 16);
++ 	
++ 	snprintf(path, MAXPATHLEN, "%s/dcecred_%08x", DCE_CREDS_DIR, pag);
++ 	path[MAXPATHLEN-1] = '\0';
++ 	chown(path, pwd->pw_uid, pwd->pw_gid);
++ 	
++ 	snprintf(path, MAXPATHLEN, "%s/dcecred_%08x.data", DCE_CREDS_DIR, pag);
++ 	path[MAXPATHLEN-1] = '\0';
++ 	chown(path, pwd->pw_uid, pwd->pw_gid);
++ 	
++ 	snprintf(path, MAXPATHLEN, "%s/dcecred_%08x.data.db", DCE_CREDS_DIR, pag);
++ 	path[MAXPATHLEN-1] = '\0';
++ 	chown(path, pwd->pw_uid, pwd->pw_gid);
++ 	
++ 	snprintf(path, MAXPATHLEN, "%s/dcecred_%08x.nc", DCE_CREDS_DIR, pag);
++ 	path[MAXPATHLEN-1] = '\0';
++ 	chown(path, pwd->pw_uid, pwd->pw_gid);
++       }
++   }
++ #endif
++ 
++ #ifdef WITH_DCE_REFRESH
++   if (pthread_create(&refresh_thread, pthread_attr_default, dce_refresh_context, (void *)NULL))
++     syslog(LOG_NOTICE, "dce_randnum_login: pthread_create failed");
++ 
++   pthread_detach(&refresh_thread);
++ #endif
++   
++   return 1;
++ }
++ 
++ 
++ int dce_rand2num_login(struct passwd *pwd, char s_challenge[8], char c_response[8], char c_challenge[8], char s_response[8]) {
++ 
++   error_status_t dce_st;
++   dce_error_string_t dce_error;
++   int dce_error_st;
++   sec_login_auth_src_t auth_src;
++   sec_passwd_rec_t pw_entry;
++   boolean32 reset_passwd;
++   sec_passwd_str_t tmp_pw;
++   rpc_ns_handle_t lookup_context;
++   rpc_binding_vector_t *binding_vec;
++   rpc_binding_handle_t handle;
++   unsigned_char_t *server_princ_name;
++   sec_rgy_name_t princ_name;
++ 
++ #ifdef WITH_DCE_REFRESH
++   pthread_t refresh_thread;
++ #endif
++ 
++   rpc_ns_binding_lookup_begin(rpc_c_ns_syntax_default, SEC_AUTH_RPC_GROUP_NAME,
++ 			      SEC_AUTH_C_IFSPEC, NULL, 5, &lookup_context,
++ 			      &dce_st);
++   if (dce_st) {
++     dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++     syslog(LOG_NOTICE, "dce_rand2num_login: rpc_ns_binding_lookup_begin failed - %s\n", dce_error);
++     return 0;
++   }
++ 
++   rpc_ns_binding_lookup_next(lookup_context, &binding_vec, &dce_st);
++   if (dce_st) {
++     dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++     syslog(LOG_NOTICE, "dce_rand2num_login: rpc_ns_binding_lookup_next failed - %s\n", dce_error);
++     return 0;
++   }
++  
++   rpc_ns_binding_lookup_done(&lookup_context, &dce_st);
++   if (dce_st) {
++     dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++     syslog(LOG_NOTICE, "dce_rand2num_login: rpc_ns_binding_lookup_done failed - %s\n", dce_error);
++     return 0;
++   }
++ 
++   while (1) {
++     rpc_ns_binding_select(binding_vec, &handle, &dce_st);
++     
++     if (dce_st) {
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "dce_rand2num_login: rpc_ns_binding_select failed - %s\n", dce_error);
++       rpc_binding_vector_free(&binding_vec, &dce_st);
++       return 0;
++     }
++       
++     rpc_ep_resolve_binding(handle, SEC_AUTH_C_IFSPEC, &dce_st);
++ 
++     if (dce_st)	{
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "dce_rand2num_login: rpc_ep_resolve_binding failed - %s\n", dce_error);
++       rpc_binding_free(&handle, &dce_st);
++       continue;
++     }
++   
++     rpc_mgmt_inq_server_princ_name(handle, rpc_c_authn_dce_secret, &server_princ_name, &dce_st);
++     if (dce_st)	{
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "dce_rand2num_login: rpc_mgmt_inq_server_princ_name failed - %s\n", dce_error);
++       rpc_binding_free(&handle, &dce_st);
++       continue;
++     }
++ 
++     sec_id_parse_name(sec_rgy_default_handle, server_princ_name, NULL, NULL, princ_name, NULL, &dce_st);
++     if (dce_st)	{
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "dce_rand2num_login: sec_id_parse_name failed - %s\n", dce_error);
++       rpc_binding_free(&handle, &dce_st);
++       continue;
++     }
++ 
++     {
++       int is_member = sec_rgy_pgo_is_member(sec_rgy_default_handle, sec_rgy_domain_group, "sec_auth", princ_name, &dce_st);
++       if (dce_st) {
++ 	dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++ 	syslog(LOG_NOTICE, "dce_rand2num_login: sec_rgy_pgo_is_member failed - %s\n", dce_error);
++ 	rpc_binding_free(&handle, &dce_st);
++ 	continue;
++       }
++ 	
++       if (!is_member) {
++ 	syslog(LOG_NOTICE, "dce_rand2num_login: %s not valid sec_auth server\n", princ_name);
++ 	rpc_binding_free(&handle, &dce_st);
++ 	continue;
++       }
++     }
++       
++     rpc_binding_set_auth_info(handle, server_princ_name,
++ 			      rpc_c_protect_level_pkt_privacy, rpc_c_authn_dce_secret,
++ 			      NULL, rpc_c_authz_name, &dce_st);
++     if (dce_st)	{
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "dce_rand2num_login: rpc_binding_set_auth_info failed - %s\n", dce_error);
++       rpc_binding_free(&handle, &dce_st);
++       continue;
++     }
++   
++     sec_auth_apple_rand2num(handle, pwd->pw_name, s_challenge, c_response, c_challenge, s_response,
++ 			    (idl_byte *)&pw_entry.key.tagged_union.des_key, &dce_st);
++     if (dce_st == error_status_ok) {
++       rpc_binding_vector_free(&binding_vec, &dce_st);
++       rpc_binding_free(&handle, &dce_st);
++       break;
++     }
++     else if (dce_st == sec_rgy_passwd_invalid || dce_st == sec_rgy_not_authorized || dce_st == sec_rgy_not_implemented)	{
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "dce_rand2num_login: sec_auth failed for %s - %s\n", pwd->pw_name, dce_error);
++       rpc_binding_free(&handle, &dce_st);
++       rpc_binding_vector_free(&binding_vec, &dce_st);
++       return 0;
++     }
++     else {
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "dce_rand2num_login: sec_auth failed for %s - %s\n", pwd->pw_name, dce_error);
++       rpc_binding_free(&handle, &dce_st);
++     }
++   }
++ 
++   if (!sec_login_setup_identity(pwd->pw_name, sec_login_no_flags, &dce_login_context, &dce_st)) {
++     dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++     syslog(LOG_NOTICE, "dce_rand2num_login: sec_login_setup_identity failed for %s - %s\n", pwd->pw_name, dce_error);
++     return 0;
++   }
++   
++   pw_entry.pepper = NULL;
++   pw_entry.key.key_type = sec_passwd_des;
++   pw_entry.version_number = sec_passwd_c_version_none;
++   
++ #ifdef WITH_DCE_REFRESH
++   dce_passwd_type = sec_passwd_des;
++   memcpy(dce_refresh_deskey, pw_entry.key.tagged_union.des_key, sec_passwd_c_des_key_size);
++ #endif  
++   
++   if (!sec_login_valid_and_cert_ident(dce_login_context, &pw_entry, &reset_passwd, &auth_src, &dce_st)) {
++     dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++     syslog(LOG_NOTICE, "dce_rand2num_login: sec_login_valid_and_cert_ident failed for %s - %s\n", pwd->pw_name, dce_error);
++     return 0;
++   }
++ 
++   if (auth_src != sec_login_auth_src_network) {
++     sec_login_purge_context(&dce_login_context, &dce_st);
++     syslog(LOG_NOTICE, "dce_rand2num_login: no network credentials for %s\n", pwd->pw_name);
++     return 0;
++   }
++   
++   sec_login_set_context(dce_login_context, &dce_st);
++   if (dce_st) {
++     dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++     syslog(LOG_NOTICE, "dce_rand2num_login: sec_login_set_context failed for %s - %s\n", pwd->pw_name, dce_error);
++     sec_login_purge_context(&dce_login_context, &dce_st);
++     return 0;
++   }
++ 
++ #ifdef WITH_DCE_IBM_KLUDGE
++   {
++     char path[MAXPATHLEN];
++     char *krb5ccname;
++     char *pag_str;
++     unsigned long pag;
++     
++     if (krb5ccname = getenv("KRB5CCNAME"))
++       if (pag_str = strrchr(krb5ccname, '_')) {
++ 	pag = strtol(pag_str+1, NULL, 16);
++ 	  
++ 	snprintf(path, MAXPATHLEN, "%s/dcecred_%08x", DCE_CREDS_DIR, pag);
++ 	path[MAXPATHLEN-1] = '\0';
++ 	chown(path, pwd->pw_uid, pwd->pw_gid);
++ 	
++ 	snprintf(path, MAXPATHLEN, "%s/dcecred_%08x.data", DCE_CREDS_DIR, pag);
++ 	path[MAXPATHLEN-1] = '\0';
++ 	chown(path, pwd->pw_uid, pwd->pw_gid);
++ 	
++ 	snprintf(path, MAXPATHLEN, "%s/dcecred_%08x.data.db", DCE_CREDS_DIR, pag);
++ 	path[MAXPATHLEN-1] = '\0';
++ 	chown(path, pwd->pw_uid, pwd->pw_gid);
++ 	
++ 	snprintf(path, MAXPATHLEN, "%s/dcecred_%08x.nc", DCE_CREDS_DIR, pag);
++ 	path[MAXPATHLEN-1] = '\0';
++ 	chown(path, pwd->pw_uid, pwd->pw_gid);
++       }
++   }
++ #endif
++ 
++ #ifdef WITH_DCE_REFRESH
++   if (pthread_create(&refresh_thread, pthread_attr_default, dce_refresh_context, (void *)NULL))
++     syslog(LOG_NOTICE, "dce_randnum_login: pthread_create failed");
++   
++   pthread_detach(&refresh_thread);
++ #endif
++ 
++   return 1;
++ }
++ 
++ #endif
++ 
++ #ifdef WITH_DFS
++ 
++ #include <netinet/in.h>
++ #include <arpa/inet.h>
++ #include <dcedfs/param.h>
++ #include <dcedfs/afsvl_proc.h>
++ #include <dcedfs/aggr.h>
++ #include <dcedfs/cm.h>
++ #include <dcedfs/fldb_proc.h>
++ #include <dcedfs/flserver.h>
++ #include <dcedfs/ftserver.h>
++ #include <dcedfs/ftserver_proc.h>
++ #include <dcedfs/ioctl.h>
++ #include <dcedfs/vol_init.h>
++ #include <dcedfs/rep_errs.h>
++ #include <dcedfs/vol_errs.h>
++ 
++ #define FLSERVER_H_SIZE 5
++ static rpc_binding_handle_t flserver_h[FLSERVER_H_SIZE];
++ static int flserver_h_count = 0;
++ static int flserver_h_index = 0;
++ 
++ static int path_to_fid(char *path, struct afsFid *fidp) {
++   
++   struct afs_ioctl ioctl_data;
++   
++   ioctl_data.in_size = 0;
++   ioctl_data.out_size = sizeof(afsFid);
++   ioctl_data.out = (caddr_t) fidp;
++   
++   return (!pioctl(path, VIOCGETFID, &ioctl_data, 1));
++ }  
++ 
++ static int bind_flservers() {
++   
++   unsigned32 import_status, group_status, rpc_status;
++   rpc_ns_handle_t import_context;
++   rpc_ns_handle_t group_context;
++   unsigned_char_t *name, *string_binding, *protseq, *network_addr;
++   uuid_t obj_uuid;
++   unsigned_char_t *string_uuid;
++   rpc_binding_handle_t temp_h;
++   dce_error_string_t dce_error;
++   int dce_error_st;
++   
++   rpc_ns_entry_object_inq_begin(rpc_c_ns_syntax_default, "/.:/fs", &import_context, &import_status);
++   if (import_status) {
++     dce_error_inq_text(import_status, dce_error, &dce_error_st);      
++     syslog(LOG_NOTICE, "bind_flservers.entry_object_inq_begin failed - %s", dce_error);
++     return 0;
++   }
++ 
++   rpc_ns_entry_object_inq_next(import_context, &obj_uuid, &import_status);
++   if (import_status) {
++     dce_error_inq_text(import_status, dce_error, &dce_error_st);      
++     syslog(LOG_NOTICE, "bind_flservers.entry_object_inq_next failed - %s", dce_error);
++     return 0;
++   }
++ 
++   rpc_ns_entry_object_inq_done(&import_context, &import_status);
++ 
++   uuid_to_string(&obj_uuid, &string_uuid, &import_status);
++   if (import_status) {
++     dce_error_inq_text(import_status, dce_error, &dce_error_st);      
++     syslog(LOG_NOTICE, "bind_flservers.uuid_to_string failed - %s", dce_error);
++     return 0;
++   }
++ 
++   rpc_ns_group_mbr_inq_begin(rpc_c_ns_syntax_default, "/.:/fs", rpc_c_ns_syntax_default, &group_context, &group_status);
++   if (group_status) {
++     dce_error_inq_text(group_status, dce_error, &dce_error_st);      
++     syslog(LOG_NOTICE, "bind_flservers.group_mbr_inq_begin failed - %s", dce_error);
++     return 0;
++   }
++   
++   while ((!group_status) &&  (flserver_h_count < FLSERVER_H_SIZE)) {
++     rpc_ns_group_mbr_inq_next(group_context, &name, &group_status);
++ 
++     if (group_status) {
++       if (group_status != rpc_s_no_more_members) {
++ 	dce_error_inq_text(group_status, dce_error, &dce_error_st);      
++ 	syslog(LOG_NOTICE, "bind_flservers.group_mbr_inq_next failed - %s", dce_error);
++       }
++       continue;
++     }
++       
++     rpc_ns_binding_import_begin(rpc_c_ns_syntax_default, name, NULL, NULL, &import_context, &import_status);
++     if (import_status) {
++       dce_error_inq_text(import_status, dce_error, &dce_error_st);      
++       syslog(LOG_NOTICE, "bind_flservers.binding_import_begin failed - %s", dce_error);
++       rpc_ns_binding_import_done(&import_context, &import_status);
++       continue;
++     }
++       
++     rpc_ns_binding_import_next(import_context, &temp_h, &import_status);
++       
++     if (import_status) {
++       dce_error_inq_text(import_status, dce_error, &dce_error_st);      
++       syslog(LOG_NOTICE, "bind_flservers.binding_import_next failed - %s", dce_error);
++       rpc_ns_binding_import_done(&import_context, &import_status);
++       continue;
++     }
++       
++     rpc_binding_to_string_binding(temp_h, &string_binding, &import_status);
++     rpc_binding_free(&temp_h, &rpc_status);
++     
++     if (import_status) {
++       dce_error_inq_text(import_status, dce_error, &dce_error_st);      
++       syslog(LOG_NOTICE, "bind_flservers.to_string_binding failed - %s", dce_error);
++       rpc_ns_binding_import_done(&import_context, &import_status);
++       continue;
++     }
++       
++     rpc_string_binding_parse(string_binding, NULL, &protseq, &network_addr, NULL, NULL, &import_status);
++     rpc_string_free(&string_binding, &rpc_status);
++ 
++     if (import_status) {
++       dce_error_inq_text(import_status, dce_error, &dce_error_st);      
++       syslog(LOG_NOTICE, "bind_flservers.binding_parse failed - %s", dce_error);
++       rpc_ns_binding_import_done(&import_context, &import_status);
++       continue;
++     }
++       
++     rpc_string_binding_compose(string_uuid, protseq, network_addr, NULL, NULL, &string_binding, &import_status);
++     rpc_string_free(&protseq, &rpc_status);
++     rpc_string_free(&network_addr, &rpc_status);
++     
++     if (import_status) {
++       dce_error_inq_text(import_status, dce_error, &dce_error_st);      
++       syslog(LOG_NOTICE, "bind_flservers.binding_compose failed - %s", dce_error);
++       rpc_ns_binding_import_done(&import_context, &import_status);
++       continue;
++     }
++       
++     rpc_binding_from_string_binding(string_binding, &flserver_h[flserver_h_count], &import_status);
++     rpc_string_free(&string_binding, &rpc_status);
++       
++     if (import_status) {
++       dce_error_inq_text(import_status, dce_error, &dce_error_st);      
++       syslog(LOG_NOTICE, "bind_flservers.from_string_binding failed - %s", dce_error);
++     }
++     else
++       flserver_h_count++;
++     
++     rpc_ns_binding_import_done(&import_context, &import_status);
++   }
++   rpc_ns_group_mbr_inq_done(&group_context, &group_status);
++   rpc_string_free(&string_uuid, &import_status);
++ 
++   return flserver_h_count;
++ }
++ 
++ 
++ int dfsquota(char *path, int *quota, int *used) {
++   
++   struct afsFid fidp;
++   struct vldbentry fl_entry;
++   unsigned32 status, status2;
++   unsigned_char_t *string_binding;
++   rpc_binding_handle_t ftserver_h;
++   struct ftserver_status ft_status;
++   struct afsHyper hyper;
++   int index;
++   
++   if (flserver_h_count == 0)
++     if (!bind_flservers())
++       if (!bind_flservers()) {
++ 	syslog(LOG_NOTICE, "dfsquota - unable to bind to any flservers");
++ 	return 0;
++       }
++   
++   if (!path_to_fid(path, &fidp)) {
++     syslog(LOG_NOTICE, "dfsquota - path_to_fid failed for %s", path);
++     return 0;
++   }
++ 
++   for(index = 0; index < flserver_h_count; index++) {
++     
++     error_status_t reset_status;
++     
++     status = VL_GetEntryByID(flserver_h[flserver_h_index], &fidp.Volume, -1, &fl_entry);
++ 
++     if (!(status >= rpc_s_mod && status <= rpc_s_mod+4096))
++       break;
++     
++     rpc_binding_reset(flserver_h[flserver_h_index], &reset_status);
++     flserver_h_index = ((flserver_h_index + 1) % flserver_h_count);
++   }
++   
++   if (status) {
++     syslog(LOG_NOTICE, "dfsquota - all flservers failed");
++     return 0;
++   }
++   
++   flserver_h_index = ((flserver_h_index + 1) % flserver_h_count);
++   
++   rpc_string_binding_compose(NULL, "ncadg_ip_udp",
++                              inet_ntoa(((struct sockaddr_in *)(&fl_entry.siteAddr[0]))->sin_addr),
++                              NULL, NULL, &string_binding, &status);
++   if (status)
++     return 0;
++   
++   rpc_binding_from_string_binding(string_binding, &ftserver_h, &status);
++   rpc_string_free(&string_binding, &status2);
++   
++   if (status)
++     return 0;
++ 
++   status = FTSERVER_GetOneVolStatus(ftserver_h, &fidp.Volume, fl_entry.sitePartition[0], 0, &ft_status);
++ 
++   rpc_binding_free(&ftserver_h, &status2);
++   if (status) {
++     syslog(LOG_NOTICE, "dfsquota - ftserver call failed - %d", status);
++     return 0;
++   }
++ 
++   *quota = ((0xffc00000 & (AFS_hgethi(ft_status.vsd.visQuotaLimit) << 22)) | (0x003fffff & (AFS_hgetlo(ft_status.vsd.visQuotaLimit) >> 10)));
++ 
++   *used = ((0xffc00000 & (AFS_hgethi(ft_status.vsd.visQuotaUsage) << 22)) | (0x003fffff & (AFS_hgetlo(ft_status.vsd.visQuotaUsage) >> 10)));
++   
++   return 1;
++ }
++ #endif
++ #endif
+diff -d -c -r netatalk-1.5pre6/etc/afpd/uam.c netatalk-1.5pre6-dce-2.5/etc/afpd/uam.c
+*** netatalk-1.5pre6/etc/afpd/uam.c	Tue Apr 10 11:07:06 2001
+--- netatalk-1.5pre6-dce-2.5/etc/afpd/uam.c	Thu Jul  5 13:54:00 2001
+***************
+*** 220,226 ****
+    }
+    endusershell();
+  
+! #ifdef DISABLE_SHELLCHECK
+    if (!p) {
+      syslog( LOG_INFO, "illegal shell %s for %s", pwd->pw_shell, pwd->pw_name);
+      return -1;
+--- 220,226 ----
+    }
+    endusershell();
+  
+! #ifndef DISABLE_SHELLCHECK
+    if (!p) {
+      syslog( LOG_INFO, "illegal shell %s for %s", pwd->pw_shell, pwd->pw_name);
+      return -1;
+diff -d -c -r netatalk-1.5pre6/etc/afpd/unix.c netatalk-1.5pre6-dce-2.5/etc/afpd/unix.c
+*** netatalk-1.5pre6/etc/afpd/unix.c	Wed Feb 28 08:53:24 2001
+--- netatalk-1.5pre6-dce-2.5/etc/afpd/unix.c	Fri Jul  6 11:06:09 2001
+***************
+*** 25,30 ****
+--- 25,37 ----
+  #include "volume.h"
+  #include "unix.h"
+  
++ #ifdef WITH_DFS
++ /* chmod screws up DFS ACLs */
++ #define chmod(X, Y) (0)
++ /* why chown stuff? */
++ #define chown(X, Y, Z) (0)
++ #endif
++ 
+  /*
+   * Get the free space on a partition.
+   */
+diff -d -c -r netatalk-1.5pre6/etc/afpd/volume.c netatalk-1.5pre6-dce-2.5/etc/afpd/volume.c
+*** netatalk-1.5pre6/etc/afpd/volume.c	Wed Mar  7 07:36:54 2001
+--- netatalk-1.5pre6-dce-2.5/etc/afpd/volume.c	Tue Jul  3 16:58:45 2001
+***************
+*** 775,780 ****
+--- 775,784 ----
+    }
+  }
+  
++ #ifdef WITH_DFS
++ extern int dfsquota(char *path, int *quota, int *used);
++ #endif
++ 
+  static int getvolspace( vol, bfree, btotal, xbfree, xbtotal, bsize )
+      struct vol	*vol;
+      u_int32_t	*bfree, *btotal, *bsize;
+***************
+*** 786,797 ****
+--- 790,816 ----
+      VolSpace	qfree, qtotal;
+  #endif
+  
++ #ifdef WITH_DFS
++     int quota, used;
++ #endif
++ 
+      spaceflag = AFPVOL_GVSMASK & vol->v_flags;
+      /* report up to 2GB if afp version is < 2.2 (4GB if not) */
+      maxsize = (vol->v_flags & AFPVOL_A2VOL) ? 0x01fffe00 :
+        (((afp_version < 22) || (vol->v_flags & AFPVOL_LIMITSIZE))
+         ? 0x7fffffffL : 0xffffffffL);
+  
++ #define min(a,b)      ((a)<(b)?(a):(b))
++ #ifdef WITH_DFS
++     if (dfsquota(vol->v_path, &quota, &used))
++       {
++       *bsize = 1024;
++         *xbfree = *bfree = min((quota - used) * 1024, (unsigned int)maxsize);
++         *xbtotal = *btotal = min(quota * 1024, (unsigned int)maxsize);
++         return (AFP_OK);
++       }
++ #endif
++ 
+  #ifdef AFS
+      if ( spaceflag == AFPVOL_NONE || spaceflag == AFPVOL_AFSGVS ) {
+  	if ( afs_getvolspace( vol, xbfree, xbtotal, bsize ) == AFP_OK ) {
+***************
+*** 806,812 ****
+  	return( rc );
+      }
+  
+- #define min(a,b)	((a)<(b)?(a):(b))
+  #ifndef NO_QUOTA_SUPPORT
+      if ( spaceflag == AFPVOL_NONE || spaceflag == AFPVOL_UQUOTA ) {
+  	if ( uquota_getvolspace( vol, &qfree, &qtotal, *bsize ) == AFP_OK ) {
+--- 825,830 ----
+diff -d -c -r netatalk-1.5pre6/etc/uams/uams_passwd.c netatalk-1.5pre6-dce-2.5/etc/uams/uams_passwd.c
+*** netatalk-1.5pre6/etc/uams/uams_passwd.c	Tue Feb 27 09:07:43 2001
+--- netatalk-1.5pre6-dce-2.5/etc/uams/uams_passwd.c	Fri Jul  6 09:34:10 2001
+***************
+*** 33,38 ****
+--- 33,184 ----
+  
+  #define PASSWDLEN 8
+  
++ #ifdef WITH_DCE
++ 
++ #define DCE_CREDS_DIR "/opt/dcelocal/var/security/creds"
++ 
++ #include <dce/sec_login.h>
++ #include <dce/dce_error.h>
++ #include <dce/acct.h>
++ 
++ extern sec_login_handle_t dce_login_context;
++ 
++ #ifdef WITH_DCE_REFRESH
++ 
++ #include <dce/pthread.h>
++ 
++ extern sec_passwd_str_t dce_refresh_plaintext;
++ extern sec_passwd_type_t dce_passwd_type;
++ 
++ pthread_addr_t dce_refresh_context();
++ #endif
++ 
++ int dce_login(struct passwd *pwd, char *password) {
++   
++   error_status_t dce_st;
++   dce_error_string_t dce_error;
++   int dce_error_st;
++   sec_login_auth_src_t auth_src;
++   sec_passwd_rec_t pw_entry;
++   boolean32 reset_passwd;
++   sec_passwd_str_t tmp_pw;
++ 
++ #ifdef WITH_DCE_REFRESH
++   pthread_t refresh_thread;
++ #endif
++   
++   if (!sec_login_setup_identity(pwd->pw_name, sec_login_no_flags, &dce_login_context, &dce_st)) {
++     dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++     syslog(LOG_NOTICE, "unable to setup identity for %s - %s", pwd->pw_name, dce_error);
++     return 0;
++   }
++ 
++   pw_entry.version_number = sec_passwd_c_version_none;
++   pw_entry.pepper = NULL;
++   pw_entry.key.key_type = sec_passwd_plain;
++   strncpy( (char *)tmp_pw, password, sec_passwd_str_max_len);
++   tmp_pw[sec_passwd_str_max_len] = '\0';
++   pw_entry.key.tagged_union.plain = &(tmp_pw[0]);
++ 
++   if (!sec_login_valid_and_cert_ident(dce_login_context, &pw_entry, &reset_passwd, &auth_src, &dce_st)) {
++     dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++     syslog(LOG_NOTICE, "unable to validate identity for %s - %s", pwd->pw_name, dce_error);
++     return 0;
++   }
++ 
++   if (auth_src != sec_login_auth_src_network) {
++     sec_login_purge_context(&dce_login_context, &dce_st);
++     syslog(LOG_NOTICE, "no network credentials for %s", pwd->pw_name);
++     return 0;
++   }
++ 
++   sec_login_set_context(dce_login_context, &dce_st);
++   if (dce_st) {
++     dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++     syslog(LOG_NOTICE, "unable to set context for %s - %s", pwd->pw_name, dce_error);
++     sec_login_purge_context(&dce_login_context, &dce_st);
++     return 0;
++   }
++   
++ #ifdef WITH_DCE_IBM_KLUDGE
++   {
++     char path[MAXPATHLEN];
++     char *krb5ccname;
++     char *pag_str;
++     unsigned long pag;
++ 
++     if (krb5ccname = getenv("KRB5CCNAME"))
++       if (pag_str = strrchr(krb5ccname, '_')) {
++ 	pag = strtol(pag_str+1, NULL, 16);
++ 	
++ 	snprintf(path, MAXPATHLEN, "%s/dcecred_%08x", DCE_CREDS_DIR, pag);
++ 	path[MAXPATHLEN-1] = '\0';
++ 	chown(path, pwd->pw_uid, pwd->pw_gid);
++ 	
++ 	snprintf(path, MAXPATHLEN, "%s/dcecred_%08x.data", DCE_CREDS_DIR, pag);
++ 	path[MAXPATHLEN-1] = '\0';
++ 	chown(path, pwd->pw_uid, pwd->pw_gid);
++ 	
++ 	snprintf(path, MAXPATHLEN, "%s/dcecred_%08x.data.db", DCE_CREDS_DIR, pag);
++ 	path[MAXPATHLEN-1] = '\0';
++ 	chown(path, pwd->pw_uid, pwd->pw_gid);
++ 	
++ 	snprintf(path, MAXPATHLEN, "%s/dcecred_%08x.nc", DCE_CREDS_DIR, pag);
++ 	path[MAXPATHLEN-1] = '\0';
++ 	chown(path, pwd->pw_uid, pwd->pw_gid);
++       }
++   }
++ #endif
++   
++ #ifdef WITH_DCE_ENCRYPTED
++   {
++     sec_rgy_login_name_t login_name;
++     sec_passwd_version_t new_version;
++     sec_passwd_rec_t key;
++     error_status_t dce_st;
++     sec_passwd_str_t pw;
++     sec_rgy_handle_t rgy_handle;
++     dce_error_string_t dce_error;
++     int dce_error_st;
++     
++     strncpy(login_name.pname, pwd->pw_name, sec_rgy_name_max_len);
++     strncpy(login_name.gname, "", sec_rgy_name_max_len);
++     strncpy(login_name.oname, "", sec_rgy_name_max_len);
++     
++     key.version_number = sec_passwd_c_version_none;
++     key.pepper = NULL;
++     key.key.key_type = sec_passwd_plain;
++     strncpy( (char *)pw, password, sec_passwd_str_max_len);
++     pw[sec_passwd_str_max_len] = '\0';
++     key.key.tagged_union.plain = &(pw[0]);
++     
++     sec_rgy_site_open_update(NULL, &rgy_handle, &dce_st);
++     
++     sec_rgy_acct_passwd(rgy_handle, &login_name, &key, &key, sec_passwd_des, &new_version, &dce_st);
++     
++     if (dce_st != error_status_ok) {
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       syslog(LOG_NOTICE, "dce_login: sec_rgy_account_password failed for %s - %s\n", pwd->pw_name, dce_error);
++       return 0;
++     }
++   }
++ #endif
++ 
++ #ifdef WITH_DCE_REFRESH
++   dce_passwd_type = sec_passwd_plain;
++   strncpy( (char *)dce_refresh_plaintext, password, sec_passwd_str_max_len);
++   dce_refresh_plaintext[sec_passwd_str_max_len] = '\0';
++ 
++   if (pthread_create(&refresh_thread, pthread_attr_default, dce_refresh_context, (void *)NULL))
++     syslog(LOG_NOTICE, "dce_login: pthread_create failed\n");
++ 
++   pthread_detach(&refresh_thread);
++ #endif
++   
++   return 1;
++ }
++ #endif
++ 
+  /* cleartxt login */
+  static int passwd_login(void *obj, struct passwd **uam_pwd,
+  			char *ibuf, int ibuflen,
+***************
+*** 84,91 ****
+--- 230,241 ----
+  
+      *uam_pwd = pwd;
+  
++ #ifdef WITH_DCE
++     if (dce_login(pwd, ibuf))
++ #else
+      p = crypt( ibuf, pwd->pw_passwd );
+      if ( strcmp( p, pwd->pw_passwd ) == 0 ) 
++ #endif
+        return AFP_OK;
+  
+      return AFPERR_NOTAUTH;
+diff -d -c -r netatalk-1.5pre6/etc/uams/uams_randnum.c netatalk-1.5pre6-dce-2.5/etc/uams/uams_randnum.c
+*** netatalk-1.5pre6/etc/uams/uams_randnum.c	Tue Feb 27 09:07:43 2001
+--- netatalk-1.5pre6-dce-2.5/etc/uams/uams_randnum.c	Fri Jul  6 10:02:59 2001
+***************
+*** 320,328 ****
+--- 320,330 ----
+    if (uam_checkuser(randpwd) < 0)
+      return AFPERR_NOTAUTH;
+  
++ #ifndef WITH_DCE_ENCRYPTED
+    if ((err = randpass(randpwd, passwdfile, seskey,
+  		      sizeof(seskey), 0)) != AFP_OK)
+      return err;
++ #endif
+  
+    /* get a random number */
+    len = sizeof(randbuf);
+***************
+*** 342,347 ****
+--- 344,353 ----
+    return AFPERR_AUTHCONT;
+  }
+  
++ #ifdef WITH_DCE_ENCRYPTED
++ int dce_randnum_login(struct passwd *pwd, char challenge[8], char response[8]);
++ int dce_rand2num_login(struct passwd *pwd, char s_challenge[8], char c_response[8], char c_challenge[8], char s_response[8]);
++ #endif
+  
+  /* check encrypted reply. we actually setup the encryption stuff
+   * here as the first part of randnum and rand2num are identical. */
+***************
+*** 359,364 ****
+--- 365,375 ----
+  
+    ibuf += sizeof(sessid);
+  
++ #ifdef WITH_DCE_ENCRYPTED
++   if (!dce_randnum_login(randpwd, randbuf, ibuf))
++     return AFPERR_NOTAUTH;
++ #else
++     
+    /* encrypt. this saves a little space by using the fact that
+     * des can encrypt in-place without side-effects. */
+    key_sched((C_Block *) seskey, seskeysched);
+***************
+*** 373,378 ****
+--- 384,391 ----
+      return AFPERR_NOTAUTH;
+    }
+  
++ #endif
++   
+    memset(randbuf, 0, sizeof(randbuf));
+    *uam_pwd = randpwd;
+    return AFP_OK;
+***************
+*** 400,405 ****
+--- 413,425 ----
+  
+    ibuf += sizeof(sessid);
+  
++ #ifdef WITH_DCE_ENCRYPTED
++   if (!dce_rand2num_login(randpwd, randbuf, ibuf, ibuf+8, rbuf))
++     return AFPERR_NOTAUTH;
++   else
++     *rbuflen = 8;
++ #else
++     
+    /* shift key elements left one bit */
+    for (i = 0; i < sizeof(seskey); i++)
+      seskey[i] <<= 1;
+***************
+*** 424,429 ****
+--- 444,451 ----
+  	       seskeysched, DES_ENCRYPT);
+    memset(seskeysched, 0, sizeof(seskeysched));
+    *rbuflen = sizeof(randbuf);
++ 
++ #endif
+    
+    *uam_pwd = randpwd;
+    return AFP_OK;
+diff -d -c -r netatalk-1.5pre6/libatalk/adouble/ad_open.c netatalk-1.5pre6-dce-2.5/libatalk/adouble/ad_open.c
+*** netatalk-1.5pre6/libatalk/adouble/ad_open.c	Wed Mar 21 06:36:36 2001
+--- netatalk-1.5pre6-dce-2.5/libatalk/adouble/ad_open.c	Tue Jul  3 17:00:20 2001
+***************
+*** 535,540 ****
+--- 535,544 ----
+      struct stat		stbuf;
+      char 		*slash;
+  
++ #ifdef WITH_DFS
++     return mode;
++ #else
++ 
+      if ( mode == 0 ) {
+  	return( mode );		/* save on syscalls */
+      }
+***************
+*** 561,566 ****
+--- 565,571 ----
+      }
+  
+      return( mode & stbuf.st_mode );
++ #endif
+  }
+  
+  /*
+diff -d -c -r netatalk-1.5pre6/libatalk/dsi/dsi_tcp.c netatalk-1.5pre6-dce-2.5/libatalk/dsi/dsi_tcp.c
+*** netatalk-1.5pre6/libatalk/dsi/dsi_tcp.c	Thu Oct  5 06:51:35 2000
+--- netatalk-1.5pre6-dce-2.5/libatalk/dsi/dsi_tcp.c	Tue Jul  3 17:18:16 2001
+***************
+*** 88,93 ****
+--- 88,94 ----
+  {
+    pid_t pid;
+    SOCKLEN_T len;
++   sigset_t sigs;
+  
+    len = sizeof(dsi->client);
+    dsi->socket = accept(dsi->serversock, (struct sockaddr *) &dsi->client,
+***************
+*** 110,121 ****
+--- 111,128 ----
+    if (dsi->socket < 0)
+      return -1;
+  
++   sigemptyset(&sigs);
++   sigaddset(&sigs, SIGCHLD);
++   sigprocmask(SIG_BLOCK, &sigs, NULL);
++ 
+    if ((pid = fork()) == 0) { /* child */
+      static const struct itimerval timer = {{0, 0}, {DSI_TCPTIMEOUT, 0}};
+      struct sigaction newact, oldact;
+      u_int8_t block[DSI_BLOCKSIZ];
+      size_t stored;
+      
++     sigprocmask(SIG_UNBLOCK, &sigs, NULL);
++ 
+      /* reset a couple signals */
+      signal(SIGTERM, SIG_DFL); 
+      signal(SIGHUP, SIG_DFL);
+***************
+*** 185,190 ****
+--- 192,199 ----
+  	   dsi->socket);
+    }
+    
++   sigprocmask(SIG_UNBLOCK, &sigs, NULL);
++ 
+    /* send back our pid */
+    return pid;
+  }

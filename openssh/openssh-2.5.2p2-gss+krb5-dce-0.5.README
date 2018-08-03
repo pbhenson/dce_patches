@@ -1,0 +1,90 @@
+DCE integration patch v0.5 for openssh-2.5.2p2-gss+krb5
+-----------------------------------------------------------------
+
+This patch adds DCE integration to OpenSSH. It includes plaintext
+password support and extends Kerberos V TGT forwarding to generate
+a DCE context. Note that only SSH protocol version 1 is currently
+supported.
+
+To utilize the patch, first retrieve openssh-2.5.2p2 from
+
+    http://www.openssh.org/
+
+
+Next, retrieve the GSSAPI and Kerberos V patches for openssh from
+
+    http://www.sxw.org.uk/computing/patches/
+
+
+You must apply the Kerberos V patch, even if you only want plaintext
+password support, in order for this DCE patch to apply cleanly.
+
+After applying this patch, include the --with-dce option when
+configuring openssh. This will include plaintext password support
+and extend Kerberos V TGT forwarding if the --with-kerberos5
+option is included. After the configure has generated a Makefile,
+edit the Makefile and add the appropriate DCE libraries (generally
+at least -ldce) to the following rule:
+
+sshd$(EXEEXT): libssh.a $(LIBCOMPAT) $(SSHDOBJS)
+  $(LD) -o $@ $(SSHDOBJS) $(LDFLAGS) -lssh -lopenbsd-compat -ldce $(LIBS)
+
+
+This is necessary because the configure script only allows you to
+include libraries that apply to all binaries. Only sshd needs to be
+linked with DCE; linking the other binaries with -ldce just wastes
+memory.
+
+There appears a bug in the openssh shadow support that makes it
+believe an account is expired that really isn't. You can include
+the --without-shadow option to configure if you have this problem.
+
+The Kerberos V integration requires a DCE library that has no link
+conflicts with MIT Kerberos libraries. This is known to be true for
+Transarc DCE 2.0 under Solaris 2.6. While Transarc DCE 2.0 will link
+successfully, it obfuscates the sec_login_krb5_add_cred function.
+This patch includes a #define in auth-dce.c to handle this. If you
+aren't using Transarc DCE 2.0, you should comment out this define.
+
+Unfortunately, IBM/Transarc DCE 3.1 for Solaris has link conflicts
+with MIT Kerberos libraries. This bug has been reported to IBM, but
+no action has yet been taken. If you would like to avail of Kerberos
+integration with DCE 3.1, please contact your IBM technical support
+representative and request a status update and escalation of this
+issue.
+
+
+Feedback/Availability
+---------------------
+
+Please report any bugs or feature requests to <henson@acm.org>.
+
+The latest version of this patch is currently available at
+
+    http://www.csupomona.edu/~henson/www/projects/dce_patches/openssh/
+
+
+Changes
+-------
+
+0.5 - First publicly released version for openssh-2.5.2p2-gss+krb5
+
+
+---------------------------------------------------------------------------
+   Copyright (C) 2001 Paul Henson <henson@acm.org>
+
+   This patch is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 1, or (at your option)
+   any later version.
+
+   This patch is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License, write to the Free
+   Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+   The GNU General Public License is, as of this writing, also available
+   at http://www.gnu.org/copyleft/gpl.html

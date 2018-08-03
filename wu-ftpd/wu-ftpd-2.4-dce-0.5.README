@@ -1,0 +1,51 @@
+DCE authentication patch (version 0.5) for wu-ftpd 2.4
+------------------------------------------------------
+
+
+This patch adds DCE authentication to wu-ftpd version 2.4. I've seen a couple
+different versions floating around with a 2.4 version number. The patch
+was made based on:
+
+ftp://ftp.wustl.edu/packages/wuarchive-ftpd/wu-ftpd-2.4.tar.gz
+
+-r--r--r--   1 root       111813 Feb 11 16:04 wu-ftpd-2.4.tar.gz
+
+
+To apply the patch, acquire and untar the wu-ftpd distribution, change into
+the wu-ftpd-2.4 directory and type:
+
+patch -p1 -d . < /path/to/wu-ftpd-2.4-dce-0.5.diff
+
+
+This patch has only been tested under Solaris 2.5/Transarc 1.1. If you want
+to use this patch with a different vendor's DCE, you will need to edit
+the appropriate Makefile in src/makefiles for your system and add the
+correct libraries. You can refer to src/makefiles/Makefile.sol as an
+example.
+
+If your OS doesn't support DCE as a naming service, you will need to
+replicate your registry in local files for wu-ftpd to work. Solaris
+users can install my nss_dce package to integrate DCE into the Solaris
+naming service switch:
+
+http://www.intranet.csupomona.edu/~henson/www/projects/nss_dce/
+
+
+---------------------------------------------------------------------------
+   Copyright (C) 1997 Paul Henson <henson@acm.org>
+
+   This patch is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 1, or (at your option)
+   any later version.
+
+   This patch is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License, write to the Free
+   Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+   The GNU General Public License is, as of this writing, also available
+   at http://www.irsociety.com/webchat/gnu.html

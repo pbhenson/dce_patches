@@ -1,0 +1,54 @@
+DCE authentication/DFS fileset patch (version 3.0) for samba 2.2.5
+------------------------------------------------------------------
+
+This patch adds support for DCE authentication and DFS filesets to
+samba 2.2.5. In addition to plaintext password support, encrypted
+passwords are supported with the optional sec_auth package.
+Other features include DFS fileset quota reporting and Windows
+Terminal Server connection multiplexing.
+
+To apply the patch, first acquire the samba distribution, and then
+execute the commands:
+
+     cd /path/to/samba-2.2.5
+     patch -p1 -d . < /path/to/samba-2.2.5-dce-3.0.diff
+
+
+See the file docs/textdocs/README.DCEDFS after applying the patch
+for configuration information.
+
+If you are interested in NT 4 domain support using a DCE back end,
+you might want to look at the work of James E. Flemer
+<jflemer@acm.jhu.edu>, available at
+
+     http://www.uvm.edu/~jflemer/dce/
+
+
+Feedback/Availability
+---------------------
+
+Please report problems/requests to <henson@acm.org>.
+
+The latest version of this patch is currently available at:
+
+     http://www.csupomona.edu/~henson/www/projects/dce_patches/samba/
+
+
+---------------------------------------------------------------------------
+  Copyright (C) 1999-2002 Paul Henson <henson@acm.org>
+
+   This patch is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 1, or (at your option)
+   any later version.
+
+   This patch is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License, write to the Free
+   Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+   The GNU General Public License is, as of this writing, also available
+   at http://www.gnu.org/copyleft/gpl.html

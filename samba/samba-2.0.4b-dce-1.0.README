@@ -1,0 +1,70 @@
+DCE authentication/DFS fileset patch (version 1.0) for samba 2.0.4b
+-------------------------------------------------------------------
+
+This patch adds support for DCE authentication and DFS filesets to
+samba 2.0.4b. To apply the patch, first acquire the samba 
+distribution, and then execute the commands:
+
+     cd /path/to/samba-2.0.4b
+     patch -p1 -d . < /path/to/samba-2.0.4b-dce-1.0.diff
+
+
+Once you have installed the patch, you can use the '--with-dce' option
+when configuring to enable DCE authentication with plaintext passwords.
+To support encrypted passwords, also include the '--with-dce-encrypted'
+option. Encrypted password support requires the sec_auth package,
+available at:
+
+     http://www.csupomona.edu/~henson/www/projects/sec_auth/
+
+Encrypted password support allows you to use the 'encrypt passwords'
+option in your smb.conf file. It also supports the 'update encrypted'
+option, which allows you to automatically collect the necessary data for
+encrypted password operation while running in plaintext password mode.
+
+To enable support for DFS fileset quotas and appropriate interpretation
+of DFS ACLs, include the '--with-dfs' option. You will need the DFS
+header files and libraries to compile with DFS support. I'm unaware
+of any vendors that include these (get a clue, vendors); contact me for
+more information if you are interested.
+
+
+Changes
+-------
+
+1.0 - Updated for Samba 2.0.4b.
+
+    - Added support for encrypted passwords.
+
+
+0.5 - First publicly released version.
+
+
+Feedback/Availability
+---------------------
+
+Please report problems/requests to <henson@acm.org>.
+
+The latest version of this patch is currently available at:
+
+     http://www.csupomona.edu/~henson/www/projects/dce_patches/samba/
+
+
+---------------------------------------------------------------------------
+  Copyright (C) 1999 Paul Henson <henson@acm.org>
+
+   This patch is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 1, or (at your option)
+   any later version.
+
+   This patch is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License, write to the Free
+   Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+   The GNU General Public License is, as of this writing, also available
+   at http://www.irsociety.com/webchat/gnu.html

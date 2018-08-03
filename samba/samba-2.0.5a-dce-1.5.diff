@@ -1,0 +1,2280 @@
+diff -c -r samba-2.0.5a/source/Makefile.in samba-2.0.5a-dce-1.5/source/Makefile.in
+*** samba-2.0.5a/source/Makefile.in	Tue Jul 20 18:24:31 1999
+--- samba-2.0.5a-dce-1.5/source/Makefile.in	Thu Sep  9 15:18:24 1999
+***************
+*** 138,144 ****
+                locking/shmem.o locking/shmem_sysv.o
+  
+  PASSDB_OBJ = passdb/passdb.o passdb/smbpassfile.o passdb/smbpass.o \
+!              passdb/pass_check.o passdb/ldap.o passdb/nispass.o passdb/smbpasschange.o
+  
+  SMBD_OBJ1 = smbd/server.o smbd/files.o smbd/chgpasswd.o smbd/connection.o \
+              smbd/dfree.o smbd/dir.o smbd/password.o smbd/conn.o smbd/fileio.o \
+--- 138,144 ----
+                locking/shmem.o locking/shmem_sysv.o
+  
+  PASSDB_OBJ = passdb/passdb.o passdb/smbpassfile.o passdb/smbpass.o \
+!              passdb/pass_check.o passdb/dce_pass.o passdb/ldap.o passdb/nispass.o passdb/smbpasschange.o
+  
+  SMBD_OBJ1 = smbd/server.o smbd/files.o smbd/chgpasswd.o smbd/connection.o \
+              smbd/dfree.o smbd/dir.o smbd/password.o smbd/conn.o smbd/fileio.o \
+diff -c -r samba-2.0.5a/source/acconfig.h samba-2.0.5a-dce-1.5/source/acconfig.h
+*** samba-2.0.5a/source/acconfig.h	Tue Jul 20 18:24:31 1999
+--- samba-2.0.5a-dce-1.5/source/acconfig.h	Thu Sep  9 15:18:25 1999
+***************
+*** 17,22 ****
+--- 17,24 ----
+  #undef HAVE_SHORT_INO_T
+  #undef WITH_SMBWRAPPER
+  #undef WITH_AFS
++ #undef WITH_DCE
++ #undef WITH_DCE_ENCRYPTED
+  #undef WITH_DFS
+  #undef SUNOS5
+  #undef SUNOS4
+diff -c -r samba-2.0.5a/source/configure samba-2.0.5a-dce-1.5/source/configure
+*** samba-2.0.5a/source/configure	Tue Jul 20 18:24:51 1999
+--- samba-2.0.5a-dce-1.5/source/configure	Thu Sep  9 15:06:50 1999
+***************
+*** 21,26 ****
+--- 21,32 ----
+    --with-afs     Include AFS support
+    --without-afs  Don't include AFS support (default)"
+  ac_help="$ac_help
++   --with-dce     Include DCE support
++   --without-dce  Don't include DCE support (default)"
++ ac_help="$ac_help
++   --with-dce-encrypted     Include DCE support for encrypted passwords
++   --without-dce-encrypted  Don't include DCE support for encrypted passwords (default)"
++ ac_help="$ac_help
+    --with-dfs     Include DFS support
+    --without-dfs  Don't include DFS support (default)"
+  ac_help="$ac_help
+***************
+*** 8854,8868 ****
+  
+  
+  #################################################
+! # check for the DFS auth system
+! echo $ac_n "checking whether to use DFS auth""... $ac_c" 1>&6
+! echo "configure:8860: checking whether to use DFS auth" >&5
+  # Check whether --with-dfs or --without-dfs was given.
+  if test "${with_dfs+set}" = set; then
+    withval="$with_dfs"
+     case "$withval" in
+    yes)
+      echo "$ac_t""yes" 1>&6
+      cat >> confdefs.h <<\EOF
+  #define WITH_DFS 1
+  EOF
+--- 8860,8927 ----
+  
+  
+  #################################################
+! # Check whether --with-dce or --without-dce was given.
+! # check for the DCE auth system
+! echo $ac_n "checking whether to use DCE auth""... $ac_c" 1>&6
+! echo "configure:8790: checking whether to use DCE auth" >&5
+! if test "${with_dce+set}" = set; then
+!   withval="$with_dce"
+!    case "$withval" in
+!   yes)
+!     echo "$ac_t""yes" 1>&6
+!     LIBS="-ldce -lpthread $LIBS"
+!     CPPFLAGS="$CPPFLAGS -D_REENTRANT"
+!     cat >> confdefs.h <<\EOF
+! #define WITH_DCE 1
+! EOF
+! 
+!     ;;
+!   *)
+!     echo "$ac_t""no" 1>&6
+!     ;;
+!   esac 
+! else
+!   echo "$ac_t""no" 1>&6
+! 
+! fi
+! 
+! #################################################
+! # check for the DCE auth system w/encrypted passwords
+! echo $ac_n "checking whether to use DCE auth encrypted""... $ac_c" 1>&6
+! echo "configure:8791: checking whether to use DCE auth encrypted" >&5
+! # Check whether --with-dce-encrypted or --without-dce-encrypted was given.
+! if test "${with_dce_encrypted+set}" = set; then
+!   withval="$with_dce_encrypted"
+!    case "$withval" in
+!   yes)
+!     echo "$ac_t""yes" 1>&6
+!     LIBS="-lsec_auth $LIBS"
+!     cat >> confdefs.h <<\EOF
+! #define WITH_DCE_ENCRYPTED 1
+! EOF
+! 
+!     ;;
+!   *)
+!     echo "$ac_t""no" 1>&6
+!     ;;
+!   esac 
+! else
+!   echo "$ac_t""no" 1>&6
+! 
+! fi
+! 
+! 
+! #################################################
+! # check for DFS
+! echo $ac_n "checking whether to use DFS""... $ac_c" 1>&6
+! echo "configure:8792: checking whether to use DFS" >&5
+  # Check whether --with-dfs or --without-dfs was given.
+  if test "${with_dfs+set}" = set; then
+    withval="$with_dfs"
+     case "$withval" in
+    yes)
+      echo "$ac_t""yes" 1>&6
++     LIBS="$LIBS -ldcedfs"
+      cat >> confdefs.h <<\EOF
+  #define WITH_DFS 1
+  EOF
+diff -c -r samba-2.0.5a/source/include/config.h.in samba-2.0.5a-dce-1.5/source/include/config.h.in
+*** samba-2.0.5a/source/include/config.h.in	Tue Jul 20 18:25:05 1999
+--- samba-2.0.5a-dce-1.5/source/include/config.h.in	Thu Sep  9 15:18:25 1999
+***************
+*** 80,85 ****
+--- 80,87 ----
+  #undef HAVE_SHORT_INO_T
+  #undef WITH_SMBWRAPPER
+  #undef WITH_AFS
++ #undef WITH_DCE
++ #undef WITH_DCE_ENCRYPTED
+  #undef WITH_DFS
+  #undef SUNOS5
+  #undef SUNOS4
+diff -c -r samba-2.0.5a/source/include/proto.h samba-2.0.5a-dce-1.5/source/include/proto.h
+*** samba-2.0.5a/source/include/proto.h	Wed Jul 21 19:00:26 1999
+--- samba-2.0.5a-dce-1.5/source/include/proto.h	Thu Sep  9 15:18:25 1999
+***************
+*** 1211,1216 ****
+--- 1211,1220 ----
+                   BOOL (*sfunc)(char *),
+                   BOOL (*pfunc)(char *, char *) );
+  
++ /*The following definitions come from  passdb/dce_pass.c  */
++ 
++ struct passdb_ops *dce_initialize_password_db(void);
++ 
+  /*The following definitions come from  passdb/ldap.c  */
+  
+  struct passdb_ops *ldap_initialize_password_db(void);
+***************
+*** 1221,1229 ****
+  
+  /*The following definitions come from  passdb/pass_check.c  */
+  
+! void dfs_unlogin(void);
+  BOOL pass_check(char *user,char *password, int pwlen, struct passwd *pwd,
+  		BOOL (*fn)(char *, char *));
+  
+  /*The following definitions come from  passdb/passdb.c  */
+  
+--- 1225,1237 ----
+  
+  /*The following definitions come from  passdb/pass_check.c  */
+  
+! #ifdef WITH_DCE
+! BOOL pass_check(char *user,char *password, int pwlen, struct passwd *pwd,
+! 		BOOL (*fn)(char *, char *), sec_login_handle_t *dce_login_context);
+! #else
+  BOOL pass_check(char *user,char *password, int pwlen, struct passwd *pwd,
+  		BOOL (*fn)(char *, char *));
++ #endif WITH_DCE
+  
+  /*The following definitions come from  passdb/passdb.c  */
+  
+***************
+*** 2510,2524 ****
+--- 2518,2545 ----
+  void invalidate_vuid(uint16 vuid);
+  char *validated_username(uint16 vuid);
+  int setup_groups(char *user, uid_t uid, gid_t gid, int *p_ngroups, gid_t **p_groups);
++ #ifdef WITH_DCE
++ uint16 register_vuid(uid_t uid,gid_t gid, char *unix_name, char *requested_name, BOOL guest, sec_login_handle_t dce_login_context);
++ #else
+  uint16 register_vuid(uid_t uid,gid_t gid, char *unix_name, char *requested_name, BOOL guest);
++ #endif WITH_DCE
+  void add_session_user(char *user);
+  BOOL smb_password_check(char *password, unsigned char *part_passwd, unsigned char *c8);
++ #ifdef WITH_DCE
++ BOOL smb_password_ok(struct smb_passwd *smb_pass, uchar chal[8],
++                      uchar lm_pass[24], uchar nt_pass[24], sec_login_handle_t *dce_login_context);
++ BOOL pass_check_smb(char *user, char *domain,
++ 		uchar *chal, uchar *lm_pwd, uchar *nt_pwd,
++ 		struct passwd *pwd, sec_login_handle_t *dce_login_context);
++ BOOL password_ok(char *user, char *password, int pwlen, struct passwd *pwd, sec_login_handle_t *dce_login_context);
++ #else
+  BOOL smb_password_ok(struct smb_passwd *smb_pass, uchar chal[8],
+                       uchar lm_pass[24], uchar nt_pass[24]);
+  BOOL pass_check_smb(char *user, char *domain,
+  		uchar *chal, uchar *lm_pwd, uchar *nt_pwd,
+  		struct passwd *pwd);
+  BOOL password_ok(char *user, char *password, int pwlen, struct passwd *pwd);
++ #endif WITH_DCE
+  BOOL user_ok(char *user,int snum);
+  BOOL authorise_login(int snum,char *user,char *password, int pwlen, 
+  		     BOOL *guest,BOOL *force,uint16 vuid);
+diff -c -r samba-2.0.5a/source/include/smb.h samba-2.0.5a-dce-1.5/source/include/smb.h
+*** samba-2.0.5a/source/include/smb.h	Tue Jul 20 18:25:07 1999
+--- samba-2.0.5a-dce-1.5/source/include/smb.h	Thu Sep  9 15:18:25 1999
+***************
+*** 597,602 ****
+--- 597,606 ----
+  
+  } connection_struct;
+  
++ #ifdef WITH_DCE
++ #include <dce/sec_login.h>
++ #endif WITH_DCE
++ 
+  struct current_user
+  {
+  	connection_struct *conn;
+***************
+*** 605,610 ****
+--- 609,618 ----
+  	gid_t gid;
+  	int ngroups;
+  	gid_t *groups;
++ 
++ #ifdef WITH_DCE
++   sec_login_handle_t dce_login_context;
++ #endif
+  };
+  
+  typedef struct files_struct
+***************
+*** 669,674 ****
+--- 677,686 ----
+    int n_groups;
+    gid_t *groups;
+  
++ #ifdef WITH_DCE
++   sec_login_handle_t dce_login_context;
++ #endif WITH_DCE
++   
+    int n_sids;
+    int *sids;
+  
+***************
+*** 1334,1344 ****
+  ;
+  #else
+  int slprintf();
+- #endif
+- 
+- #ifdef WITH_DFS
+- void dfs_unlogin(void);
+- extern int dcelogin_atmost_once;
+  #endif
+  
+  #ifdef NOSTRDUP
+--- 1346,1351 ----
+diff -c -r samba-2.0.5a/source/passdb/dce_pass.c samba-2.0.5a-dce-1.5/source/passdb/dce_pass.c
+*** samba-2.0.5a/source/passdb/dce_pass.c	Fri Sep 10 17:16:37 1999
+--- samba-2.0.5a-dce-1.5/source/passdb/dce_pass.c	Thu Sep  9 15:18:25 1999
+***************
+*** 0 ****
+--- 1,138 ----
++ #include "includes.h"
++ 
++ #ifdef WITH_DCE_ENCRYPTED
++ 
++ extern int DEBUGLEVEL;
++ 
++ /***************************************************************
++  Start to enumerate the smbpasswd list. Returns a void pointer
++  to ensure no modification outside this module.
++ ****************************************************************/
++ 
++ static void *startdcesmbpwent(BOOL update)
++ {
++   return NULL;
++ }
++ 
++ /***************************************************************
++  End enumeration of the smbpasswd list.
++ ****************************************************************/
++ 
++ static void enddcesmbpwent(void *vp)
++ {
++ }
++ 
++ /*************************************************************************
++  Routine to return the next entry in the smbpasswd list.
++  *************************************************************************/
++ static struct smb_passwd *getdcesmbpwent(void *vp)
++ {
++   return NULL;
++ }
++ 
++ /*************************************************************************
++  Return the current position in the smbpasswd list as an SMB_BIG_UINT.
++  This must be treated as an opaque token.
++ *************************************************************************/
++ 
++ static SMB_BIG_UINT getdcesmbpwpos(void *vp)
++ {
++   return 0;
++ }
++ 
++ /*************************************************************************
++  Set the current position in the smbpasswd list from an SMB_BIG_UINT.
++  This must be treated as an opaque token.
++ *************************************************************************/
++ 
++ static BOOL setdcesmbpwpos(void *vp, SMB_BIG_UINT tok)
++ {
++   return 0;
++ }
++ 
++ 
++ struct smb_passwd *getdcesmbpwuid(uid_t smb_userid)
++ {
++   static struct smb_passwd pwd;
++   struct passwd *unix_pwd;
++   static pstring  user_name;
++   static unsigned char smbpwd[16] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
++   static unsigned char smbntpwd[16] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
++ 
++   if (!(unix_pwd = getpwuid(smb_userid))) {
++     DEBUG(0, ("getdcesmbpwuid getpwuid failed for %d", smb_userid));
++     return NULL;
++   }
++   
++   strncpy(user_name, unix_pwd->pw_name, 1024);
++   pwd.smb_name = user_name;
++   pwd.smb_userid = smb_userid;
++   pwd.smb_passwd = smbpwd;
++   pwd.smb_nt_passwd = smbntpwd;
++   pwd.acct_ctrl = ACB_NORMAL;  
++ 
++   return &pwd;
++ }
++ 
++ 
++ struct smb_passwd *getdcesmbpwrid(uint32 user_rid)
++ {
++   return getdcesmbpwuid(pdb_user_rid_to_uid(user_rid));
++ }
++ 
++ 
++ struct smb_passwd *getdcesmbpwnam(char *name)
++ {
++   static struct smb_passwd pwd;
++   struct passwd *unix_pwd;
++   static pstring  user_name;
++   static unsigned char smbpwd[16] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
++   static unsigned char smbntpwd[16] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
++ 
++   if (!(unix_pwd = getpwnam(name))) {
++     DEBUG(0, ("getdcesmbpwnam getpwnam failed for %s", name));
++     return NULL;
++   }
++   
++   strncpy(user_name, name, 1024);
++   pwd.smb_name = user_name;
++   pwd.smb_userid = unix_pwd->pw_uid;
++   pwd.smb_passwd = smbpwd;
++   pwd.smb_nt_passwd = smbntpwd;
++   pwd.acct_ctrl = ACB_NORMAL;  
++ 
++   return &pwd;
++ }
++ 
++ 
++ static struct passdb_ops dce_ops = {
++   startdcesmbpwent,
++   enddcesmbpwent,
++   getdcesmbpwpos,
++   setdcesmbpwpos,
++   getdcesmbpwnam,
++   getdcesmbpwuid,
++   getdcesmbpwrid,
++   getdcesmbpwent,
++   NULL,
++   NULL,
++   NULL,
++   NULL,
++   NULL,
++   NULL, 
++   NULL,
++   NULL,
++   NULL,
++   NULL,
++   NULL
++ };
++ 
++ struct passdb_ops *dce_initialize_password_db(void)
++ {    
++   return &dce_ops;
++ }
++ 
++ #else
++  /* Do *NOT* make this function static. It breaks the compile on gcc. JRA */
++  void smbpass_dummy_function(void) { } /* stop some compilers complaining */
++ #endif /* USE_SMBPASS_DB */
+diff -c -r samba-2.0.5a/source/passdb/pass_check.c samba-2.0.5a-dce-1.5/source/passdb/pass_check.c
+*** samba-2.0.5a/source/passdb/pass_check.c	Tue Jul 20 18:25:12 1999
+--- samba-2.0.5a-dce-1.5/source/passdb/pass_check.c	Thu Sep  9 15:18:25 1999
+***************
+*** 167,462 ****
+  }
+  #endif
+  
+  
+- #ifdef WITH_DFS
+- 
+- #include <dce/dce_error.h>
+  #include <dce/sec_login.h>
+  
+! /*****************************************************************
+!  This new version of the DFS_AUTH code was donated by Karsten Muuss
+!  <muuss@or.uni-bonn.de>. It fixes the following problems with the
+!  old code :
+! 
+!   - Server credentials may expire
+!   - Client credential cache files have wrong owner
+!   - purge_context() function is called with invalid argument
+! 
+!  This new code was modified to ensure that on exit the uid/gid is
+!  still root, and the original directory is restored. JRA.
+! ******************************************************************/
+! 
+! sec_login_handle_t my_dce_sec_context;
+! int dcelogin_atmost_once = 0;
+! 
+! /*******************************************************************
+! check on a DCE/DFS authentication
+! ********************************************************************/
+! static BOOL dfs_auth(char *user,char *password)
+! {
+! 	error_status_t err;
+! 	int err2;
+! 	int prterr;
+! 	signed32 expire_time, current_time;
+! 	boolean32 password_reset;
+! 	struct passwd *pw;
+! 	sec_passwd_rec_t passwd_rec;
+! 	sec_login_auth_src_t auth_src = sec_login_auth_src_network;
+! 	unsigned char dce_errstr[dce_c_error_string_len];
+! 	gid_t egid;
+! 
+! 	if (dcelogin_atmost_once) return(False);
+! 
+! #ifdef HAVE_CRYPT
+! 	/*
+! 	 * We only go for a DCE login context if the given password
+! 	 * matches that stored in the local password file.. 
+! 	 * Assumes local passwd file is kept in sync w/ DCE RGY!
+! 	 */
+! 
+! 	if (strcmp((char *)crypt(password,this_salt),this_crypted)) {
+! 		return(False);
+! 	}
+! #endif
+! 
+! 	sec_login_get_current_context(&my_dce_sec_context, &err);
+! 	if (err != error_status_ok ) {  
+! 		dce_error_inq_text(err, dce_errstr, &err2);
+! 		DEBUG(0,("DCE can't get current context. %s\n", dce_errstr));
+! 
+! 		return(False);
+! 	}
+! 
+! 	sec_login_certify_identity(my_dce_sec_context, &err);
+! 	if (err != error_status_ok) {  
+! 		dce_error_inq_text(err, dce_errstr, &err2);
+! 		DEBUG(0,("DCE can't get current context. %s\n", dce_errstr));
+! 		
+! 		return(False);
+! 	}
+! 
+! 	sec_login_get_expiration(my_dce_sec_context, &expire_time, &err);
+! 	if (err != error_status_ok) {
+! 		dce_error_inq_text(err, dce_errstr, &err2);
+! 		DEBUG(0,("DCE can't get expiration. %s\n", dce_errstr));
+! 		
+! 		return(False);
+! 	}
+!   
+! 	time(&current_time);
+! 
+! 	if (expire_time < (current_time + 60)) {
+! 		struct passwd    *pw;
+! 		sec_passwd_rec_t *key;
+!   
+! 		sec_login_get_pwent(my_dce_sec_context, 
+! 				    (sec_login_passwd_t*)&pw, &err);
+! 		if (err != error_status_ok ) {
+! 			dce_error_inq_text(err, dce_errstr, &err2);
+! 			DEBUG(0,("DCE can't get pwent. %s\n", dce_errstr));
+! 			
+! 			return(False);
+! 		}
+! 		
+! 		sec_login_refresh_identity(my_dce_sec_context, &err);
+! 		if (err != error_status_ok) { 
+! 			dce_error_inq_text(err, dce_errstr, &err2);
+! 			DEBUG(0,("DCE can't refresh identity. %s\n", 
+! 				 dce_errstr));
+! 			
+! 			return(False);
+! 		}
+!   
+! 		sec_key_mgmt_get_key(rpc_c_authn_dce_secret, NULL,
+! 				     (unsigned char *)pw->pw_name,
+! 				     sec_c_key_version_none,
+! 				     (void**)&key, &err);
+! 		if (err != error_status_ok) {
+! 			dce_error_inq_text(err, dce_errstr, &err2);
+! 			DEBUG(0,("DCE can't get key for %s. %s\n", 
+! 				 pw->pw_name, dce_errstr));
+! 
+! 			return(False);
+! 		}
+!   
+! 		sec_login_valid_and_cert_ident(my_dce_sec_context, key,
+! 					       &password_reset, &auth_src, 
+! 					       &err);
+! 		if (err != error_status_ok ) {
+! 			dce_error_inq_text(err, dce_errstr, &err2);
+! 			DEBUG(0,("DCE can't validate and certify identity for %s. %s\n", 
+! 				 pw->pw_name, dce_errstr));
+! 		}
+!   
+! 		sec_key_mgmt_free_key(key, &err);
+! 		if (err != error_status_ok ) {
+! 			dce_error_inq_text(err, dce_errstr, &err2);
+! 			DEBUG(0,("DCE can't free key.\n", dce_errstr));
+! 		}
+! 	}
+! 
+! 	if (sec_login_setup_identity((unsigned char *)user,
+! 				     sec_login_no_flags,
+! 				     &my_dce_sec_context,
+! 				     &err) == 0) {
+! 		dce_error_inq_text(err, dce_errstr, &err2);
+! 		DEBUG(0,("DCE Setup Identity for %s failed: %s\n",
+! 			 user,dce_errstr));
+! 		return(False);
+! 	}
+! 
+! 	sec_login_get_pwent(my_dce_sec_context, 
+! 			    (sec_login_passwd_t*)&pw, &err);
+! 	if (err != error_status_ok) {
+! 		dce_error_inq_text(err, dce_errstr, &err2);
+! 		DEBUG(0,("DCE can't get pwent. %s\n", dce_errstr));
+! 		
+! 		return(False);
+! 	}
+! 
+! 	sec_login_purge_context(&my_dce_sec_context, &err);
+! 	if (err != error_status_ok) {
+! 		dce_error_inq_text(err, dce_errstr, &err2);
+! 		DEBUG(0,("DCE can't purge context. %s\n", dce_errstr));
+! 
+! 		return(False);
+! 	}
+! 
+! 	/*
+! 	 * NB. I'd like to change these to call something like become_user()
+! 	 * instead but currently we don't have a connection
+! 	 * context to become the correct user. This is already
+! 	 * fairly platform specific code however, so I think
+! 	 * this should be ok. I have added code to go
+! 	 * back to being root on error though. JRA.
+! 	 */
+! 	
+! 	egid = getegid();
+! 
+! 	if (set_effective_gid(pw->pw_gid) != 0) {
+! 		DEBUG(0,("Can't set egid to %d (%s)\n", 
+! 			 pw->pw_gid, strerror(errno)));
+! 		return False;
+! 	}
+! 
+! 	if (set_effective_uid(pw->pw_uid) != 0) {
+! 		set_effective_gid(egid);
+! 		DEBUG(0,("Can't set euid to %d (%s)\n", 
+! 			 pw->pw_uid, strerror(errno)));
+! 		return False;
+! 	}
+!  
+! 	if (sec_login_setup_identity((unsigned char *)user,
+! 				     sec_login_no_flags,
+! 				     &my_dce_sec_context,
+! 				     &err) == 0) {
+! 		dce_error_inq_text(err, dce_errstr, &err2);
+! 		DEBUG(0,("DCE Setup Identity for %s failed: %s\n",
+! 			 user,dce_errstr));
+! 		goto err;
+! 	}
+! 
+! 	sec_login_get_pwent(my_dce_sec_context, 
+! 			    (sec_login_passwd_t*)&pw, &err);
+! 	if (err != error_status_ok ) {
+! 		dce_error_inq_text(err, dce_errstr, &err2);
+! 		DEBUG(0,("DCE can't get pwent. %s\n", dce_errstr));
+! 		goto err;
+! 	}
+! 
+! 	passwd_rec.version_number = sec_passwd_c_version_none;
+! 	passwd_rec.pepper = NULL;
+! 	passwd_rec.key.key_type = sec_passwd_plain;
+! 	passwd_rec.key.tagged_union.plain  = (idl_char *)password;
+! 	
+! 	sec_login_validate_identity(my_dce_sec_context,
+! 				    &passwd_rec, &password_reset,
+! 				    &auth_src, &err);
+! 	if (err != error_status_ok ) { 
+! 		dce_error_inq_text(err, dce_errstr, &err2);
+! 		DEBUG(0,("DCE Identity Validation failed for principal %s: %s\n",
+! 			 user,dce_errstr));
+! 		goto err;
+! 	}
+! 
+! 	sec_login_certify_identity(my_dce_sec_context, &err);
+! 	if (err != error_status_ok) { 
+! 		dce_error_inq_text(err, dce_errstr, &err2);
+! 		DEBUG(0,("DCE certify identity failed: %s\n", dce_errstr));
+! 		goto err;
+! 	}
+! 
+! 	if (auth_src != sec_login_auth_src_network) { 
+! 		DEBUG(0,("DCE context has no network credentials.\n"));
+! 	}
+! 
+! 	sec_login_set_context(my_dce_sec_context, &err);
+! 	if (err != error_status_ok) {  
+! 		dce_error_inq_text(err, dce_errstr, &err2);
+! 		DEBUG(0,("DCE login failed for principal %s, cant set context: %s\n",
+! 			 user,dce_errstr));
+! 		
+! 		sec_login_purge_context(&my_dce_sec_context, &err);
+! 		goto err;
+! 	}
+! 	
+! 	sec_login_get_pwent(my_dce_sec_context, 
+! 			    (sec_login_passwd_t*)&pw, &err);
+! 	if (err != error_status_ok) {
+! 		dce_error_inq_text(err, dce_errstr, &err2);
+! 		DEBUG(0,("DCE can't get pwent. %s\n", dce_errstr));
+! 		goto err;
+! 	}
+! 	
+! 	DEBUG(0,("DCE login succeeded for principal %s on pid %d\n",
+! 		 user, getpid()));
+! 	
+! 	DEBUG(3,("DCE principal: %s\n"
+! 		 "          uid: %d\n"
+! 		 "          gid: %d\n",
+! 		 pw->pw_name, pw->pw_uid, pw->pw_gid));
+! 	DEBUG(3,("         info: %s\n"
+! 		 "          dir: %s\n"
+! 		 "        shell: %s\n",
+! 		 pw->pw_gecos, pw->pw_dir, pw->pw_shell));
+! 	
+! 	sec_login_get_expiration(my_dce_sec_context, &expire_time, &err);
+! 	if (err != error_status_ok) {
+! 		dce_error_inq_text(err, dce_errstr, &err2);
+! 		DEBUG(0,("DCE can't get expiration. %s\n", dce_errstr));
+! 		goto err;
+! 	}
+! 	
+! 	set_effective_uid(0);
+! 	set_effective_gid(0);
+! 	
+! 	DEBUG(0,("DCE context expires: %s",asctime(localtime(&expire_time))));
+! 	
+! 	dcelogin_atmost_once = 1;
+! 	return (True);
+! 
+! err:
+! 
+! 	/* Go back to root, JRA. */
+! 	set_effective_uid(0);
+! 	set_effective_gid(egid);
+! 	return(False);
+! }
+! 
+! void dfs_unlogin(void)
+  {
+! 	error_status_t err;
+! 	int err2;
+! 	unsigned char dce_errstr[dce_c_error_string_len];
+! 	
+! 	sec_login_purge_context(&my_dce_sec_context, &err);
+! 	if (err != error_status_ok) {  
+! 		dce_error_inq_text(err, dce_errstr, &err2);
+! 		DEBUG(0,("DCE purge login context failed for server instance %d: %s\n",
+! 			 getpid(), dce_errstr));
+! 	}
+  }
+! #endif
+  
+  #ifdef KRB5_AUTH
+  
+--- 167,225 ----
+  }
+  #endif
+  
++ #ifdef WITH_DCE
+  
+  #include <dce/sec_login.h>
++ #include <dce/dce_error.h>
+  
+! int dce_auth(char *user, char *password, sec_login_handle_t *dce_login_context)
+  {
+!   sec_login_handle_t temp_dce_login_context;
+!   error_status_t dce_st;
+!   dce_error_string_t dce_error;
+!   int dce_error_st;
+!   sec_login_auth_src_t auth_src;
+!   sec_passwd_rec_t pw_entry;
+!   boolean32 reset_passwd;
+!   sec_passwd_str_t tmp_pw;
+! 
+!   if (!dce_login_context)
+!     dce_login_context = &temp_dce_login_context;
+!   
+!   if (!sec_login_setup_identity(user, sec_login_no_flags, dce_login_context, &dce_st))
+!     {
+!       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
+!       DEBUG(0, ("dce_auth: unable to setup identity for %s - %s\n", user, dce_error));
+!       return 0;
+!     }
+! 
+!   pw_entry.version_number = sec_passwd_c_version_none;
+!   pw_entry.pepper = NULL;
+!   pw_entry.key.key_type = sec_passwd_plain;
+!   strncpy( (char *)tmp_pw, password, sec_passwd_str_max_len);
+!   tmp_pw[sec_passwd_str_max_len] = '\0';
+!   pw_entry.key.tagged_union.plain = &(tmp_pw[0]);
+! 
+!   if (!sec_login_valid_and_cert_ident(*dce_login_context, &pw_entry, &reset_passwd, &auth_src, &dce_st))
+!     {
+!       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
+!       DEBUG(0, ("dce_auth: unable to validate identity for %s - %s\n", user, dce_error));
+!       return 0;
+!     }
+! 
+!   if (auth_src != sec_login_auth_src_network)
+!     {
+!       sec_login_purge_context(dce_login_context, &dce_st);
+!       DEBUG(0, ("dce_auth: no network credentials for %s\n", user));
+!       return 0;
+!     }
+! 
+!   if (dce_login_context == &temp_dce_login_context)
+!     sec_login_purge_context(dce_login_context, &dce_st);
+!     
+!   return 1;
+  }
+! #endif WITH_DCE
+  
+  #ifdef KRB5_AUTH
+  
+***************
+*** 630,636 ****
+--- 393,403 ----
+  offset is the first char to try and change (start with 0)
+  it assumes the string starts lowercased
+  ****************************************************************************/
++ #ifdef WITH_DCE
++ static BOOL string_combinations2(char *s,int offset,BOOL (*fn)(char *, sec_login_handle_t *),int N, sec_login_handle_t *dce_login_context)
++ #else
+  static BOOL string_combinations2(char *s,int offset,BOOL (*fn)(char *),int N)
++ #endif WITH_DCE
+  {
+  	int len = strlen(s);
+  	int i;
+***************
+*** 640,653 ****
+  #endif
+  
+  	if (N <= 0 || offset >= len) {
+! 		return(fn(s));
+  	}
+  
+  	for (i=offset;i<(len-(N-1));i++) {      
+  		char c = s[i];
+  		if (!islower(c)) continue;
+  		s[i] = toupper(c);
+  		if (string_combinations2(s,i+1,fn,N-1))
+  			return(True);
+  		s[i] = c;
+  	}
+--- 407,428 ----
+  #endif
+  
+  	if (N <= 0 || offset >= len) {
+! #ifdef WITH_DCE
+! 	  return(fn(s, dce_login_context));
+! #else
+! 	  return(fn(s));
+! #endif
+  	}
+  
+  	for (i=offset;i<(len-(N-1));i++) {      
+  		char c = s[i];
+  		if (!islower(c)) continue;
+  		s[i] = toupper(c);
++ #ifdef WITH_DCE
++ 		if (string_combinations2(s,i+1,fn,N-1, dce_login_context))
++ #else
+  		if (string_combinations2(s,i+1,fn,N-1))
++ #endif
+  			return(True);
+  		s[i] = c;
+  	}
+***************
+*** 661,671 ****
+  offset is the first char to try and change (start with 0)
+  it assumes the string starts lowercased
+  ****************************************************************************/
+  static BOOL string_combinations(char *s,BOOL (*fn)(char *),int N)
+  {
+  	int n;
+  	for (n=1;n<=N;n++)
+! 		if (string_combinations2(s,0,fn,n)) return(True);
+  	return(False);
+  }
+  
+--- 436,455 ----
+  offset is the first char to try and change (start with 0)
+  it assumes the string starts lowercased
+  ****************************************************************************/
++ #ifdef WITH_DCE
++ static BOOL string_combinations(char *s,BOOL (*fn)(char *, sec_login_handle_t *),int N, sec_login_handle_t *dce_login_context)
++ #else
+  static BOOL string_combinations(char *s,BOOL (*fn)(char *),int N)
++ #endif WITH_DCE
+  {
+  	int n;
+  	for (n=1;n<=N;n++)
+! 
+! #ifdef WITH_DCE
+! 	  if (string_combinations2(s,0,fn,n, dce_login_context)) return(True);
+! #else
+! 	  if (string_combinations2(s,0,fn,n)) return(True);
+! #endif WITH_DCE
+  	return(False);
+  }
+  
+***************
+*** 673,679 ****
+--- 457,467 ----
+  /****************************************************************************
+  core of password checking routine
+  ****************************************************************************/
++ #ifdef WITH_DCE
++ static BOOL password_check(char *password, sec_login_handle_t *dce_login_context)
++ #else
+  static BOOL password_check(char *password)
++ #endif WITH_DCE
+  {
+  
+  #ifdef WITH_PAM
+***************
+*** 693,701 ****
+  	if (afs_auth(this_user,password)) return(True);
+  #endif /* WITH_AFS */
+  	
+! #ifdef WITH_DFS
+! 	if (dfs_auth(this_user,password)) return(True);
+! #endif /* WITH_DFS */
+  
+  #ifdef KRB5_AUTH
+  	if (krb5_auth(this_user,password)) return(True);
+--- 481,489 ----
+  	if (afs_auth(this_user,password)) return(True);
+  #endif /* WITH_AFS */
+  	
+! #ifdef WITH_DCE
+! 	if (dce_auth(this_user,password, dce_login_context)) return(True);
+! #endif WITH_DCE
+  
+  #ifdef KRB5_AUTH
+  	if (krb5_auth(this_user,password)) return(True);
+***************
+*** 760,767 ****
+--- 548,560 ----
+  match is found and is used to update the encrypted password file 
+  return True on correct match, False otherwise
+  ****************************************************************************/
++ #ifdef WITH_DCE
++ BOOL pass_check(char *user,char *password, int pwlen, struct passwd *pwd,
++ 		BOOL (*fn)(char *, char *), sec_login_handle_t *dce_login_context)
++ #else
+  BOOL pass_check(char *user,char *password, int pwlen, struct passwd *pwd,
+  		BOOL (*fn)(char *, char *))
++ #endif WITH_DCE
+  {
+  	pstring pass2;
+  	int level = lp_passwordlevel();
+***************
+*** 883,889 ****
+--- 676,686 ----
+  	}
+  
+  	/* try it as it came to us */
++ #ifdef WITH_DCE
++ 	if (password_check(password, dce_login_context)) {
++ #else
+  	if (password_check(password)) {
++ #endif WITH_DCE
+  		if (fn) fn(user,password);
+  		return(True);
+  	}
+***************
+*** 900,906 ****
+--- 697,707 ----
+    
+  	/* try all lowercase */
+  	strlower(password);
++ #ifdef WITH_DCE
++ 	if (password_check(password, dce_login_context)) {
++ #else
+  	if (password_check(password)) {
++ #endif WITH_DCE
+  		if (fn) fn(user,password);
+  		return(True);
+  	}
+***************
+*** 917,923 ****
+--- 718,728 ----
+  	/* last chance - all combinations of up to level chars upper! */
+  	strlower(password);
+  
++ #ifdef WITH_DCE
++ 	if (string_combinations(password,password_check,level, dce_login_context)) {
++ #else
+  	if (string_combinations(password,password_check,level)) {
++ #endif WITH_DCE
+  		if (fn) fn(user,password);
+  		return(True);
+  	}
+diff -c -r samba-2.0.5a/source/passdb/passdb.c samba-2.0.5a-dce-1.5/source/passdb/passdb.c
+*** samba-2.0.5a/source/passdb/passdb.c	Tue Jul 20 18:25:12 1999
+--- samba-2.0.5a-dce-1.5/source/passdb/passdb.c	Thu Sep  9 15:18:25 1999
+***************
+*** 74,79 ****
+--- 74,81 ----
+  
+  #ifdef WITH_NISPLUS
+    pdb_ops =  nisplus_initialize_password_db();
++ #elif defined(WITH_DCE_ENCRYPTED)
++   pdb_ops = dce_initialize_password_db();
+  #elif defined(WITH_LDAP)
+    pdb_ops = ldap_initialize_password_db();
+  #else 
+diff -c -r samba-2.0.5a/source/rpc_server/srv_pipe.c samba-2.0.5a-dce-1.5/source/rpc_server/srv_pipe.c
+*** samba-2.0.5a/source/rpc_server/srv_pipe.c	Mon Apr 26 14:17:52 1999
+--- samba-2.0.5a-dce-1.5/source/rpc_server/srv_pipe.c	Thu Sep  9 15:18:26 1999
+***************
+*** 319,326 ****
+--- 319,331 ----
+  
+  	become_root(True);
+  
++ #ifdef WITH_DCE
++ 	if(!(p->ntlmssp_auth_validated = pass_check_smb(unix_user_name, domain,
++ 	                      (uchar*)p->challenge, lm_owf, nt_owf, NULL, NULL))) {
++ #else
+  	if(!(p->ntlmssp_auth_validated = pass_check_smb(unix_user_name, domain,
+  	                      (uchar*)p->challenge, lm_owf, nt_owf, NULL))) {
++ #endif WITH_DCE
+  		DEBUG(1,("api_pipe_ntlmssp_verify: User %s\\%s from machine %s \
+  failed authentication on named pipe %s.\n", domain, unix_user_name, wks, p->name ));
+  		unbecome_root(True);
+diff -c -r samba-2.0.5a/source/smbd/dosmode.c samba-2.0.5a-dce-1.5/source/smbd/dosmode.c
+*** samba-2.0.5a/source/smbd/dosmode.c	Tue Jul 20 18:25:20 1999
+--- samba-2.0.5a-dce-1.5/source/smbd/dosmode.c	Thu Sep  9 15:18:26 1999
+***************
+*** 81,88 ****
+  
+    DEBUG(8,("dos_mode: %s\n", path));
+  
+    if ((sbuf->st_mode & S_IWUSR) == 0)
+!       result |= aRONLY;
+  
+    if (MAP_ARCHIVE(conn) && ((sbuf->st_mode & S_IXUSR) != 0))
+      result |= aARCH;
+--- 81,92 ----
+  
+    DEBUG(8,("dos_mode: %s\n", path));
+  
++ #ifdef WITH_DFS
++   if (access(path, W_OK))
++ #else    
+    if ((sbuf->st_mode & S_IWUSR) == 0)
+! #endif
+!     result |= aRONLY;
+  
+    if (MAP_ARCHIVE(conn) && ((sbuf->st_mode & S_IXUSR) != 0))
+      result |= aARCH;
+diff -c -r samba-2.0.5a/source/smbd/ipc.c samba-2.0.5a-dce-1.5/source/smbd/ipc.c
+*** samba-2.0.5a/source/smbd/ipc.c	Wed Jul 21 19:00:33 1999
+--- samba-2.0.5a-dce-1.5/source/smbd/ipc.c	Thu Sep  9 15:18:26 1999
+***************
+*** 1708,1714 ****
+--- 1708,1718 ----
+     * Older versions of Windows seem to do this.
+     */
+  
++ #ifdef WITH_DCE
++   if (password_ok(user, pass1,strlen(pass1),NULL, NULL) &&
++ #else
+    if (password_ok(user, pass1,strlen(pass1),NULL) &&
++ #endif WITH_DCE      
+        chgpasswd(user,pass1,pass2,False))
+    {
+      SSVAL(*rparam,0,NERR_Success);
+diff -c -r samba-2.0.5a/source/smbd/password.c samba-2.0.5a-dce-1.5/source/smbd/password.c
+*** samba-2.0.5a/source/smbd/password.c	Tue Jul 20 18:25:21 1999
+--- samba-2.0.5a-dce-1.5/source/smbd/password.c	Thu Sep  9 15:40:00 1999
+***************
+*** 21,26 ****
+--- 21,35 ----
+  
+  #include "includes.h"
+  
++ #ifdef WITH_DCE_ENCRYPTED
++ 
++ #include <dce/sec_login.h>
++ #include <dce/dce_error.h>
++ #include <dce/acct.h>
++ #include <sec_auth.h>
++ 
++ #endif
++ 
+  extern int DEBUGLEVEL;
+  extern int Protocol;
+  
+***************
+*** 117,127 ****
+--- 126,149 ----
+  {
+    user_struct *vuser = get_valid_user_struct(vuid);
+  
++ #ifdef WITH_DCE
++   error_status_t dce_st;
++ #endif WITH_DCE
++ 
+    if (vuser == NULL) return;
+  
+    vuser->uid = (uid_t)-1;
+    vuser->gid = (gid_t)-1;
+  
++ #ifdef WITH_DCE
++   if (vuser->dce_login_context)
++     {
++       sec_login_purge_context(&vuser->dce_login_context, &dce_st);
++       if (dce_st)
++ 	DEBUG(0,("error purging DCE context - %d\n", dce_st));
++     }
++ #endif WITH_DCE
++ 	      
+    vuser->n_sids = 0;
+  
+    /* same number of igroups as groups */
+***************
+*** 209,215 ****
+--- 231,241 ----
+  has been given. vuid is biased by an offset. This allows us to
+  tell random client vuid's (normally zero) from valid vuids.
+  ****************************************************************************/
++ #ifdef WITH_DCE
++ uint16 register_vuid(uid_t uid,gid_t gid, char *unix_name, char *requested_name, BOOL guest, sec_login_handle_t dce_login_context)
++ #else
+  uint16 register_vuid(uid_t uid,gid_t gid, char *unix_name, char *requested_name, BOOL guest)
++ #endif WITH_DCE
+  {
+    user_struct *vuser;
+    struct passwd *pwfile; /* for getting real name from passwd file */
+***************
+*** 255,260 ****
+--- 281,291 ----
+  
+    vuser->uid = uid;
+    vuser->gid = gid;
++ 
++ #ifdef WITH_DCE
++   vuser->dce_login_context = dce_login_context;
++ #endif WITH_DCE
++   
+    vuser->guest = guest;
+    fstrcpy(vuser->name,unix_name);
+    fstrcpy(vuser->requested_name,requested_name);
+***************
+*** 308,313 ****
+--- 339,381 ----
+  	}
+      }
+  }
++ #ifdef WITH_DCE_ENCRYPTED
++ static BOOL dce_update_encrypted_pw(char *user, char *password)
++ {
++   sec_rgy_login_name_t login_name;
++   sec_passwd_version_t new_version;
++   sec_passwd_rec_t key;
++   error_status_t dce_st;
++   sec_passwd_str_t pw;
++   sec_rgy_handle_t rgy_handle;
++   dce_error_string_t dce_error;
++   int dce_error_st;
++ 
++   strncpy(login_name.pname, user, sec_rgy_name_max_len);
++   strncpy(login_name.gname, "", sec_rgy_name_max_len);
++   strncpy(login_name.oname, "", sec_rgy_name_max_len);
++   
++   key.version_number = sec_passwd_c_version_none;
++   key.pepper = NULL;
++   key.key.key_type = sec_passwd_plain;
++   strncpy( (char *)pw, password, sec_passwd_str_max_len);
++   pw[sec_passwd_str_max_len] = '\0';
++   key.key.tagged_union.plain = &(pw[0]);
++ 
++   sec_rgy_site_open_update(NULL, &rgy_handle, &dce_st);
++   
++   sec_rgy_acct_passwd(rgy_handle, &login_name, &key, &key, sec_passwd_des, &new_version, &dce_st);
++ 
++   if (dce_st != error_status_ok)
++     {
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       DEBUG(0, ("dce_update_encrypted_pw: sec_rgy_account_password failed for %s - %s\n", user, dce_error));
++       return 0;
++     }
++   
++   return 1;
++ }
++ #endif
+  
+  
+  /****************************************************************************
+***************
+*** 389,400 ****
+    return (memcmp(p24, password, 24) == 0);
+  }
+  
+  /****************************************************************************
+   Do a specific test for an smb password being correct, given a smb_password and
+   the lanman and NT responses.
+  ****************************************************************************/
+  BOOL smb_password_ok(struct smb_passwd *smb_pass, uchar chal[8],
+!                      uchar lm_pass[24], uchar nt_pass[24])
+  {
+  	uchar challenge[8];
+  
+--- 457,661 ----
+    return (memcmp(p24, password, 24) == 0);
+  }
+  
++ #ifdef WITH_DCE_ENCRYPTED
++ BOOL dce_smb_password_check(char *user, unsigned char *challenge, unsigned char *response, int hash_type, sec_login_handle_t *dce_login_context)
++ {
++   error_status_t dce_st;
++   dce_error_string_t dce_error;
++   sec_login_handle_t temp_dce_login_context;
++   int dce_error_st;
++   sec_login_auth_src_t auth_src;
++   sec_passwd_rec_t pw_entry;
++   boolean32 reset_passwd;
++   sec_passwd_str_t tmp_pw;
++   rpc_ns_handle_t lookup_context;
++   rpc_binding_vector_t *binding_vec;
++   rpc_binding_handle_t handle;
++   unsigned_char_t *server_princ_name;
++   sec_rgy_name_t princ_name;
++ 
++   if (!dce_login_context)
++     dce_login_context = &temp_dce_login_context;
++   
++   rpc_ns_binding_lookup_begin(rpc_c_ns_syntax_default, SEC_AUTH_RPC_GROUP_NAME,
++ 			      SEC_AUTH_C_IFSPEC, NULL, 5, &lookup_context,
++ 			      &dce_st);
++ 
++   if (dce_st)
++     {
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       DEBUG(0, ("rpc_ns_binding_lookup_begin failed - %s\n", dce_error));
++       return 0;
++     }
++ 
++   rpc_ns_binding_lookup_next(lookup_context, &binding_vec, &dce_st);
++ 
++   if (dce_st)
++     {
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       DEBUG(0, ("rpc_ns_binding_lookup_next failed - %s\n", dce_error));
++       return 0;
++     }
++  
++   rpc_ns_binding_lookup_done(&lookup_context, &dce_st);
++ 
++   if (dce_st)
++     {
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       DEBUG(0, ("rpc_ns_binding_lookup_done failed - %s\n", dce_error));
++       return 0;
++     }
++ 
++   while (1)
++     {
++       rpc_ns_binding_select(binding_vec, &handle, &dce_st);
++ 
++       if (dce_st)
++ 	{
++ 	  dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++ 	  DEBUG(0, ("rpc_ns_binding_select failed - %s\n", dce_error));
++ 	  rpc_binding_vector_free(&binding_vec, &dce_st);
++ 	  return 0;
++ 	}
++ 
++       rpc_ep_resolve_binding(handle, SEC_AUTH_C_IFSPEC, &dce_st);
++ 
++       if (dce_st)
++ 	{
++ 	  dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++ 	  DEBUG(0, ("rpc_ep_resolve_binding failed - %s\n", dce_error));
++ 	  rpc_binding_free(&handle, &dce_st);
++ 	  continue;
++ 	}
++   
++       rpc_mgmt_inq_server_princ_name(handle, rpc_c_authn_dce_secret,
++ 				     &server_princ_name, &dce_st);
++       
++       if (dce_st)
++ 	{
++ 	  dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++ 	  DEBUG(0, ("rpc_mgmt_inq_server_princ_name failed - %s\n", dce_error));
++ 	  rpc_binding_free(&handle, &dce_st);
++ 	  continue;
++ 	}
++ 
++       sec_id_parse_name(sec_rgy_default_handle, server_princ_name, NULL, NULL,
++ 			princ_name, NULL, &dce_st);
++       
++       if (dce_st)
++ 	{
++ 	  dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++ 	  DEBUG(0, ("sec_id_parse_name failed - %s\n", dce_error));
++ 	  rpc_binding_free(&handle, &dce_st);
++ 	  continue;
++ 	}
++ 
++       {
++ 	int is_member = sec_rgy_pgo_is_member(sec_rgy_default_handle, sec_rgy_domain_group,
++ 					      "sec_auth", princ_name, &dce_st);
++ 	
++ 	if (dce_st)
++ 	  {
++ 	    dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++ 	    DEBUG(0, ("sec_rgy_pgo_is_member failed - %s\n", dce_error));
++ 	    rpc_binding_free(&handle, &dce_st);
++ 	    continue;
++ 	  }
++ 
++ 	if (!is_member)
++ 	  {
++ 	    DEBUG(0, ("%s not valid sec_auth server\n", princ_name));
++ 	    rpc_binding_free(&handle, &dce_st);
++ 	    continue;
++ 	  }
++       }
++   
++       rpc_binding_set_auth_info(handle, server_princ_name,
++ 				rpc_c_protect_level_pkt_privacy, rpc_c_authn_dce_secret,
++ 				NULL, rpc_c_authz_name, &dce_st);
++       
++       if (dce_st)
++ 	{
++ 	  dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++ 	  DEBUG(0, ("rpc_binding_set_auth_info failed - %s\n", dce_error));
++ 	  rpc_binding_free(&handle, &dce_st);
++ 	  continue;
++ 	}
++   
++       if (hash_type == 1)
++ 	{
++ 	  sec_auth_ms_nthash(handle, user, challenge, response, (idl_byte *)&pw_entry.key.tagged_union.des_key, &dce_st);
++ 	}
++       else
++ 	{
++ 	  sec_auth_ms_lmhash(handle, user, challenge, response, (idl_byte *)&pw_entry.key.tagged_union.des_key, &dce_st);
++ 	}
++ 
++       if (dce_st == error_status_ok)
++ 	{
++ 	  rpc_binding_free(&handle, &dce_st);
++ 	  rpc_binding_vector_free(&binding_vec, &dce_st);
++ 	  break;
++ 	}
++       else if (dce_st == sec_rgy_passwd_invalid || dce_st == sec_rgy_not_authorized || dce_st == sec_rgy_not_implemented)
++ 	{
++ 	  dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++ 	  DEBUG(0, ("dce_smb_password_check: sec_auth failed for %s - %s\n", user, dce_error));
++ 	  rpc_binding_free(&handle, &dce_st);
++ 	  rpc_binding_vector_free(&binding_vec, &dce_st);
++ 	  return 0;
++ 	}
++       else
++ 	{
++ 	  dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++ 	  DEBUG(0, ("dce_smb_password_check: sec_auth failed for %s - %s\n", user, dce_error));
++ 	  rpc_binding_free(&handle, &dce_st);
++ 	}
++     }
++   
++   if (!sec_login_setup_identity(user, sec_login_no_flags, dce_login_context, &dce_st))
++     {
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       DEBUG(0, ("dce_smb_password_check: unable to setup identity for %s - %s\n", user, dce_error));
++       return 0;
++     }
++ 
++   pw_entry.pepper = NULL;
++   pw_entry.key.key_type = sec_passwd_des;
++   pw_entry.version_number = sec_passwd_c_version_none;
++   
++   if (!sec_login_valid_and_cert_ident(*dce_login_context, &pw_entry, &reset_passwd, &auth_src, &dce_st))
++     {
++       dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++       DEBUG(0, ("dce_smb_password_check: unable to validate identity for %s - %s\n", user, dce_error));
++       return 0;
++     }
++ 
++   if (auth_src != sec_login_auth_src_network)
++     {
++       sec_login_purge_context(dce_login_context, &dce_st);
++       DEBUG(0, ("dce_smb_password_check: no network credentials for %s\n", user));
++       return 0;
++     }
++ 
++   if (dce_login_context == &temp_dce_login_context)
++     sec_login_purge_context(dce_login_context, &dce_st);
++     
++   return 1;
++ }
++ #endif
++ 
+  /****************************************************************************
+   Do a specific test for an smb password being correct, given a smb_password and
+   the lanman and NT responses.
+  ****************************************************************************/
++ #ifdef WITH_DCE
++ BOOL smb_password_ok(struct smb_passwd *smb_pass, uchar chal[8],
++                      uchar lm_pass[24], uchar nt_pass[24], sec_login_handle_t *dce_login_context)
++ #else
+  BOOL smb_password_ok(struct smb_passwd *smb_pass, uchar chal[8],
+! 		     uchar lm_pass[24], uchar nt_pass[24])
+! #endif WITH_DCE
+  {
+  	uchar challenge[8];
+  
+***************
+*** 429,437 ****
+  		   use it (ie. does it exist in the smbpasswd file).
+  		*/
+  		DEBUG(4,("smb_password_ok: Checking NT MD4 password\n"));
+! 		if (smb_password_check((char *)nt_pass, 
+! 				       (uchar *)smb_pass->smb_nt_passwd, 
+! 				       challenge)) {
+  			DEBUG(4,("NT MD4 password check succeeded\n"));
+  			return(True);
+  		}
+--- 690,702 ----
+  		   use it (ie. does it exist in the smbpasswd file).
+  		*/
+  		DEBUG(4,("smb_password_ok: Checking NT MD4 password\n"));
+! 
+! #ifdef WITH_DCE_ENCRYPTED
+! 		if (dce_smb_password_check(smb_pass->smb_name, challenge, nt_pass, 1, dce_login_context))
+! #else
+! 		if (smb_password_check((char *)nt_pass, (uchar *)smb_pass->smb_nt_passwd, challenge))
+! #endif
+! 		{
+  			DEBUG(4,("NT MD4 password check succeeded\n"));
+  			return(True);
+  		}
+***************
+*** 450,458 ****
+  		return True;
+  	}
+  
+  	if((smb_pass->smb_passwd != NULL) && 
+! 	   smb_password_check((char *)lm_pass, 
+! 			      (uchar *)smb_pass->smb_passwd, challenge)) {
+  		DEBUG(4,("LM MD4 password check succeeded\n"));
+  		return(True);
+  	}
+--- 715,728 ----
+  		return True;
+  	}
+  
++ #ifdef WITH_DCE_ENCRYPTED
++ 	if((smb_pass->smb_passwd != NULL) && 
++ 	   dce_smb_password_check(smb_pass->smb_name, challenge, lm_pass, 0, dce_login_context))
++ #else
+  	if((smb_pass->smb_passwd != NULL) && 
+!  	   smb_password_check((char *)lm_pass, (uchar *)smb_pass->smb_passwd, challenge))
+! #endif WITH_DCE_ENCRYPTED
+! 	{
+  		DEBUG(4,("LM MD4 password check succeeded\n"));
+  		return(True);
+  	}
+***************
+*** 469,477 ****
+--- 739,753 ----
+  return True if the password is correct, False otherwise
+  ****************************************************************************/
+  
++ #ifdef WITH_DCE
++ BOOL pass_check_smb(char *user, char *domain,
++ 		uchar *chal, uchar *lm_pwd, uchar *nt_pwd,
++ 		struct passwd *pwd, sec_login_handle_t *dce_login_context)
++ #else
+  BOOL pass_check_smb(char *user, char *domain,
+  		uchar *chal, uchar *lm_pwd, uchar *nt_pwd,
+  		struct passwd *pwd)
++ #endif
+  {
+  	struct passwd *pass;
+  	struct smb_passwd *smb_pass;
+***************
+*** 524,530 ****
+--- 800,810 ----
+  		return(True);
+  	}
+  
++ #ifdef WITH_DCE
++ 	if (smb_password_ok(smb_pass, chal, lm_pwd, nt_pwd, dce_login_context))
++ #else
+  	if (smb_password_ok(smb_pass, chal, lm_pwd, nt_pwd))
++ #endif WITH_DCE
+  	{
+  		return(True);
+  	}
+***************
+*** 538,544 ****
+--- 818,828 ----
+  database or the encrypted SMB password database
+  return True if the password is correct, False otherwise
+  ****************************************************************************/
++ #ifdef WITH_DCE
++ BOOL password_ok(char *user, char *password, int pwlen, struct passwd *pwd, sec_login_handle_t *dce_login_context)
++ #else
+  BOOL password_ok(char *user, char *password, int pwlen, struct passwd *pwd)
++ #endif WITH_DCE
+  {
+  	if (pwlen == 24 || (lp_encrypted_passwords() && (pwlen == 0) && lp_null_passwords()))
+  	{
+***************
+*** 551,563 ****
+  			return False;
+  		}
+  
+  		return pass_check_smb(user, global_myworkgroup,
+  		                      challenge, (uchar *)password, (uchar *)password, pwd);
+  	} 
+  
+  	return pass_check(user, password, pwlen, pwd, 
+  			  lp_update_encrypted() ? 
+! 			  update_smbpassword_file : NULL);
+  }
+  
+  /****************************************************************************
+--- 835,861 ----
+  			return False;
+  		}
+  
++ #ifdef WITH_DCE
++ 		return pass_check_smb(user, global_myworkgroup,
++ 		                      challenge, (uchar *)password, (uchar *)password, pwd, dce_login_context);
++ #else
+  		return pass_check_smb(user, global_myworkgroup,
+  		                      challenge, (uchar *)password, (uchar *)password, pwd);
++ #endif WITH_DCE
+  	} 
+  
+  	return pass_check(user, password, pwlen, pwd, 
+  			  lp_update_encrypted() ? 
+! #ifdef WITH_DCE_ENCRYPTED
+! 			  dce_update_encrypted_pw
+! #else
+! 			  update_smbpassword_file
+! #endif WITH_DCE_ENCRYPTED
+! 			  : NULL
+! #ifdef WITH_DCE
+! 			  , dce_login_context
+! #endif WITH_DCE
+! 			  );
+  }
+  
+  /****************************************************************************
+***************
+*** 604,610 ****
+--- 902,912 ----
+      while (getnetgrent(&host, &user, &domain)) {
+        if (user) {
+  	if (user_ok(user, snum) && 
++ #ifdef WITH_DCE
++ 	    password_ok(user,password,pwlen,NULL, NULL)) {
++ #else
+  	    password_ok(user,password,pwlen,NULL)) {
++ #endif WITH_DCE
+  	  endnetgrent();
+  	  return(user);
+  	}
+***************
+*** 626,632 ****
+--- 928,938 ----
+  	    static fstring name;
+  	    fstrcpy(name,*member);
+  	    if (user_ok(name,snum) &&
++ #ifdef WITH_DCE
++ 		password_ok(name,password,pwlen,NULL, NULL))
++ #else
+  		password_ok(name,password,pwlen,NULL))
++ #endif WITH_DCE
+  	      return(&name[0]);
+  	    member++;
+  	  }
+***************
+*** 639,645 ****
+--- 945,955 ----
+  	  while (pwd = getpwent ()) {
+  	    if (*(pwd->pw_passwd) && pwd->pw_gid == gptr->gr_gid) {
+  	      /* This Entry have PASSWORD and same GID then check pwd */
++ #ifdef WITH_DCE
++ 	      if (password_ok(NULL, password, pwlen, pwd, NULL)) {
++ #else
+  	      if (password_ok(NULL, password, pwlen, pwd)) {
++ #endif WITH_DCE
+  		fstrcpy(tm, pwd->pw_name);
+  		endpwent ();
+  		return tm;
+***************
+*** 692,705 ****
+--- 1002,1023 ----
+  
+        /* check the given username and password */
+        if (!ok && (*user) && user_ok(user,snum)) {
++ #ifdef WITH_DCE
++ 	ok = password_ok(user,password, pwlen, NULL, NULL);
++ #else
+  	ok = password_ok(user,password, pwlen, NULL);
++ #endif WITH_DCE
+  	if (ok) DEBUG(3,("ACCEPTED: given username password ok\n"));
+        }
+  
+        /* check for a previously registered guest username */
+        if (!ok && (vuser != 0) && vuser->guest) {	  
+  	if (user_ok(vuser->name,snum) &&
++ #ifdef WITH_DCE
++ 	    password_ok(vuser->name, password, pwlen, NULL, NULL)) {
++ #else
+  	    password_ok(vuser->name, password, pwlen, NULL)) {
++ #endif WITH_DCE
+  	  fstrcpy(user, vuser->name);
+  	  vuser->guest = False;
+  	  DEBUG(3,("ACCEPTED: given password with registered user %s\n", user));
+***************
+*** 722,729 ****
+          fstring user2;
+          fstrcpy(user2,auser);
+          if (!user_ok(user2,snum)) continue;
+! 		  
+          if (password_ok(user2,password, pwlen, NULL)) {
+            ok = True;
+            fstrcpy(user,user2);
+            DEBUG(3,("ACCEPTED: session list username and given password ok\n"));
+--- 1040,1051 ----
+          fstring user2;
+          fstrcpy(user2,auser);
+          if (!user_ok(user2,snum)) continue;
+! 
+! #ifdef WITH_DCE
+!         if (password_ok(user2,password, pwlen, NULL, NULL)) {
+! #else
+          if (password_ok(user2,password, pwlen, NULL)) {
++ #endif WITH_DCE
+            ok = True;
+            fstrcpy(user,user2);
+            DEBUG(3,("ACCEPTED: session list username and given password ok\n"));
+***************
+*** 775,781 ****
+--- 1097,1107 ----
+  		fstring user2;
+  		fstrcpy(user2,auser);
+  		if (user_ok(user2,snum) && 
++ #ifdef WITH_DCE
++ 		    password_ok(user2,password,pwlen,NULL, NULL))
++ #else
+  		    password_ok(user2,password,pwlen,NULL))
++ #endif WITH_DCE
+  		  {
+  		    ok = True;
+  		    fstrcpy(user,user2);
+diff -c -r samba-2.0.5a/source/smbd/quotas.c samba-2.0.5a-dce-1.5/source/smbd/quotas.c
+*** samba-2.0.5a/source/smbd/quotas.c	Fri Feb 12 13:41:05 1999
+--- samba-2.0.5a-dce-1.5/source/smbd/quotas.c	Thu Sep  9 15:18:26 1999
+***************
+*** 30,36 ****
+  
+  extern int DEBUGLEVEL;
+  
+! #ifdef LINUX
+  
+  #include <sys/types.h>
+  #include <asm/types.h>
+--- 30,336 ----
+  
+  extern int DEBUGLEVEL;
+  
+! #ifdef WITH_DFS
+! 
+! #include <netinet/in.h>
+! #include <arpa/inet.h>
+! #include <dce/dce_error.h>
+! #include <dce/rpc.h>
+! #include <dce/exc_handling.h>
+! #include <dcedfs/param.h>
+! #include <dcedfs/osi.h>
+! #include <dcedfs/stds.h>
+! #include <dcedfs/vol_errs.h>
+! #include <dcedfs/afs4int.h>
+! #include <dcedfs/ftserver_data.h>
+! #include <dcedfs/fldb_data.h>
+! #include <dcedfs/flserver.h>
+! #include <dcedfs/ftserver.h>
+! #include <dcedfs/queue.h>
+! #include <dcedfs/volume.h>
+! #include <dcedfs/ftserver_trans.h>
+! #include <dcedfs/lock.h>
+! #include <dcedfs/bomb.h>
+! #include <dcedfs/compat.h>
+! #include <dcedfs/tkm_tokens.h>
+! #include <dcedfs/volc.h>
+! #include <dcedfs/ftserver_proc.h>
+! #include <dcedfs/ioctl.h>
+! #include <dcedfs/cm.h>
+! 
+! #define FLSERVER_H_SIZE 5
+! static rpc_binding_handle_t flserver_h[FLSERVER_H_SIZE];
+! static int flserver_h_count = 0;
+! static int flserver_h_index = 0;
+! 
+! static int path_to_fid(char *path, struct afsFid *fidp)
+! {
+!   struct afs_ioctl ioctl_data;
+! 
+!   ioctl_data.in_size = 0;
+!   ioctl_data.out_size = sizeof(afsFid);
+!   ioctl_data.out = (caddr_t) fidp;
+! 
+!   return (!pioctl(path, VIOCGETFID, &ioctl_data, 1));
+! }  
+! 
+! static int bind_flservers()
+! {
+!   unsigned32 import_status, group_status, rpc_status;
+!   rpc_ns_handle_t import_context;
+!   rpc_ns_handle_t group_context;
+!   unsigned_char_t *name, *string_binding, *protseq, *network_addr;
+!   uuid_t obj_uuid;
+!   unsigned_char_t *string_uuid;
+!   rpc_binding_handle_t temp_h;
+!   dce_error_string_t dce_error;
+!   int dce_error_st;
+!   
+! 
+!   rpc_ns_entry_object_inq_begin(rpc_c_ns_syntax_default, "/.:/fs",
+! 				&import_context, &import_status);
+! 
+!   if (import_status)
+!     {
+!       dce_error_inq_text(import_status, dce_error, &dce_error_st);      
+!       DEBUG(0, ("dfsquota: bind_flservers.entry_object_inq_begin failed - %s\n", dce_error));
+!       return 0;
+!     }
+! 
+!   rpc_ns_entry_object_inq_next(import_context, &obj_uuid, &import_status);
+! 
+!   if (import_status)
+!     {
+!       dce_error_inq_text(import_status, dce_error, &dce_error_st);      
+!       DEBUG(0, ("dfsquota: bind_flservers.entry_object_inq_next failed - %s\n", dce_error));
+!       return 0;
+!     }
+! 
+!   rpc_ns_entry_object_inq_done(&import_context, &import_status);
+! 
+!   uuid_to_string(&obj_uuid, &string_uuid, &import_status);
+! 
+!   if (import_status)
+!     {
+!       dce_error_inq_text(import_status, dce_error, &dce_error_st);      
+!       DEBUG(0, ("dfsquota: bind_flservers.uuid_to_string failed - %s\n", dce_error));
+!       return 0;
+!     }
+! 
+!   rpc_ns_group_mbr_inq_begin(rpc_c_ns_syntax_default, "/.:/fs", rpc_c_ns_syntax_default,
+!                              &group_context, &group_status);
+! 
+!   if (group_status)
+!     {
+!       dce_error_inq_text(group_status, dce_error, &dce_error_st);      
+!       DEBUG(0, ("dfsquota: bind_flservers.group_mbr_inq_begin failed - %s\n", dce_error));
+!       return 0;
+!     }
+!   
+!   while ((!group_status) &&  (flserver_h_count < FLSERVER_H_SIZE))
+!     {
+!       rpc_ns_group_mbr_inq_next(group_context, &name, &group_status);
+! 
+!       if (group_status)
+!         {
+!           if (group_status != rpc_s_no_more_members)
+!             {
+!               dce_error_inq_text(group_status, dce_error, &dce_error_st);      
+! 	      DEBUG(0, ("dfsquota: bind_flservers.group_mbr_inq_next failed - %s\n", dce_error));
+!             }
+!           continue;
+!         }
+!       
+!       rpc_ns_binding_import_begin(rpc_c_ns_syntax_default, name, NULL,
+!                                   NULL, &import_context, &import_status);
+!       
+!       if (import_status)
+!         {
+!           dce_error_inq_text(import_status, dce_error, &dce_error_st);      
+! 	  DEBUG(0, ("dfsquota: bind_flservers.binding_import_begin failed - %s\n", dce_error));
+!           rpc_ns_binding_import_done(&import_context, &import_status);
+!           continue;
+!         }
+!       
+!       rpc_ns_binding_import_next(import_context, &temp_h, &import_status);
+!       
+!       if (import_status)
+!         {
+!           dce_error_inq_text(import_status, dce_error, &dce_error_st);      
+! 	  DEBUG(0, ("dfsquota: bind_flservers.binding_import_next failed - %s\n", dce_error));
+!           rpc_ns_binding_import_done(&import_context, &import_status);
+!           continue;
+!         }
+!       
+!       rpc_binding_to_string_binding(temp_h, &string_binding, &import_status);
+!       rpc_binding_free(&temp_h, &rpc_status);
+!       
+!       if (import_status)
+!         {
+!           dce_error_inq_text(import_status, dce_error, &dce_error_st);      
+! 	  DEBUG(0, ("dfsquota: bind_flservers.to_string_binding failed - %s\n", dce_error));
+!           rpc_ns_binding_import_done(&import_context, &import_status);
+!           continue;
+!         }
+!       
+!       rpc_string_binding_parse(string_binding, NULL, &protseq, &network_addr,
+!                                NULL, NULL, &import_status);
+!       rpc_string_free(&string_binding, &rpc_status);
+!       
+!       if (import_status)
+!         {
+!           dce_error_inq_text(import_status, dce_error, &dce_error_st);      
+! 	  DEBUG(0, ("dfsquota: bind_flservers.binding_parse failed - %s\n", dce_error));
+!           rpc_ns_binding_import_done(&import_context, &import_status);
+!           continue;
+!         }
+!       
+!       rpc_string_binding_compose(string_uuid,
+!                                  protseq, network_addr, NULL, NULL,
+!                                  &string_binding, &import_status);
+!       rpc_string_free(&protseq, &rpc_status);
+!       rpc_string_free(&network_addr, &rpc_status);
+!       
+!       if (import_status)
+!         {
+!           dce_error_inq_text(import_status, dce_error, &dce_error_st);      
+! 	  DEBUG(0, ("dfsquota: bind_flservers.binding_compose failed - %s\n", dce_error));
+!           rpc_ns_binding_import_done(&import_context, &import_status);
+!           continue;
+!         }
+!       
+!       rpc_binding_from_string_binding(string_binding,
+!                                       &flserver_h[flserver_h_count],
+!                                       &import_status);
+!       rpc_string_free(&string_binding, &rpc_status);
+!       
+!       if (import_status)
+!         {
+!           dce_error_inq_text(import_status, dce_error, &dce_error_st);      
+! 	  DEBUG(0, ("dfsquota: bind_flservers.from_string_binding failed - %s\n", dce_error));
+!         }
+!       else
+!         flserver_h_count++;
+!       
+!       rpc_ns_binding_import_done(&import_context, &import_status);
+!     }
+!   rpc_ns_group_mbr_inq_done(&group_context, &group_status);
+!   rpc_string_free(&string_uuid, &import_status);
+! 
+!   return flserver_h_count;
+! }
+! 
+! 
+! BOOL disk_quotas(char *path, SMB_BIG_UINT *bsize, SMB_BIG_UINT *dfree, SMB_BIG_UINT *dsize)
+! {
+!   struct afsFid fidp;
+!   struct vldbentry fl_entry;
+!   unsigned32 status, status2;
+!   unsigned_char_t *string_binding;
+!   rpc_binding_handle_t ftserver_h;
+!   struct ftserver_status ft_status;
+!   struct afsHyper hyper;
+!   unsigned32 ft_quota, ft_used;
+!   int index;
+!   
+!   if (flserver_h_count == 0)
+!     if (!bind_flservers())
+!       {
+! 	DEBUG(0, ("dfsquota: retrying flserver bind\n"));
+! 	if (!bind_flservers())
+! 	  {
+! 	    DEBUG(0, ("dfsquota: unable to bind to any flservers\n"));
+! 	    return 0;
+! 	  }
+!       }
+!   
+!   if (!path_to_fid(path, &fidp))
+!     {
+!       DEBUG(0, ("dfsquota: path_to_fid failed for %s\n", path));
+!       return 0;
+!     }
+!   
+!   for(index = 0; index < flserver_h_count; index++)
+!     {
+!       int raised = 0;
+!       
+!       TRY
+! 	status = VL_GetEntryByID(flserver_h[flserver_h_index], &fidp.Volume, -1, &fl_entry);
+!       CATCH_ALL
+! 	status = THIS_CATCH->status.status;
+!         DEBUG(0, ("dfsquota: flserver[%d] rpc failed - %d\n", flserver_h_index, status));
+! 	raised = 1;
+!       ENDTRY
+! 	
+!       if (!raised)
+! 	{
+! 	  if (status)
+! 	    {
+! 	      DEBUG(0, ("dfsquota: flserver call failed - %d\n", status));
+! 	      return 0;
+! 	    }
+! 	  else
+! 	    break;
+! 	}
+!       else if ((status >= rpc_s_mod) && (status <= (rpc_s_mod+4096)))
+! 	{
+! 	  error_status_t reset_status;
+! 
+! 	  rpc_binding_reset(flserver_h[flserver_h_index], &reset_status);
+! 	  if (reset_status)
+! 	    DEBUG(0, ("dfsquota: flserver[%d] handle reset failed - %d\n", flserver_h_index, reset_status));
+! 	}
+!       
+!       flserver_h_index = ((flserver_h_index + 1) % flserver_h_count);
+!     }
+!   
+!   if (index == flserver_h_count)
+!     {
+!       DEBUG(0, ("dfsquota - all flservers failed\n"));
+!       return 0;
+!     }
+!   
+!   flserver_h_index = ((flserver_h_index + 1) % flserver_h_count);
+!   
+!   rpc_string_binding_compose(NULL, "ncadg_ip_udp",
+!                              inet_ntoa(((struct sockaddr_in *)(&fl_entry.siteAddr[0]))->sin_addr),
+!                              NULL, NULL, &string_binding, &status);
+!   
+!   if (status)
+!     return 0;
+!   
+!   rpc_binding_from_string_binding(string_binding, &ftserver_h, &status);
+!   rpc_string_free(&string_binding, &status2);
+!   
+!   if (status)
+!     return 0;
+! 
+!   TRY
+!     status = FTSERVER_GetOneVolStatus(ftserver_h, &fidp.Volume,
+! 				      fl_entry.sitePartition[0], 0, &ft_status);
+!   CATCH_ALL
+!     status = THIS_CATCH->status.status;
+!   ENDTRY;
+! 
+!   rpc_binding_free(&ftserver_h, &status2);
+! 
+!   if (status)
+!     {
+!       DEBUG(0, ("dfsquota: ftserver call failed - %d\n", status));
+!       return 0;
+!     }
+!   
+!   ft_quota = ((0xffc00000 & (AFS_hgethi(ft_status.vsd.visQuotaLimit) << 22)) | (0x003fffff & (AFS_hgetlo(ft_status.vsd.visQuotaLimit) >> 10)));
+! 
+!   ft_used = ((0xffc00000 & (AFS_hgethi(ft_status.vsd.visQuotaUsage) << 22)) | (0x003fffff & (AFS_hgetlo(ft_status.vsd.visQuotaUsage) >> 10)));
+! 
+!   *bsize = 1024;
+!   *dfree = (ft_quota - ft_used);
+!   *dsize = ft_quota;
+!   return 1;
+! }
+! 
+! #elif LINUX
+  
+  #include <sys/types.h>
+  #include <asm/types.h>
+diff -c -r samba-2.0.5a/source/smbd/reply.c samba-2.0.5a-dce-1.5/source/smbd/reply.c
+*** samba-2.0.5a/source/smbd/reply.c	Tue Jul 20 18:25:21 1999
+--- samba-2.0.5a-dce-1.5/source/smbd/reply.c	Thu Sep  9 15:18:26 1999
+***************
+*** 414,420 ****
+--- 414,424 ----
+        return(ERROR(0, 0xc0000000|NT_STATUS_LOGON_FAILURE));
+      }
+  
++ #ifdef WITH_DCE
++     if (!smb_password_ok(smb_trust_acct, NULL, (unsigned char *)smb_passwd, (unsigned char *)smb_nt_passwd, NULL))
++ #else
+      if (!smb_password_ok(smb_trust_acct, NULL, (unsigned char *)smb_passwd, (unsigned char *)smb_nt_passwd))
++ #endif WITH_DCE
+      {
+        DEBUG(0,("session_trust_account: Trust Account %s - password failed\n", user));
+        SSVAL(outbuf, smb_flg2, FLAGS2_32_BIT_ERROR_CODES);
+***************
+*** 592,597 ****
+--- 596,606 ----
+    uint16 sess_vuid;
+    gid_t gid;
+    uid_t uid;
++ 
++ #ifdef WITH_DCE
++   sec_login_handle_t dce_login_context;
++ #endif WITH_DCE
++   
+    int   smb_bufsize;    
+    int   smb_apasslen = 0;   
+    pstring smb_apasswd;
+***************
+*** 826,838 ****
+--- 835,855 ----
+  
+      if(smb_ntpasslen)
+      {
++ #ifdef WITH_DCE
++       if(!password_ok(user, smb_ntpasswd,smb_ntpasslen,NULL, &dce_login_context))
++ #else
+        if(!password_ok(user, smb_ntpasswd,smb_ntpasslen,NULL))
++ #endif WITH_DCE
+          DEBUG(2,("NT Password did not match for user '%s' ! Defaulting to Lanman\n", user));
+        else
+          valid_nt_password = True;
+      } 
+  
++ #ifdef WITH_DCE
++     if (!valid_nt_password && !password_ok(user, smb_apasswd,smb_apasslen,NULL, &dce_login_context))
++ #else
+      if (!valid_nt_password && !password_ok(user, smb_apasswd,smb_apasslen,NULL))
++ #endif WITH_DCE
+      {
+        if (lp_security() >= SEC_USER) 
+        {
+***************
+*** 907,913 ****
+--- 924,934 ----
+  
+    /* register the name and uid as being validated, so further connections
+       to a uid can get through without a password, on the same VC */
++ #ifdef WITH_DCE
++   sess_vuid = register_vuid(uid,gid,user,sesssetup_user,guest, dce_login_context);
++ #else
+    sess_vuid = register_vuid(uid,gid,user,sesssetup_user,guest);
++ #endif WITH_DCE
+   
+    SSVAL(outbuf,smb_uid,sess_vuid);
+    SSVAL(inbuf,smb_uid,sess_vuid);
+diff -c -r samba-2.0.5a/source/smbd/server.c samba-2.0.5a-dce-1.5/source/smbd/server.c
+*** samba-2.0.5a/source/smbd/server.c	Tue Jul 20 18:25:21 1999
+--- samba-2.0.5a-dce-1.5/source/smbd/server.c	Thu Sep  9 15:18:26 1999
+***************
+*** 40,50 ****
+  
+  extern pstring user_socket_options;
+  
+- #ifdef WITH_DFS
+- extern int dcelogin_atmost_once;
+- #endif /* WITH_DFS */
+- 
+- 
+  extern fstring remote_machine;
+  extern pstring OriginalDir;
+  extern pstring myhostname;
+--- 40,45 ----
+***************
+*** 407,419 ****
+  
+  	conn_close_all();
+  
+!     respond_to_all_remaining_local_messages();
+! 
+! #ifdef WITH_DFS
+! 	if (dcelogin_atmost_once) {
+! 		dfs_unlogin();
+! 	}
+! #endif
+  
+  	if (!reason) {   
+  		int oldlevel = DEBUGLEVEL;
+--- 402,408 ----
+  
+  	conn_close_all();
+  
+! 	respond_to_all_remaining_local_messages();
+  
+  	if (!reason) {   
+  		int oldlevel = DEBUGLEVEL;
+diff -c -r samba-2.0.5a/source/smbd/uid.c samba-2.0.5a-dce-1.5/source/smbd/uid.c
+*** samba-2.0.5a/source/smbd/uid.c	Tue Jul 20 18:25:21 1999
+--- samba-2.0.5a-dce-1.5/source/smbd/uid.c	Thu Sep  9 15:18:26 1999
+***************
+*** 28,39 ****
+--- 28,52 ----
+  
+  pstring OriginalDir;
+  
++ #ifdef WITH_DCE
++ sec_login_handle_t root_dce_login_context;
++ #endif WITH_DCE
++ 
+  /****************************************************************************
+   Initialise the uid routines.
+  ****************************************************************************/
+  
+  void init_uid(void)
+  {
++ #ifdef WITH_DCE
++   error_status_t dce_st;
++ 
++   sec_login_get_current_context(&root_dce_login_context, &dce_st);
++ 
++   if (dce_st)
++     DEBUG(0,("failed to acquire root login context - %d\n", dce_st));
++ #endif WITH_DCE
++ 	  
+  	current_user.uid = geteuid();
+  	current_user.gid = getegid();
+  
+***************
+*** 142,147 ****
+--- 155,167 ----
+    initgroups(pass->pw_name, (gid_t)pass->pw_gid);
+  #endif
+  
++ #ifdef WITH_DCE
++   /* Really should drop root DFS privs here, but we have no guest credentials
++      to switch to */
++   
++   DEBUG(0,("warning - guest user has root machine credentials for DFS access\n"));
++ #endif
++   
+    ret = become_id(pass->pw_uid,pass->pw_gid);
+  
+    if (!ret) {
+***************
+*** 188,193 ****
+--- 208,217 ----
+  	uid_t uid;
+  	char group_c;
+  
++ #ifdef WITH_DCE
++ 	error_status_t dce_st;
++ #endif WITH_DCE
++ 	
+  	if (!conn) {
+  		DEBUG(2,("Connection not open\n"));
+  		return(False);
+***************
+*** 236,241 ****
+--- 260,274 ----
+  		current_user.groups  = vuser->groups;
+  	}
+  
++ #ifdef WITH_DCE
++ 	sec_login_set_context(vuser->dce_login_context, &dce_st);
++ 	
++ 	if (dce_st) {
++ 	  DEBUG(0,("failed to set DCE login context for %s - %d\n", vuser->name, dce_st));
++ 	  return(False);
++ 	}
++ #endif WITH_DCE
++ 	
+  	/*
+  	 * See if we should force group for this service.
+  	 * If so this overrides any group set in the force
+***************
+*** 284,289 ****
+--- 317,326 ----
+  	current_user.conn = conn;
+  	current_user.vuid = vuid;
+  
++ #ifdef WITH_DCE
++ 	current_user.dce_login_context = vuser->dce_login_context;
++ #endif WITH_DCE
++ 	
+  	DEBUG(5,("become_user uid=(%d,%d) gid=(%d,%d)\n",
+  		 (int)getuid(),(int)geteuid(),(int)getgid(),(int)getegid()));
+    
+***************
+*** 296,301 ****
+--- 333,342 ----
+  
+  BOOL unbecome_user(void )
+  {
++ #ifdef WITH_DCE
++   error_status_t dce_st;
++ #endif WITH_DCE
++   
+  	if (!current_user.conn)
+  		return(False);
+  
+***************
+*** 311,316 ****
+--- 352,364 ----
+  		DEBUG(0,("Warning: You appear to have a trapdoor gid system\n"));
+  	}
+  
++ #ifdef WITH_DCE
++ 	sec_login_set_context(root_dce_login_context, &dce_st);
++ 	
++ 	if (dce_st)
++ 	  DEBUG(0,("failed to restore root DCE login context - %d\n"));
++ #endif WITH_DCE
++ 	
+  	current_user.uid = 0;
+  	current_user.gid = 0;
+    
+***************
+*** 323,328 ****
+--- 371,380 ----
+  	current_user.conn = NULL;
+  	current_user.vuid = UID_FIELD_INVALID;
+  
++ #ifdef WITH_DCE
++ 	current_user.dce_login_context = root_dce_login_context;
++ #endif WITH_DCE
++ 	
+  	return(True);
+  }
+  
+***************
+*** 351,356 ****
+--- 403,415 ----
+  		return False;
+  	}
+  
++ #ifdef WITH_DCE
++   /* Really should drop root DFS privs here, but we have no pipe user credentials
++      to switch to */
++   
++   DEBUG(0,("warning - pipe user %d has root machine credentials for DFS access\n", p->uid));
++ #endif
++ 
+  	return True;	 
+  }
+  
+***************
+*** 385,390 ****
+--- 444,453 ----
+  
+  void become_root(BOOL save_dir) 
+  {
++ #ifdef WITH_DCE
++   error_status_t dce_st;
++ #endif WITH_DCE
++   
+  	if (become_root_depth) {
+  		DEBUG(0,("ERROR: become root depth is non zero\n"));
+  	}
+***************
+*** 396,401 ****
+--- 459,471 ----
+  
+  	become_uid(0);
+  	become_gid(0);
++ 
++ #ifdef WITH_DCE
++ 	sec_login_set_context(root_dce_login_context, &dce_st);
++ 	
++ 	if (dce_st)
++ 	  DEBUG(0,("failed to set root DCE login context - %d\n", dce_st));
++ #endif WITH_DCE
+  }
+  
+  /****************************************************************************
+***************
+*** 406,411 ****
+--- 476,485 ----
+  
+  void unbecome_root(BOOL restore_dir)
+  {
++ #ifdef WITH_DCE
++   error_status_t dce_st;
++ #endif WITH_DCE
++   
+  	if (become_root_depth != 1) {
+  		DEBUG(0,("ERROR: unbecome root depth is %d\n",
+  			 become_root_depth));
+***************
+*** 432,437 ****
+--- 506,518 ----
+  	}
+  #endif
+  
++ #ifdef WITH_DCE
++ 	sec_login_set_context(current_user_saved.dce_login_context, &dce_st);
++ 	
++ 	if (dce_st)
++ 	  DEBUG(0,("failed to restore DCE login context for %d\n", current_user_saved.uid));
++ #endif WITH_DCE
++ 	
+  	/* now restore our uid */
+  	if (!become_uid(current_user_saved.uid)) {
+  		DEBUG(0,("ERROR: Failed to restore uid\n"));
+diff -c -r samba-2.0.5a/source/web/cgi.c samba-2.0.5a-dce-1.5/source/web/cgi.c
+*** samba-2.0.5a/source/web/cgi.c	Tue Jul 20 18:25:30 1999
+--- samba-2.0.5a-dce-1.5/source/web/cgi.c	Thu Sep  9 15:18:27 1999
+***************
+*** 375,381 ****
+--- 375,385 ----
+  	 * Validate the password they have given.
+  	 */
+  
++ #ifdef WITH_DCE
++ 	if((ret = pass_check(user, user_pass, strlen(user_pass), NULL, NULL, NULL)) == True) {
++ #else
+  	if((ret = pass_check(user, user_pass, strlen(user_pass), NULL, NULL)) == True) {
++ #endif WITH_DCE
+  
+  		/*
+  		 * Password was ok.

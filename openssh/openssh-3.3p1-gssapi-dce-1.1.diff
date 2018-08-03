@@ -1,0 +1,4275 @@
+diff -c -d -r openssh-3.3p1/Makefile.in openssh-3.3p1-gssapi-dce-1.1/Makefile.in
+*** openssh-3.3p1/Makefile.in	Thu Jun 20 18:38:53 2002
+--- openssh-3.3p1-gssapi-dce-1.1/Makefile.in	Tue Jun 25 15:11:53 2002
+***************
+*** 42,47 ****
+--- 42,48 ----
+  CPPFLAGS=-I. -I$(srcdir) @CPPFLAGS@ $(PATHS) @DEFS@
+  LIBS=@LIBS@
+  LIBPAM=@LIBPAM@
++ LIBDCE=@LIBDCE@
+  LIBWRAP=@LIBWRAP@
+  AR=@AR@
+  RANLIB=@RANLIB@
+***************
+*** 59,69 ****
+  
+  TARGETS=ssh$(EXEEXT) sshd$(EXEEXT) ssh-add$(EXEEXT) ssh-keygen$(EXEEXT) ssh-keyscan${EXEEXT} ssh-keysign${EXEEXT} ssh-agent$(EXEEXT) scp$(EXEEXT) ssh-rand-helper${EXEEXT} $(SFTP_PROGS)
+  
+! LIBSSH_OBJS=atomicio.o authfd.o authfile.o bufaux.o buffer.o canohost.o channels.o cipher.o compat.o compress.o crc32.o deattack.o dh.o dispatch.o fatal.o mac.o msg.o hostfile.o key.o kex.o kexdh.o kexgex.o log.o match.o misc.o mpaux.o nchan.o packet.o radix.o rijndael.o entropy.o readpass.o rsa.o scard.o scard-opensc.o ssh-dss.o ssh-rsa.o tildexpand.o ttymodes.o uidswap.o uuencode.o xmalloc.o monitor_wrap.o monitor_fdpass.o
+  
+  SSHOBJS= ssh.o sshconnect.o sshconnect1.o sshconnect2.o sshtty.o readconf.o clientloop.o
+  
+! SSHDOBJS= sshd.o auth.o auth1.o auth2.o auth2-hostbased.o auth2-kbdint.o auth2-none.o auth2-passwd.o auth2-pubkey.o auth-chall.o auth2-chall.o auth-rhosts.o auth-options.o auth-krb4.o auth-krb5.o auth-pam.o auth2-pam.o auth-passwd.o auth-rsa.o auth-rh-rsa.o auth-sia.o sshpty.o sshlogin.o loginrec.o servconf.o serverloop.o md5crypt.o session.o groupaccess.o auth-skey.o auth-bsdauth.o monitor_mm.o monitor.o
+  
+  MANPAGES	= scp.1.out ssh-add.1.out ssh-agent.1.out ssh-keygen.1.out ssh-keyscan.1.out ssh.1.out sshd.8.out sftp-server.8.out sftp.1.out ssh-rand-helper.8.out ssh-keysign.8.out sshd_config.5.out ssh_config.5.out
+  MANPAGES_IN	= scp.1 ssh-add.1 ssh-agent.1 ssh-keygen.1 ssh-keyscan.1 ssh.1 sshd.8 sftp-server.8 sftp.1 ssh-rand-helper.8 ssh-keysign.8 sshd_config.5 ssh_config.5
+--- 60,70 ----
+  
+  TARGETS=ssh$(EXEEXT) sshd$(EXEEXT) ssh-add$(EXEEXT) ssh-keygen$(EXEEXT) ssh-keyscan${EXEEXT} ssh-keysign${EXEEXT} ssh-agent$(EXEEXT) scp$(EXEEXT) ssh-rand-helper${EXEEXT} $(SFTP_PROGS)
+  
+! LIBSSH_OBJS=atomicio.o authfd.o authfile.o bufaux.o buffer.o canohost.o channels.o cipher.o compat.o compress.o crc32.o deattack.o dh.o dispatch.o fatal.o mac.o msg.o hostfile.o key.o kex.o kexdh.o kexgex.o log.o match.o misc.o mpaux.o nchan.o packet.o radix.o rijndael.o entropy.o readpass.o rsa.o scard.o scard-opensc.o ssh-dss.o ssh-rsa.o tildexpand.o ttymodes.o uidswap.o uuencode.o xmalloc.o monitor_wrap.o monitor_fdpass.o kexgss.o gss-genr.o
+  
+  SSHOBJS= ssh.o sshconnect.o sshconnect1.o sshconnect2.o sshtty.o readconf.o clientloop.o
+  
+! SSHDOBJS= sshd.o auth.o auth1.o auth2.o auth2-hostbased.o auth2-kbdint.o auth2-none.o auth2-passwd.o auth2-pubkey.o auth-chall.o auth2-chall.o auth-rhosts.o auth-options.o auth-krb4.o auth-krb5.o auth-pam.o auth2-pam.o auth-passwd.o auth-rsa.o auth-rh-rsa.o auth-sia.o sshpty.o sshlogin.o loginrec.o servconf.o serverloop.o md5crypt.o session.o groupaccess.o auth-skey.o auth-bsdauth.o monitor_mm.o monitor.o gss-serv.o auth-dce.o
+  
+  MANPAGES	= scp.1.out ssh-add.1.out ssh-agent.1.out ssh-keygen.1.out ssh-keyscan.1.out ssh.1.out sshd.8.out sftp-server.8.out sftp.1.out ssh-rand-helper.8.out ssh-keysign.8.out sshd_config.5.out ssh_config.5.out
+  MANPAGES_IN	= scp.1 ssh-add.1 ssh-agent.1 ssh-keygen.1 ssh-keyscan.1 ssh.1 sshd.8 sftp-server.8 sftp.1 ssh-rand-helper.8 ssh-keysign.8 sshd_config.5 ssh_config.5
+***************
+*** 113,119 ****
+  	$(LD) -o $@ $(SSHOBJS) $(LDFLAGS) -lssh -lopenbsd-compat $(LIBS)
+  
+  sshd$(EXEEXT): libssh.a	$(LIBCOMPAT) $(SSHDOBJS)
+! 	$(LD) -o $@ $(SSHDOBJS) $(LDFLAGS) -lssh -lopenbsd-compat $(LIBWRAP) $(LIBPAM) $(LIBS)
+  
+  scp$(EXEEXT): $(LIBCOMPAT) libssh.a scp.o
+  	$(LD) -o $@ scp.o $(LDFLAGS) -lssh -lopenbsd-compat $(LIBS)
+--- 114,120 ----
+  	$(LD) -o $@ $(SSHOBJS) $(LDFLAGS) -lssh -lopenbsd-compat $(LIBS)
+  
+  sshd$(EXEEXT): libssh.a	$(LIBCOMPAT) $(SSHDOBJS)
+! 	$(LD) -o $@ $(SSHDOBJS) $(LDFLAGS) -lssh -lopenbsd-compat $(LIBWRAP) $(LIBPAM) $(LIBS) $(LIBDCE)
+  
+  scp$(EXEEXT): $(LIBCOMPAT) libssh.a scp.o
+  	$(LD) -o $@ scp.o $(LDFLAGS) -lssh -lopenbsd-compat $(LIBS)
+diff -c -d -r openssh-3.3p1/acconfig.h openssh-3.3p1-gssapi-dce-1.1/acconfig.h
+*** openssh-3.3p1/acconfig.h	Wed Jun 12 09:57:15 2002
+--- openssh-3.3p1-gssapi-dce-1.1/acconfig.h	Mon Jun 24 17:15:50 2002
+***************
+*** 198,203 ****
+--- 198,212 ----
+  /* Define if compiler implements __func__ */
+  #undef HAVE___func__
+  
++ /* Define this is you want GSSAPI support in the version 2 protocol */
++ #undef GSSAPI
++ 
++ /* Define if you want DCE support */
++ #undef DCE
++ 
++ /* Define if you require DCE IBM kludge */
++ #undef DCE_IBM_KLUDGE
++ 
+  /* Define if you want Kerberos 5 support */
+  #undef KRB5
+  
+***************
+*** 209,214 ****
+--- 218,226 ----
+  
+  /* Define if you want AFS support */
+  #undef AFS
++ 
++ /* Define if you want GSI/Globus authentication support */
++ #undef GSI
+  
+  /* Define if you want S/Key support */
+  #undef SKEY
+diff -c -d -r openssh-3.3p1/auth-dce.c openssh-3.3p1-gssapi-dce-1.1/auth-dce.c
+*** openssh-3.3p1/auth-dce.c	Tue Jun 25 16:11:44 2002
+--- openssh-3.3p1-gssapi-dce-1.1/auth-dce.c	Mon Jun 24 17:15:50 2002
+***************
+*** 0 ****
+--- 1,358 ----
++ #include "includes.h"
++ 
++ #ifdef DCE
++ 
++ #define DCE_CREDS_DIR "/opt/dcelocal/var/security/creds"
++ 
++ /* For IBM/Transarc DCE under Solaris */
++ /* #define sec_login_krb5_add_cred _dce_ePDtOJTZvU */
++ 
++ #include <dce/sec_login.h>
++ #include <pwd.h>
++ 
++ #include "auth.h"
++ #include "ssh.h"
++ #include "ssh1.h"
++ #include "log.h"
++ 
++ static sec_login_handle_t dce_context = NULL;
++ 
++ int auth_dce_password(struct passwd *pw, char *password) {
++ 
++   sec_login_auth_src_t auth_src;
++   sec_login_tkt_info_t tkt_info;
++   sec_passwd_rec_t pw_entry;
++   boolean32 reset_passwd;
++   sec_passwd_str_t dce_pw;
++   error_status_t dce_st;
++ 
++   sec_login_setup_identity(pw->pw_name, sec_login_no_flags, &dce_context, &dce_st);
++   if (dce_st) {
++     log("auth_dce_password: sec_login_setup_identity failed - %d", (int)dce_st);
++     return 0;
++   }
++   
++   pw_entry.version_number = sec_passwd_c_version_none;
++   pw_entry.pepper = NULL;
++   pw_entry.key.key_type = sec_passwd_plain;
++ 
++   strncpy((char *)dce_pw, password, sec_passwd_str_max_len);
++   dce_pw[sec_passwd_str_max_len] = '\0';
++   pw_entry.key.tagged_union.plain = &(dce_pw[0]);
++   
++   tkt_info.options = sec_login_tkt_forwardable;
++   sec_login_tkt_request_options(dce_context, &tkt_info, &dce_st);
++ 
++   sec_login_valid_and_cert_ident(dce_context, &pw_entry, &reset_passwd, &auth_src, &dce_st);
++ 
++   if (dce_st) {
++     log("auth_dce_password: sec_login_valid_and_cert_ident failed - %d", (int)dce_st);
++     sec_login_purge_context(&dce_context, &dce_st);
++     return 0;
++   }
++   
++ #ifdef DCE_IBM_KLUDGE
++   {
++     char path[MAXPATHLEN];
++     char *krb5ccname;
++     char *pag_str;
++     unsigned long pag;
++ 
++     sec_login_set_context(dce_context, &dce_st);
++     if (dce_st) {
++       log("auth_dce_password: sec_login_set_context failed - %d", (int)dce_st);
++       sec_login_purge_context(&dce_context, &dce_st);
++       return 0;
++     }
++     
++     if (krb5ccname = getenv("KRB5CCNAME"))
++       if (pag_str = strrchr(krb5ccname, '_')) {
++ 	pag = strtol(pag_str+1, NULL, 16);
++ 	  
++ 	snprintf(path, MAXPATHLEN, "%s/dcecred_%08x", DCE_CREDS_DIR, pag);
++ 	path[MAXPATHLEN-1] = '\0';
++ 	chown(path, pw->pw_uid, pw->pw_gid);
++ 	
++ 	snprintf(path, MAXPATHLEN, "%s/dcecred_%08x.data", DCE_CREDS_DIR, pag);
++ 	path[MAXPATHLEN-1] = '\0';
++ 	chown(path, pw->pw_uid, pw->pw_gid);
++ 	
++ 	snprintf(path, MAXPATHLEN, "%s/dcecred_%08x.data.db", DCE_CREDS_DIR, pag);
++ 	path[MAXPATHLEN-1] = '\0';
++ 	chown(path, pw->pw_uid, pw->pw_gid);
++ 	
++ 	snprintf(path, MAXPATHLEN, "%s/dcecred_%08x.nc", DCE_CREDS_DIR, pag);
++ 	path[MAXPATHLEN-1] = '\0';
++ 	chown(path, pw->pw_uid, pw->pw_gid);
++       }
++   }
++ #endif
++ 
++   return 1;
++ }
++ 
++ void auth_dce_setcred(char **env, u_int *envsize) {
++ 
++   error_status_t dce_st;
++ 
++   if (!dce_context)
++     return;
++ 
++ #ifndef DCE_IBM_KLUDGE
++   sec_login_set_context(dce_context, &dce_st);
++   if (dce_st) {
++     log("auth_dce_setcred: sec_login_set_context failed - %d", (int)dce_st);
++     sec_login_purge_context(&dce_context, &dce_st);
++     return;
++   }
++ #endif
++ 
++   child_set_env(&env, envsize, "KRB5CCNAME", getenv("KRB5CCNAME"));
++ }
++ 
++ void auth_dce_cleanup() {
++ 
++   error_status_t dce_st;
++ 
++   if (!dce_context)
++     return;
++ 
++   sec_login_purge_context(&dce_context, &dce_st);
++   if (dce_st)
++     log("auth_dce_cleanup: sec_login_purge_context failed - %d", (int)dce_st);
++  
++ }
++ 
++ #ifdef KRB5
++ 
++ #include <krb5.h>
++ 
++ typedef int dce_krb5_int32;
++ typedef short dce_krb5short;
++ typedef unsigned char dce_krb5_octet;
++ typedef dce_krb5_octet dce_krb5_boolean;
++ typedef dce_krb5short dce_krb5_keytype;
++ typedef dce_krb5_int32 dce_krb5_flags;
++ typedef dce_krb5_int32 dce_krb5_timestamp;
++ typedef dce_krb5_int32 dce_krb5_addrtype;
++ 
++ typedef char *dce_krb5_pointer;
++ 
++ typedef struct _dce_krb5_keyblock {
++     dce_krb5_keytype keytype;
++     int length;
++     dce_krb5_octet *contents;
++ } dce_krb5_keyblock;
++ 
++ typedef struct _dce_krb5_ticket_times {
++     dce_krb5_timestamp authtime;
++     dce_krb5_timestamp starttime;
++     dce_krb5_timestamp endtime;
++     dce_krb5_timestamp renew_till;
++ } dce_krb5_ticket_times;
++ 
++ typedef struct _dce_krb5_data {
++      int length;
++      char *data;
++ } dce_krb5_data;
++ 
++ typedef struct _dce_krb5_authdata {
++     int ad_type;
++     int length;
++     dce_krb5_octet *contents;
++ } dce_krb5_authdata;
++ 
++ typedef struct dce_krb5_address {
++     dce_krb5_addrtype addrtype;
++     int length;
++     dce_krb5_octet *contents;
++ } dce_krb5_address;
++ 
++ typedef struct _dce_krb5_creds {
++     dce_krb5_data **client;
++     dce_krb5_data **server;
++     dce_krb5_keyblock keyblock;
++     dce_krb5_ticket_times times;
++     dce_krb5_boolean is_skey;
++     dce_krb5_flags ticket_flags;
++     dce_krb5_address **addresses;
++     dce_krb5_data ticket;
++     dce_krb5_data second_ticket;
++     dce_krb5_pointer **authdata;
++ } dce_krb5_creds;
++ 
++ static dce_krb5_creds *mit_to_dce_creds(krb5_context context, krb5_creds *creds) {
++ 
++   static dce_krb5_creds dce_creds;
++   static dce_krb5_data *client_data[3];
++   static dce_krb5_data client_data_realm;
++   static dce_krb5_data client_data_principal;
++   static dce_krb5_data *server_data[4];
++   static dce_krb5_data server_data_realm;
++   static dce_krb5_data server_data_principal;
++   static dce_krb5_data server_data_instance;
++   static dce_krb5_address *dce_krb5_addresses[2];
++   static dce_krb5_address dce_krb5_addr;
++ 
++   krb5_error_code error_code;
++   char *principal_text;
++   char *realm_text;
++   
++   if ((error_code = krb5_unparse_name(context, creds->client, &principal_text))) {
++     log("auth_dce.mit_to_dce_creds: krb5_parse_name failed: %d", error_code);
++     return NULL;
++   }
++ 
++   if (!(realm_text = strchr(principal_text, '@'))) {
++     log("auth_dce.mit_to_dce_creds: realm separator not found in principal %s", principal_text);
++     return NULL;
++   }
++ 
++   *realm_text++ = '\0';
++   
++   dce_creds.client = client_data;
++   client_data[0] = &client_data_realm;
++   client_data_realm.length = strlen(realm_text);
++   client_data_realm.data = realm_text;
++   client_data[1] = &client_data_principal;
++   client_data_principal.length = strlen(principal_text);
++   client_data_principal.data = principal_text;
++   client_data[2] = 0;
++ 
++   dce_creds.server = server_data;
++   server_data[0] = &server_data_realm;
++   server_data_realm.length = strlen(realm_text);
++   server_data_realm.data = realm_text;
++   server_data[1] = &server_data_principal;
++   server_data_principal.length = strlen("krbtgt");
++   server_data_principal.data = "krbtgt";
++   server_data[2] = &server_data_instance;
++   server_data_instance.length = strlen(realm_text);
++   server_data_instance.data = realm_text;
++   server_data[3] = 0;
++ 
++   dce_creds.keyblock.keytype = creds->keyblock.enctype;
++   dce_creds.keyblock.length = creds->keyblock.length;
++   dce_creds.keyblock.contents = creds->keyblock.contents;
++ 
++   dce_creds.times.authtime = creds->times.authtime;
++   dce_creds.times.starttime = creds->times.starttime;
++   dce_creds.times.endtime = creds->times.endtime;
++   dce_creds.times.renew_till = creds->times.renew_till;
++ 
++   dce_creds.is_skey = creds->is_skey;
++ 
++   dce_creds.ticket_flags = creds->ticket_flags;
++ 
++   dce_creds.addresses = dce_krb5_addresses;
++   dce_krb5_addresses[0] = &dce_krb5_addr;
++   dce_krb5_addr.addrtype = creds->addresses[0]->addrtype;
++   dce_krb5_addr.length = creds->addresses[0]->length;
++   dce_krb5_addr.contents = creds->addresses[0]->contents;
++   dce_krb5_addresses[1] = 0;
++ 
++   dce_creds.ticket.length = creds->ticket.length;
++   dce_creds.ticket.data = creds->ticket.data;
++ 
++   dce_creds.second_ticket.length = creds->second_ticket.length;
++   dce_creds.second_ticket.data = creds->second_ticket.data;
++ 
++   dce_creds.authdata = 0;
++ 
++   return &dce_creds;
++ }
++ 
++ int auth_dce_krb5_tgt_wrapped(Authctxt *authctxt, krb5_data *tgt)
++ {
++   krb5_error_code error_code;
++   krb5_creds **creds;
++ 
++   if ((error_code = krb5_rd_cred(authctxt->krb5_ctx, authctxt->krb5_auth_ctx, tgt, &creds, NULL))) {
++     log("auth_dce_krb5_tgt: krb5_rd_cred failed - %d", error_code);
++     return 0;
++   }
++ 
++   return auth_dce_krb5_tgt(authctxt, *creds);
++ }
++ 
++ int auth_dce_krb5_tgt(Authctxt *authctxt, krb5_creds *creds)
++ {
++   error_status_t dce_st;
++   boolean32 reset_passwd;
++   sec_login_auth_src_t auth_src;
++   dce_krb5_creds *dce_creds;
++   
++   sec_login_setup_identity(authctxt->pw->pw_name, sec_login_external_tgt|sec_login_proxy_cred, &dce_context, &dce_st);
++ 
++   if (dce_st) {
++     log("auth_dce_krb5_tgt: sec_login_setup_identity failed - %d", (int)dce_st);
++     return 0;
++   }
++ 
++   if (!(dce_creds = mit_to_dce_creds(authctxt->krb5_ctx, creds))) {
++     log("auth_dce_krb5_tgt: mit_to_dce_creds failed");
++     return 0;
++   }
++   
++   sec_login_krb5_add_cred(dce_context, dce_creds, &dce_st);
++   if (dce_st) {
++     log("auth_dce_krb5_tgt: sec_login_krb5_add_cred failed - %d", (int)dce_st);
++     sec_login_purge_context(&dce_context, &dce_st);
++     return 0;
++   }
++ 
++   sec_login_validate_identity(dce_context, NULL, &reset_passwd, &auth_src, &dce_st);
++ 
++   if (dce_st) {
++     log("auth_dce_krb5_tgt: sec_login_validate_identity failed - %d", (int)dce_st);
++     sec_login_purge_context(&dce_context, &dce_st);
++     return 0;
++   }
++ 
++   if (!sec_login_certify_identity(dce_context, &dce_st)) {
++     log("auth_dce_krb5_tgt: sec_login_certify_identity failed - %d", (int)dce_st);
++     sec_login_purge_context(&dce_context, &dce_st);
++     return 0;
++   }
++   
++ #ifdef DCE_IBM_KLUDGE
++   {
++     char path[MAXPATHLEN];
++     char *krb5ccname;
++     char *pag_str;
++     unsigned long pag;
++ 
++     sec_login_set_context(dce_context, &dce_st);
++     if (dce_st) {
++       log("auth_dce_password: sec_login_set_context failed - %d", (int)dce_st);
++       sec_login_purge_context(&dce_context, &dce_st);
++       return 0;
++     }
++   
++     if (krb5ccname = getenv("KRB5CCNAME"))
++       if (pag_str = strrchr(krb5ccname, '_')) {
++         pag = strtol(pag_str+1, NULL, 16);
++ 
++         snprintf(path, MAXPATHLEN, "%s/dcecred_%08x", DCE_CREDS_DIR, pag);
++         path[MAXPATHLEN-1] = '\0';
++         chown(path, authctxt->pw->pw_uid, authctxt->pw->pw_gid);
++ 
++         snprintf(path, MAXPATHLEN, "%s/dcecred_%08x.data", DCE_CREDS_DIR, pag);
++         path[MAXPATHLEN-1] = '\0';
++         chown(path, authctxt->pw->pw_uid, authctxt->pw->pw_gid);
++ 
++         snprintf(path, MAXPATHLEN, "%s/dcecred_%08x.data.db", DCE_CREDS_DIR, pag);
++         path[MAXPATHLEN-1] = '\0';
++         chown(path, authctxt->pw->pw_uid, authctxt->pw->pw_gid);
++ 
++         snprintf(path, MAXPATHLEN, "%s/dcecred_%08x.nc", DCE_CREDS_DIR, pag);
++         path[MAXPATHLEN-1] = '\0';
++         chown(path, authctxt->pw->pw_uid, authctxt->pw->pw_gid);
++       }
++   }
++ #endif
++ 
++   return 1;
++ }
++ #endif
++ #endif
+diff -c -d -r openssh-3.3p1/auth-krb5.c openssh-3.3p1-gssapi-dce-1.1/auth-krb5.c
+*** openssh-3.3p1/auth-krb5.c	Sun Jun  9 12:41:48 2002
+--- openssh-3.3p1-gssapi-dce-1.1/auth-krb5.c	Mon Jun 24 17:19:40 2002
+***************
+*** 183,188 ****
+--- 183,196 ----
+  
+  	temporarily_use_uid(authctxt->pw);
+  
++ #ifdef DCE
++ 	debug("Trying DCE-integrated Kerberos V5 TGT passing");
++ 
++ 	if (!auth_dce_krb5_tgt_wrapped(authctxt, tgt))
++ 		goto dcefail;
++ 
++ #else /* DCE */
++ 
+  #ifdef HEIMDAL
+  	problem = krb5_cc_gen_new(authctxt->krb5_ctx, &krb5_fcc_ops, &ccache);
+  #else
+***************
+*** 242,247 ****
+--- 250,257 ----
+  
+  	debug("Kerberos v5 TGT accepted (%s)", pname);
+  
++ #endif /* DCE */
++ 
+  	restore_uid();
+  
+  	return (1);
+***************
+*** 252,257 ****
+--- 262,271 ----
+  		    krb5_get_err_text(authctxt->krb5_ctx, problem));
+  	if (ccache)
+  		krb5_cc_destroy(authctxt->krb5_ctx, ccache);
++ 
++ #ifdef DCE
++  dcefail:
++ #endif
+  
+  	restore_uid();
+  
+diff -c -d -r openssh-3.3p1/auth-pam.c openssh-3.3p1-gssapi-dce-1.1/auth-pam.c
+*** openssh-3.3p1/auth-pam.c	Tue May  7 19:27:56 2002
+--- openssh-3.3p1-gssapi-dce-1.1/auth-pam.c	Mon Jun 24 16:07:08 2002
+***************
+*** 402,407 ****
+--- 402,427 ----
+  #endif /* HAVE_PAM_GETENVLIST */
+  }
+  
++ /* Set a PAM environment string. We need to do this so that the session
++  * modules can handle things like Kerberos/GSI credentials that appear
++  * during the ssh authentication process.
++  */
++ 
++ int do_pam_putenv(char *name, char *value) {
++ 	char *compound;
++ 	int ret=1;
++ 
++ #ifdef HAVE_PAM_PUTENV	
++ 	compound=xmalloc(strlen(name)+strlen(value)+2);
++ 	if (compound) {
++ 		sprintf(compound,"%s=%s",name,value);
++ 		ret=pam_putenv(__pamh,compound);
++ 		xfree(compound);
++ 	}
++ #endif
++ 	return(ret);
++ }
++ 
+  /* Print any messages that have been generated during authentication */
+  /* or account checking to stderr */
+  void print_pam_messages(void)
+diff -c -d -r openssh-3.3p1/auth-pam.h openssh-3.3p1-gssapi-dce-1.1/auth-pam.h
+*** openssh-3.3p1/auth-pam.h	Thu Apr  4 11:02:28 2002
+--- openssh-3.3p1-gssapi-dce-1.1/auth-pam.h	Mon Jun 24 16:07:08 2002
+***************
+*** 17,22 ****
+--- 17,23 ----
+  int is_pam_password_change_required(void);
+  void do_pam_chauthtok(void);
+  void do_pam_set_conv(struct pam_conv *);
++ int do_pam_putenv(char *, char *);
+  void message_cat(char **p, const char *a);
+  
+  #endif /* USE_PAM */
+diff -c -d -r openssh-3.3p1/auth-passwd.c openssh-3.3p1-gssapi-dce-1.1/auth-passwd.c
+*** openssh-3.3p1/auth-passwd.c	Thu Jun 20 23:05:13 2002
+--- openssh-3.3p1-gssapi-dce-1.1/auth-passwd.c	Mon Jun 24 17:15:50 2002
+***************
+*** 126,131 ****
+--- 126,137 ----
+  #endif
+  	if (*password == '\0' && options.permit_empty_passwd == 0)
+  		return 0;
++ #ifdef DCE
++ 	if (auth_dce_password(pw, password) == 1)
++ 		return 1;
++ 	/* Fall back to ordinary passwd authentication. */
++ 
++ #else /* DCE */
+  #ifdef KRB5
+  	if (options.kerberos_authentication == 1) {
+  		int ret = auth_krb5_password(authctxt, password);
+***************
+*** 134,139 ****
+--- 140,146 ----
+  		/* Fall back to ordinary passwd authentication. */
+  	}
+  #endif
++ #endif /* DCE */
+  #ifdef HAVE_CYGWIN
+  	if (is_winnt) {
+  		HANDLE hToken = cygwin_logon_user(pw, password);
+diff -c -d -r openssh-3.3p1/auth.h openssh-3.3p1-gssapi-dce-1.1/auth.h
+*** openssh-3.3p1/auth.h	Thu Jun  6 13:52:37 2002
+--- openssh-3.3p1-gssapi-dce-1.1/auth.h	Mon Jun 24 17:15:50 2002
+***************
+*** 70,75 ****
+--- 70,76 ----
+  	krb5_principal	 krb5_user;
+  	char		*krb5_ticket_file;
+  #endif
++ 	void *methoddata;
+  };
+  
+  struct Authmethod {
+***************
+*** 125,133 ****
+--- 126,144 ----
+  
+  #endif /* KRB4 */
+  
++ #ifdef DCE
++ void	auth_dce_setcred(char **env, u_int *envsize);
++ void	auth_dce_cleanup();
++ int	auth_dce_passwd(struct passwd *pw, char *password);
++ #endif /* DCE */
++ 
+  #ifdef KRB5
+  int	auth_krb5(Authctxt *authctxt, krb5_data *auth, char **client);
+  int	auth_krb5_tgt(Authctxt *authctxt, krb5_data *tgt);
++ #ifdef DCE
++ int	auth_dce_krb5_tgt_wrapped(Authctxt *authctxt, krb5_data *tgt);
++ int	auth_dce_krb5_tgt(Authctxt *authctxt, krb5_creds *creds);
++ #endif /* DCE */
+  int	auth_krb5_password(Authctxt *authctxt, const char *password);
+  void	krb5_cleanup_proc(void *authctxt);
+  #endif /* KRB5 */
+diff -c -d -r openssh-3.3p1/auth2.c openssh-3.3p1-gssapi-dce-1.1/auth2.c
+*** openssh-3.3p1/auth2.c	Thu Jun 20 23:21:11 2002
+--- openssh-3.3p1-gssapi-dce-1.1/auth2.c	Mon Jun 24 16:14:00 2002
+***************
+*** 36,41 ****
+--- 36,45 ----
+  #include "pathnames.h"
+  #include "monitor_wrap.h"
+  
++ #ifdef GSSAPI
++ #include "ssh-gss.h"
++ #endif
++ 
+  /* import */
+  extern ServerOptions options;
+  extern u_char *session_id2;
+***************
+*** 50,55 ****
+--- 54,63 ----
+  extern Authmethod method_passwd;
+  extern Authmethod method_kbdint;
+  extern Authmethod method_hostbased;
++ #ifdef GSSAPI
++ extern Authmethod method_external;
++ extern Authmethod method_gssapi;
++ #endif
+  
+  Authmethod *authmethods[] = {
+  	&method_none,
+***************
+*** 57,62 ****
+--- 65,74 ----
+  	&method_passwd,
+  	&method_kbdint,
+  	&method_hostbased,
++ #ifdef GSSAPI
++ 	&method_external,
++ 	&method_gssapi,
++ #endif
+  	NULL
+  };
+  
+***************
+*** 180,185 ****
+--- 192,203 ----
+  	}
+  	/* reset state */
+  	auth2_challenge_stop(authctxt);
++ 
++ #ifdef GSSAPI
++ 	dispatch_set(SSH2_MSG_USERAUTH_GSSAPI_TOKEN, NULL);
++ 	dispatch_set(SSH2_MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE, NULL);
++ #endif
++ 
+  	authctxt->postponed = 0;
+  
+  	/* try to authenticate user */
+diff -c -d -r openssh-3.3p1/compat.c openssh-3.3p1-gssapi-dce-1.1/compat.c
+*** openssh-3.3p1/compat.c	Wed Apr 10 09:22:10 2002
+--- openssh-3.3p1-gssapi-dce-1.1/compat.c	Mon Jun 24 16:07:09 2002
+***************
+*** 71,82 ****
+  		{ "OpenSSH_2.5.0p1*,"
+  		  "OpenSSH_2.5.1p1*",
+  					SSH_BUG_BIGENDIANAES|SSH_OLD_DHGEX|
+! 					SSH_BUG_NOREKEY|SSH_BUG_EXTEOF},
+  		{ "OpenSSH_2.5.0*,"
+  		  "OpenSSH_2.5.1*,"
+  		  "OpenSSH_2.5.2*",	SSH_OLD_DHGEX|SSH_BUG_NOREKEY|
+  					SSH_BUG_EXTEOF},
+  		{ "OpenSSH_2.5.3*",	SSH_BUG_NOREKEY|SSH_BUG_EXTEOF},
+  		{ "OpenSSH_2.*,"
+  		  "OpenSSH_3.0*,"
+  		  "OpenSSH_3.1*",	SSH_BUG_EXTEOF},
+--- 71,84 ----
+  		{ "OpenSSH_2.5.0p1*,"
+  		  "OpenSSH_2.5.1p1*",
+  					SSH_BUG_BIGENDIANAES|SSH_OLD_DHGEX|
+! 					SSH_BUG_NOREKEY|SSH_BUG_EXTEOF|
+! 					SSH_OLD_GSSAPI},
+  		{ "OpenSSH_2.5.0*,"
+  		  "OpenSSH_2.5.1*,"
+  		  "OpenSSH_2.5.2*",	SSH_OLD_DHGEX|SSH_BUG_NOREKEY|
+  					SSH_BUG_EXTEOF},
+  		{ "OpenSSH_2.5.3*",	SSH_BUG_NOREKEY|SSH_BUG_EXTEOF},
++ 		{ "OpenSSH_2.9p*",	SSH_BUG_EXTEOF|SSH_OLD_GSSAPI},
+  		{ "OpenSSH_2.*,"
+  		  "OpenSSH_3.0*,"
+  		  "OpenSSH_3.1*",	SSH_BUG_EXTEOF},
+diff -c -d -r openssh-3.3p1/compat.h openssh-3.3p1-gssapi-dce-1.1/compat.h
+*** openssh-3.3p1/compat.h	Wed Apr 10 09:22:10 2002
+--- openssh-3.3p1-gssapi-dce-1.1/compat.h	Mon Jun 24 16:07:09 2002
+***************
+*** 54,59 ****
+--- 54,60 ----
+  #define SSH_BUG_DUMMYCHAN	0x00100000
+  #define SSH_BUG_EXTEOF		0x00200000
+  #define SSH_BUG_K5USER		0x00400000
++ #define SSH_OLD_GSSAPI		0x00800000
+  
+  void     enable_compat13(void);
+  void     enable_compat20(void);
+diff -c -d -r openssh-3.3p1/config.h.in openssh-3.3p1-gssapi-dce-1.1/config.h.in
+*** openssh-3.3p1/config.h.in	Fri Jun 21 08:56:53 2002
+--- openssh-3.3p1-gssapi-dce-1.1/config.h.in	Mon Jun 24 17:21:17 2002
+***************
+*** 198,203 ****
+--- 198,212 ----
+  /* Define if compiler implements __func__ */
+  #undef HAVE___func__
+  
++ /* Define this is you want GSSAPI support in the version 2 protocol */
++ #undef GSSAPI
++ 
++ /* Define if you want DCE support */
++ #undef DCE
++ 
++ /* Define if you require DCE IBM kludge */
++ #undef DCE_IBM_KLUDGE
++ 
+  /* Define if you want Kerberos 5 support */
+  #undef KRB5
+  
+***************
+*** 210,215 ****
+--- 219,227 ----
+  /* Define if you want AFS support */
+  #undef AFS
+  
++ /* Define if you want GSI/Globus authentication support */
++ #undef GSI
++ 
+  /* Define if you want S/Key support */
+  #undef SKEY
+  
+***************
+*** 473,478 ****
+--- 485,493 ----
+  /* Define to 1 if you have the <glob.h> header file. */
+  #undef HAVE_GLOB_H
+  
++ /* Define to 1 if you have the <gssapi.h> header file. */
++ #undef HAVE_GSSAPI_H
++ 
+  /* Define to 1 if you have the `inet_aton' function. */
+  #undef HAVE_INET_ATON
+  
+***************
+*** 589,594 ****
+--- 604,612 ----
+  
+  /* Define to 1 if you have the `pam_getenvlist' function. */
+  #undef HAVE_PAM_GETENVLIST
++ 
++ /* Define to 1 if you have the `pam_putenv' function. */
++ #undef HAVE_PAM_PUTENV
+  
+  /* Define to 1 if you have the <paths.h> header file. */
+  #undef HAVE_PATHS_H
+diff -c -d -r openssh-3.3p1/configure openssh-3.3p1-gssapi-dce-1.1/configure
+*** openssh-3.3p1/configure	Fri Jun 21 08:56:52 2002
+--- openssh-3.3p1-gssapi-dce-1.1/configure	Tue Jun 25 14:38:05 2002
+***************
+*** 859,864 ****
+--- 859,866 ----
+    --with-privsep-user=user Specify non-privileged user for privilege separation
+    --with-sectok           Enable smartcard support using libsectok
+    --with-opensc=PFX       Enable smartcard support using OpenSC
++   --with-dce              Enable DCE support
++   --with-dce-ibm-kludge   Enable IBM DCE kludge
+    --with-kerberos5=PATH   Enable Kerberos 5 support
+    --with-kerberos4=PATH   Enable Kerberos 4 support
+    --with-afs=PATH         Enable AFS support
+***************
+*** 7945,7950 ****
+--- 7947,8028 ----
+  done
+  
+  
++ for ac_func in pam_putenv
++ do
++ as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
++ echo "$as_me:$LINENO: checking for $ac_func" >&5
++ echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
++ if eval "test \"\${$as_ac_var+set}\" = set"; then
++   echo $ECHO_N "(cached) $ECHO_C" >&6
++ else
++   cat >conftest.$ac_ext <<_ACEOF
++ #line $LINENO "configure"
++ #include "confdefs.h"
++ /* System header to define __stub macros and hopefully few prototypes,
++     which can conflict with char $ac_func (); below.  */
++ #include <assert.h>
++ /* Override any gcc2 internal prototype to avoid an error.  */
++ #ifdef __cplusplus
++ extern "C"
++ #endif
++ /* We use char because int might match the return type of a gcc2
++    builtin and then its argument prototype would still apply.  */
++ char $ac_func ();
++ char (*f) ();
++ 
++ #ifdef F77_DUMMY_MAIN
++ #  ifdef __cplusplus
++      extern "C"
++ #  endif
++    int F77_DUMMY_MAIN() { return 1; }
++ #endif
++ int
++ main ()
++ {
++ /* The GNU C library defines this for functions which it implements
++     to always fail with ENOSYS.  Some functions are actually named
++     something starting with __ and the normal name is an alias.  */
++ #if defined (__stub_$ac_func) || defined (__stub___$ac_func)
++ choke me
++ #else
++ f = $ac_func;
++ #endif
++ 
++   ;
++   return 0;
++ }
++ _ACEOF
++ rm -f conftest.$ac_objext conftest$ac_exeext
++ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
++   (eval $ac_link) 2>&5
++   ac_status=$?
++   echo "$as_me:$LINENO: \$? = $ac_status" >&5
++   (exit $ac_status); } &&
++          { ac_try='test -s conftest$ac_exeext'
++   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++   (eval $ac_try) 2>&5
++   ac_status=$?
++   echo "$as_me:$LINENO: \$? = $ac_status" >&5
++   (exit $ac_status); }; }; then
++   eval "$as_ac_var=yes"
++ else
++   echo "$as_me: failed program was:" >&5
++ cat conftest.$ac_ext >&5
++ eval "$as_ac_var=no"
++ fi
++ rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
++ fi
++ echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
++ echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
++ if test `eval echo '${'$as_ac_var'}'` = yes; then
++   cat >>confdefs.h <<_ACEOF
++ #define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
++ _ACEOF
++ 
++ fi
++ done
++ 
++ 
+  			disable_shadow=yes
+  			PAM_MSG="yes"
+  
+***************
+*** 7958,7963 ****
+--- 8036,8042 ----
+  				LIBPAM="-lpam"
+  			fi
+  
++ 
+  		fi
+  
+  
+***************
+*** 14570,14575 ****
+--- 14649,14692 ----
+    fi
+  fi
+  
++ # Check whether user wants DCE support
++ DCE_MSG="no"
++ 
++ # Check whether --with-dce or --without-dce was given.
++ if test "${with_dce+set}" = set; then
++   withval="$with_dce"
++ 
++ 		if test "x$withval" != "xno" ; then
++ 			CFLAGS="$CFLAGS -D_REENTRANT"
++ 			cat >>confdefs.h <<\_ACEOF
++ #define DCE 1
++ _ACEOF
++ 
++ 			LIBDCE="-ldce"
++ 
++ 			DCE_MSG="yes"
++ 		fi
++ 
++ 
++ fi;
++ 
++ # Check whether user requires IBM DCE kludge
++ 
++ # Check whether --with-dce-ibm-kludge or --without-dce-ibm-kludge was given.
++ if test "${with_dce_ibm_kludge+set}" = set; then
++   withval="$with_dce_ibm_kludge"
++ 
++ 		if test "x$withval" != "xno" ; then
++ 			cat >>confdefs.h <<\_ACEOF
++ #define DCE_IBM_KLUDGE 1
++ _ACEOF
++ 
++ 			DCE_MSG="yes (IBM kludge enabled)"
++ 		fi
++ 
++ 
++ fi;
++ 
+  # Check whether user wants Kerberos 5 support
+  KRB5_MSG="no"
+  
+***************
+*** 14712,14717 ****
+--- 14829,15307 ----
+  fi
+  
+  
++ 			echo "$as_me:$LINENO: checking for gss_init_sec_context in -lgssapi" >&5
++ echo $ECHO_N "checking for gss_init_sec_context in -lgssapi... $ECHO_C" >&6
++ if test "${ac_cv_lib_gssapi_gss_init_sec_context+set}" = set; then
++   echo $ECHO_N "(cached) $ECHO_C" >&6
++ else
++   ac_check_lib_save_LIBS=$LIBS
++ LIBS="-lgssapi $K5LIBS $LIBS"
++ cat >conftest.$ac_ext <<_ACEOF
++ #line $LINENO "configure"
++ #include "confdefs.h"
++ 
++ /* Override any gcc2 internal prototype to avoid an error.  */
++ #ifdef __cplusplus
++ extern "C"
++ #endif
++ /* We use char because int might match the return type of a gcc2
++    builtin and then its argument prototype would still apply.  */
++ char gss_init_sec_context ();
++ #ifdef F77_DUMMY_MAIN
++ #  ifdef __cplusplus
++      extern "C"
++ #  endif
++    int F77_DUMMY_MAIN() { return 1; }
++ #endif
++ int
++ main ()
++ {
++ gss_init_sec_context ();
++   ;
++   return 0;
++ }
++ _ACEOF
++ rm -f conftest.$ac_objext conftest$ac_exeext
++ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
++   (eval $ac_link) 2>&5
++   ac_status=$?
++   echo "$as_me:$LINENO: \$? = $ac_status" >&5
++   (exit $ac_status); } &&
++          { ac_try='test -s conftest$ac_exeext'
++   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++   (eval $ac_try) 2>&5
++   ac_status=$?
++   echo "$as_me:$LINENO: \$? = $ac_status" >&5
++   (exit $ac_status); }; }; then
++   ac_cv_lib_gssapi_gss_init_sec_context=yes
++ else
++   echo "$as_me: failed program was:" >&5
++ cat conftest.$ac_ext >&5
++ ac_cv_lib_gssapi_gss_init_sec_context=no
++ fi
++ rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
++ LIBS=$ac_check_lib_save_LIBS
++ fi
++ echo "$as_me:$LINENO: result: $ac_cv_lib_gssapi_gss_init_sec_context" >&5
++ echo "${ECHO_T}$ac_cv_lib_gssapi_gss_init_sec_context" >&6
++ if test $ac_cv_lib_gssapi_gss_init_sec_context = yes; then
++    cat >>confdefs.h <<\_ACEOF
++ #define GSSAPI 1
++ _ACEOF
++ 
++ 				  K5LIBS="-lgssapi $K5LIBS"
++ else
++    echo "$as_me:$LINENO: checking for gss_init_sec_context in -lgssapi_krb5" >&5
++ echo $ECHO_N "checking for gss_init_sec_context in -lgssapi_krb5... $ECHO_C" >&6
++ if test "${ac_cv_lib_gssapi_krb5_gss_init_sec_context+set}" = set; then
++   echo $ECHO_N "(cached) $ECHO_C" >&6
++ else
++   ac_check_lib_save_LIBS=$LIBS
++ LIBS="-lgssapi_krb5 $K5LIBS $LIBS"
++ cat >conftest.$ac_ext <<_ACEOF
++ #line $LINENO "configure"
++ #include "confdefs.h"
++ 
++ /* Override any gcc2 internal prototype to avoid an error.  */
++ #ifdef __cplusplus
++ extern "C"
++ #endif
++ /* We use char because int might match the return type of a gcc2
++    builtin and then its argument prototype would still apply.  */
++ char gss_init_sec_context ();
++ #ifdef F77_DUMMY_MAIN
++ #  ifdef __cplusplus
++      extern "C"
++ #  endif
++    int F77_DUMMY_MAIN() { return 1; }
++ #endif
++ int
++ main ()
++ {
++ gss_init_sec_context ();
++   ;
++   return 0;
++ }
++ _ACEOF
++ rm -f conftest.$ac_objext conftest$ac_exeext
++ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
++   (eval $ac_link) 2>&5
++   ac_status=$?
++   echo "$as_me:$LINENO: \$? = $ac_status" >&5
++   (exit $ac_status); } &&
++          { ac_try='test -s conftest$ac_exeext'
++   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++   (eval $ac_try) 2>&5
++   ac_status=$?
++   echo "$as_me:$LINENO: \$? = $ac_status" >&5
++   (exit $ac_status); }; }; then
++   ac_cv_lib_gssapi_krb5_gss_init_sec_context=yes
++ else
++   echo "$as_me: failed program was:" >&5
++ cat conftest.$ac_ext >&5
++ ac_cv_lib_gssapi_krb5_gss_init_sec_context=no
++ fi
++ rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
++ LIBS=$ac_check_lib_save_LIBS
++ fi
++ echo "$as_me:$LINENO: result: $ac_cv_lib_gssapi_krb5_gss_init_sec_context" >&5
++ echo "${ECHO_T}$ac_cv_lib_gssapi_krb5_gss_init_sec_context" >&6
++ if test $ac_cv_lib_gssapi_krb5_gss_init_sec_context = yes; then
++    cat >>confdefs.h <<\_ACEOF
++ #define GSSAPI 1
++ _ACEOF
++ 
++ 				  	  K5LIBS="-lgssapi_krb5 $K5LIBS"
++ else
++   { echo "$as_me:$LINENO: WARNING: Cannot find any suitable gss-api library - build may fail" >&5
++ echo "$as_me: WARNING: Cannot find any suitable gss-api library - build may fail" >&2;}
++ fi
++ 
++ 
++ fi
++ 
++ 
++ 			if test "${ac_cv_header_gssapi_h+set}" = set; then
++   echo "$as_me:$LINENO: checking for gssapi.h" >&5
++ echo $ECHO_N "checking for gssapi.h... $ECHO_C" >&6
++ if test "${ac_cv_header_gssapi_h+set}" = set; then
++   echo $ECHO_N "(cached) $ECHO_C" >&6
++ fi
++ echo "$as_me:$LINENO: result: $ac_cv_header_gssapi_h" >&5
++ echo "${ECHO_T}$ac_cv_header_gssapi_h" >&6
++ else
++   # Is the header compilable?
++ echo "$as_me:$LINENO: checking gssapi.h usability" >&5
++ echo $ECHO_N "checking gssapi.h usability... $ECHO_C" >&6
++ cat >conftest.$ac_ext <<_ACEOF
++ #line $LINENO "configure"
++ #include "confdefs.h"
++ $ac_includes_default
++ #include <gssapi.h>
++ _ACEOF
++ rm -f conftest.$ac_objext
++ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++   (eval $ac_compile) 2>&5
++   ac_status=$?
++   echo "$as_me:$LINENO: \$? = $ac_status" >&5
++   (exit $ac_status); } &&
++          { ac_try='test -s conftest.$ac_objext'
++   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++   (eval $ac_try) 2>&5
++   ac_status=$?
++   echo "$as_me:$LINENO: \$? = $ac_status" >&5
++   (exit $ac_status); }; }; then
++   ac_header_compiler=yes
++ else
++   echo "$as_me: failed program was:" >&5
++ cat conftest.$ac_ext >&5
++ ac_header_compiler=no
++ fi
++ rm -f conftest.$ac_objext conftest.$ac_ext
++ echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
++ echo "${ECHO_T}$ac_header_compiler" >&6
++ 
++ # Is the header present?
++ echo "$as_me:$LINENO: checking gssapi.h presence" >&5
++ echo $ECHO_N "checking gssapi.h presence... $ECHO_C" >&6
++ cat >conftest.$ac_ext <<_ACEOF
++ #line $LINENO "configure"
++ #include "confdefs.h"
++ #include <gssapi.h>
++ _ACEOF
++ if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
++   (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
++   ac_status=$?
++   egrep -v '^ *\+' conftest.er1 >conftest.err
++   rm -f conftest.er1
++   cat conftest.err >&5
++   echo "$as_me:$LINENO: \$? = $ac_status" >&5
++   (exit $ac_status); } >/dev/null; then
++   if test -s conftest.err; then
++     ac_cpp_err=$ac_c_preproc_warn_flag
++   else
++     ac_cpp_err=
++   fi
++ else
++   ac_cpp_err=yes
++ fi
++ if test -z "$ac_cpp_err"; then
++   ac_header_preproc=yes
++ else
++   echo "$as_me: failed program was:" >&5
++   cat conftest.$ac_ext >&5
++   ac_header_preproc=no
++ fi
++ rm -f conftest.err conftest.$ac_ext
++ echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
++ echo "${ECHO_T}$ac_header_preproc" >&6
++ 
++ # So?  What about this header?
++ case $ac_header_compiler:$ac_header_preproc in
++   yes:no )
++     { echo "$as_me:$LINENO: WARNING: gssapi.h: accepted by the compiler, rejected by the preprocessor!" >&5
++ echo "$as_me: WARNING: gssapi.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
++     { echo "$as_me:$LINENO: WARNING: gssapi.h: proceeding with the preprocessor's result" >&5
++ echo "$as_me: WARNING: gssapi.h: proceeding with the preprocessor's result" >&2;};;
++   no:yes )
++     { echo "$as_me:$LINENO: WARNING: gssapi.h: present but cannot be compiled" >&5
++ echo "$as_me: WARNING: gssapi.h: present but cannot be compiled" >&2;}
++     { echo "$as_me:$LINENO: WARNING: gssapi.h: check for missing prerequisite headers?" >&5
++ echo "$as_me: WARNING: gssapi.h: check for missing prerequisite headers?" >&2;}
++     { echo "$as_me:$LINENO: WARNING: gssapi.h: proceeding with the preprocessor's result" >&5
++ echo "$as_me: WARNING: gssapi.h: proceeding with the preprocessor's result" >&2;};;
++ esac
++ echo "$as_me:$LINENO: checking for gssapi.h" >&5
++ echo $ECHO_N "checking for gssapi.h... $ECHO_C" >&6
++ if test "${ac_cv_header_gssapi_h+set}" = set; then
++   echo $ECHO_N "(cached) $ECHO_C" >&6
++ else
++   ac_cv_header_gssapi_h=$ac_header_preproc
++ fi
++ echo "$as_me:$LINENO: result: $ac_cv_header_gssapi_h" >&5
++ echo "${ECHO_T}$ac_cv_header_gssapi_h" >&6
++ 
++ fi
++ if test $ac_cv_header_gssapi_h = yes; then
++   :
++ else
++    unset ac_cv_header_gssapi_h
++ 				  CPPFLAGS="$CPPFLAGS -I${KRB5ROOT}/include/gssapi"
++ 
++ for ac_header in gssapi.h
++ do
++ as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
++ if eval "test \"\${$as_ac_Header+set}\" = set"; then
++   echo "$as_me:$LINENO: checking for $ac_header" >&5
++ echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
++ if eval "test \"\${$as_ac_Header+set}\" = set"; then
++   echo $ECHO_N "(cached) $ECHO_C" >&6
++ fi
++ echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
++ echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
++ else
++   # Is the header compilable?
++ echo "$as_me:$LINENO: checking $ac_header usability" >&5
++ echo $ECHO_N "checking $ac_header usability... $ECHO_C" >&6
++ cat >conftest.$ac_ext <<_ACEOF
++ #line $LINENO "configure"
++ #include "confdefs.h"
++ $ac_includes_default
++ #include <$ac_header>
++ _ACEOF
++ rm -f conftest.$ac_objext
++ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++   (eval $ac_compile) 2>&5
++   ac_status=$?
++   echo "$as_me:$LINENO: \$? = $ac_status" >&5
++   (exit $ac_status); } &&
++          { ac_try='test -s conftest.$ac_objext'
++   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++   (eval $ac_try) 2>&5
++   ac_status=$?
++   echo "$as_me:$LINENO: \$? = $ac_status" >&5
++   (exit $ac_status); }; }; then
++   ac_header_compiler=yes
++ else
++   echo "$as_me: failed program was:" >&5
++ cat conftest.$ac_ext >&5
++ ac_header_compiler=no
++ fi
++ rm -f conftest.$ac_objext conftest.$ac_ext
++ echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
++ echo "${ECHO_T}$ac_header_compiler" >&6
++ 
++ # Is the header present?
++ echo "$as_me:$LINENO: checking $ac_header presence" >&5
++ echo $ECHO_N "checking $ac_header presence... $ECHO_C" >&6
++ cat >conftest.$ac_ext <<_ACEOF
++ #line $LINENO "configure"
++ #include "confdefs.h"
++ #include <$ac_header>
++ _ACEOF
++ if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
++   (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
++   ac_status=$?
++   egrep -v '^ *\+' conftest.er1 >conftest.err
++   rm -f conftest.er1
++   cat conftest.err >&5
++   echo "$as_me:$LINENO: \$? = $ac_status" >&5
++   (exit $ac_status); } >/dev/null; then
++   if test -s conftest.err; then
++     ac_cpp_err=$ac_c_preproc_warn_flag
++   else
++     ac_cpp_err=
++   fi
++ else
++   ac_cpp_err=yes
++ fi
++ if test -z "$ac_cpp_err"; then
++   ac_header_preproc=yes
++ else
++   echo "$as_me: failed program was:" >&5
++   cat conftest.$ac_ext >&5
++   ac_header_preproc=no
++ fi
++ rm -f conftest.err conftest.$ac_ext
++ echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
++ echo "${ECHO_T}$ac_header_preproc" >&6
++ 
++ # So?  What about this header?
++ case $ac_header_compiler:$ac_header_preproc in
++   yes:no )
++     { echo "$as_me:$LINENO: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&5
++ echo "$as_me: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&2;}
++     { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the preprocessor's result" >&5
++ echo "$as_me: WARNING: $ac_header: proceeding with the preprocessor's result" >&2;};;
++   no:yes )
++     { echo "$as_me:$LINENO: WARNING: $ac_header: present but cannot be compiled" >&5
++ echo "$as_me: WARNING: $ac_header: present but cannot be compiled" >&2;}
++     { echo "$as_me:$LINENO: WARNING: $ac_header: check for missing prerequisite headers?" >&5
++ echo "$as_me: WARNING: $ac_header: check for missing prerequisite headers?" >&2;}
++     { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the preprocessor's result" >&5
++ echo "$as_me: WARNING: $ac_header: proceeding with the preprocessor's result" >&2;};;
++ esac
++ echo "$as_me:$LINENO: checking for $ac_header" >&5
++ echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
++ if eval "test \"\${$as_ac_Header+set}\" = set"; then
++   echo $ECHO_N "(cached) $ECHO_C" >&6
++ else
++   eval "$as_ac_Header=$ac_header_preproc"
++ fi
++ echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
++ echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
++ 
++ fi
++ if test `eval echo '${'$as_ac_Header'}'` = yes; then
++   cat >>confdefs.h <<_ACEOF
++ #define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
++ _ACEOF
++ 
++ else
++   { echo "$as_me:$LINENO: WARNING: Cannot find any suitable gss-api header - build may fail" >&5
++ echo "$as_me: WARNING: Cannot find any suitable gss-api header - build may fail" >&2;}
++ 
++ fi
++ 
++ done
++ 
++ 
++ 
++ fi
++ 
++ 
++ 
++ 			oldCPP="$CPPFLAGS"
++ 			CPPFLAGS="$CPPFLAGS -I${KRB5ROOT}/include/gssapi"
++ 			if test "${ac_cv_header_gssapi_krb5_h+set}" = set; then
++   echo "$as_me:$LINENO: checking for gssapi_krb5.h" >&5
++ echo $ECHO_N "checking for gssapi_krb5.h... $ECHO_C" >&6
++ if test "${ac_cv_header_gssapi_krb5_h+set}" = set; then
++   echo $ECHO_N "(cached) $ECHO_C" >&6
++ fi
++ echo "$as_me:$LINENO: result: $ac_cv_header_gssapi_krb5_h" >&5
++ echo "${ECHO_T}$ac_cv_header_gssapi_krb5_h" >&6
++ else
++   # Is the header compilable?
++ echo "$as_me:$LINENO: checking gssapi_krb5.h usability" >&5
++ echo $ECHO_N "checking gssapi_krb5.h usability... $ECHO_C" >&6
++ cat >conftest.$ac_ext <<_ACEOF
++ #line $LINENO "configure"
++ #include "confdefs.h"
++ $ac_includes_default
++ #include <gssapi_krb5.h>
++ _ACEOF
++ rm -f conftest.$ac_objext
++ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++   (eval $ac_compile) 2>&5
++   ac_status=$?
++   echo "$as_me:$LINENO: \$? = $ac_status" >&5
++   (exit $ac_status); } &&
++          { ac_try='test -s conftest.$ac_objext'
++   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++   (eval $ac_try) 2>&5
++   ac_status=$?
++   echo "$as_me:$LINENO: \$? = $ac_status" >&5
++   (exit $ac_status); }; }; then
++   ac_header_compiler=yes
++ else
++   echo "$as_me: failed program was:" >&5
++ cat conftest.$ac_ext >&5
++ ac_header_compiler=no
++ fi
++ rm -f conftest.$ac_objext conftest.$ac_ext
++ echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
++ echo "${ECHO_T}$ac_header_compiler" >&6
++ 
++ # Is the header present?
++ echo "$as_me:$LINENO: checking gssapi_krb5.h presence" >&5
++ echo $ECHO_N "checking gssapi_krb5.h presence... $ECHO_C" >&6
++ cat >conftest.$ac_ext <<_ACEOF
++ #line $LINENO "configure"
++ #include "confdefs.h"
++ #include <gssapi_krb5.h>
++ _ACEOF
++ if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
++   (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
++   ac_status=$?
++   egrep -v '^ *\+' conftest.er1 >conftest.err
++   rm -f conftest.er1
++   cat conftest.err >&5
++   echo "$as_me:$LINENO: \$? = $ac_status" >&5
++   (exit $ac_status); } >/dev/null; then
++   if test -s conftest.err; then
++     ac_cpp_err=$ac_c_preproc_warn_flag
++   else
++     ac_cpp_err=
++   fi
++ else
++   ac_cpp_err=yes
++ fi
++ if test -z "$ac_cpp_err"; then
++   ac_header_preproc=yes
++ else
++   echo "$as_me: failed program was:" >&5
++   cat conftest.$ac_ext >&5
++   ac_header_preproc=no
++ fi
++ rm -f conftest.err conftest.$ac_ext
++ echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
++ echo "${ECHO_T}$ac_header_preproc" >&6
++ 
++ # So?  What about this header?
++ case $ac_header_compiler:$ac_header_preproc in
++   yes:no )
++     { echo "$as_me:$LINENO: WARNING: gssapi_krb5.h: accepted by the compiler, rejected by the preprocessor!" >&5
++ echo "$as_me: WARNING: gssapi_krb5.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
++     { echo "$as_me:$LINENO: WARNING: gssapi_krb5.h: proceeding with the preprocessor's result" >&5
++ echo "$as_me: WARNING: gssapi_krb5.h: proceeding with the preprocessor's result" >&2;};;
++   no:yes )
++     { echo "$as_me:$LINENO: WARNING: gssapi_krb5.h: present but cannot be compiled" >&5
++ echo "$as_me: WARNING: gssapi_krb5.h: present but cannot be compiled" >&2;}
++     { echo "$as_me:$LINENO: WARNING: gssapi_krb5.h: check for missing prerequisite headers?" >&5
++ echo "$as_me: WARNING: gssapi_krb5.h: check for missing prerequisite headers?" >&2;}
++     { echo "$as_me:$LINENO: WARNING: gssapi_krb5.h: proceeding with the preprocessor's result" >&5
++ echo "$as_me: WARNING: gssapi_krb5.h: proceeding with the preprocessor's result" >&2;};;
++ esac
++ echo "$as_me:$LINENO: checking for gssapi_krb5.h" >&5
++ echo $ECHO_N "checking for gssapi_krb5.h... $ECHO_C" >&6
++ if test "${ac_cv_header_gssapi_krb5_h+set}" = set; then
++   echo $ECHO_N "(cached) $ECHO_C" >&6
++ else
++   ac_cv_header_gssapi_krb5_h=$ac_header_preproc
++ fi
++ echo "$as_me:$LINENO: result: $ac_cv_header_gssapi_krb5_h" >&5
++ echo "${ECHO_T}$ac_cv_header_gssapi_krb5_h" >&6
++ 
++ fi
++ if test $ac_cv_header_gssapi_krb5_h = yes; then
++   :
++ else
++    CPPFLAGS="$oldCPP"
++ fi
++ 
++ 
++ 
+                          KRB5=yes
+                  fi
+  
+***************
+*** 17012,17017 ****
+--- 17602,17608 ----
+  s,@INSTALL_SSH_PRNG_CMDS@,$INSTALL_SSH_PRNG_CMDS,;t t
+  s,@NO_SFTP@,$NO_SFTP,;t t
+  s,@OPENSC_CONFIG@,$OPENSC_CONFIG,;t t
++ s,@LIBDCE@,$LIBDCE,;t t
+  s,@rsh_path@,$rsh_path,;t t
+  s,@PRIVSEP_PATH@,$PRIVSEP_PATH,;t t
+  s,@xauth_path@,$xauth_path,;t t
+***************
+*** 17499,17504 ****
+--- 18090,18096 ----
+  fi
+  echo "                    Manpage format: $MANTYPE"
+  echo "                       PAM support: ${PAM_MSG}"
++ echo "                       DCE support: ${DCE_MSG}"
+  echo "                KerberosIV support: $KRB4_MSG"
+  echo "                 KerberosV support: $KRB5_MSG"
+  echo "                 Smartcard support: $SCARD_MSG"
+diff -c -d -r openssh-3.3p1/configure.ac openssh-3.3p1-gssapi-dce-1.1/configure.ac
+*** openssh-3.3p1/configure.ac	Thu Jun 20 17:01:19 2002
+--- openssh-3.3p1-gssapi-dce-1.1/configure.ac	Tue Jun 25 14:37:40 2002
+***************
+*** 663,668 ****
+--- 663,669 ----
+  			AC_CHECK_LIB(dl, dlopen, , )
+  			AC_CHECK_LIB(pam, pam_set_item, , AC_MSG_ERROR([*** libpam missing]))
+  			AC_CHECK_FUNCS(pam_getenvlist)
++ 			AC_CHECK_FUNCS(pam_putenv)
+  
+  			disable_shadow=yes
+  			PAM_MSG="yes"
+***************
+*** 673,678 ****
+--- 674,680 ----
+  			else
+  				LIBPAM="-lpam"
+  			fi
++ 
+  			AC_SUBST(LIBPAM)
+  		fi
+  	]
+***************
+*** 1668,1673 ****
+--- 1670,1701 ----
+    fi
+  fi
+  
++ # Check whether user wants DCE support
++ DCE_MSG="no"
++ AC_ARG_WITH(dce,
++ 	[  --with-dce              Enable DCE support],
++ 	[
++ 		if test "x$withval" != "xno" ; then
++ 			CFLAGS="$CFLAGS -D_REENTRANT"
++ 			AC_DEFINE(DCE)
++ 			LIBDCE="-ldce"
++                         AC_SUBST(LIBDCE)
++ 			DCE_MSG="yes"
++ 		fi
++ 	]
++ )
++ 
++ # Check whether user requires IBM DCE kludge
++ AC_ARG_WITH(dce-ibm-kludge,
++ 	[  --with-dce-ibm-kludge   Enable IBM DCE kludge],
++ 	[
++ 		if test "x$withval" != "xno" ; then
++ 			AC_DEFINE(DCE_IBM_KLUDGE)
++ 			DCE_MSG="yes (IBM kludge enabled)"
++ 		fi
++ 	]
++ )
++ 
+  # Check whether user wants Kerberos 5 support
+  KRB5_MSG="no" 
+  AC_ARG_WITH(kerberos5,
+***************
+*** 1702,1707 ****
+--- 1730,1760 ----
+                          fi
+                          AC_CHECK_LIB(resolv, dn_expand, , )
+  
++ 			AC_CHECK_LIB(gssapi,gss_init_sec_context,
++ 				[ AC_DEFINE(GSSAPI)
++ 				  K5LIBS="-lgssapi $K5LIBS" ],
++ 				[ AC_CHECK_LIB(gssapi_krb5,gss_init_sec_context,
++ 					[ AC_DEFINE(GSSAPI)
++ 				  	  K5LIBS="-lgssapi_krb5 $K5LIBS" ],
++ 					AC_MSG_WARN([Cannot find any suitable gss-api library - build may fail]),
++ 					$K5LIBS)
++ 				],
++ 				$K5LIBS)
++ 			
++ 			AC_CHECK_HEADER(gssapi.h, ,
++ 				[ unset ac_cv_header_gssapi_h
++ 				  CPPFLAGS="$CPPFLAGS -I${KRB5ROOT}/include/gssapi" 
++ 				  AC_CHECK_HEADERS(gssapi.h, ,
++ 					AC_MSG_WARN([Cannot find any suitable gss-api header - build may fail])
++ 				  ) 
++ 				]
++ 			)
++ 
++ 			oldCPP="$CPPFLAGS"
++ 			CPPFLAGS="$CPPFLAGS -I${KRB5ROOT}/include/gssapi"
++ 			AC_CHECK_HEADER(gssapi_krb5.h, ,
++ 					[ CPPFLAGS="$oldCPP" ])
++ 
+                          KRB5=yes
+                  fi
+          ]
+***************
+*** 2386,2391 ****
+--- 2439,2445 ----
+  fi
+  echo "                    Manpage format: $MANTYPE"
+  echo "                       PAM support: ${PAM_MSG}"
++ echo "                       DCE support: ${DCE_MSG}"
+  echo "                KerberosIV support: $KRB4_MSG"
+  echo "                 KerberosV support: $KRB5_MSG"
+  echo "                 Smartcard support: $SCARD_MSG"
+diff -c -d -r openssh-3.3p1/gss-genr.c openssh-3.3p1-gssapi-dce-1.1/gss-genr.c
+*** openssh-3.3p1/gss-genr.c	Tue Jun 25 16:13:19 2002
+--- openssh-3.3p1-gssapi-dce-1.1/gss-genr.c	Mon Jun 24 16:07:09 2002
+***************
+*** 0 ****
+--- 1,495 ----
++ /*
++  * Copyright (c) 2001 Simon Wilkinson. All rights reserved. *
++  * Redistribution and use in source and binary forms, with or without
++  * modification, are permitted provided that the following conditions
++  * are met:
++  * 1. Redistributions of source code must retain the above copyright
++  *    notice, this list of conditions and the following disclaimer.
++  * 2. Redistributions in binary form must reproduce the above copyright
++  *    notice, this list of conditions and the following disclaimer in the
++  *    documentation and/or other materials provided with the distribution.
++  *
++  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
++  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
++  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
++  * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
++  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
++  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++  */
++ 
++ #include "includes.h"
++ 
++ #ifdef GSSAPI
++ 
++ #include "ssh.h"
++ #include "ssh2.h"
++ #include "xmalloc.h"
++ #include "buffer.h"
++ #include "bufaux.h"
++ #include "packet.h"
++ #include "compat.h"
++ #include <openssl/evp.h>
++ #include "cipher.h"
++ #include "kex.h"
++ #include "log.h"
++ #include "compat.h"
++ 
++ #include <netdb.h>
++ 
++ #include "ssh-gss.h"
++ 
++ /* Assorted globals for tracking the clients identity once they've
++  * authenticated */
++  
++ gss_buffer_desc gssapi_client_name = {0,NULL}; /* Name of our client */
++ gss_cred_id_t   gssapi_client_creds = GSS_C_NO_CREDENTIAL; /* Their credentials */
++ enum ssh_gss_id gssapi_client_type = GSS_LAST_ENTRY;
++ 
++ /* The mechanism name used in the list below is defined in the internet
++  * draft as the Base 64 encoding of the MD5 hash of the ASN.1 DER encoding 
++  * of the underlying GSSAPI mechanism's OID.
++  *
++  * Also from the draft, before considering adding SPNEGO, bear in mind that
++  * "mechanisms ... MUST NOT use SPNEGO as the underlying GSSAPI mechanism"
++  */
++ 
++ /* These must be in the same order as ssh_gss_id, in ssh-gss.h */
++ 
++ ssh_gssapi_mech supported_mechs[]= {
++ #ifdef KRB5
++  /* Official OID - 1.2.850.113554.1.2.2 */
++  {"Se3H81ismmOC3OE+FwYCiQ==","Kerberos",
++  	{9, "\x2A\x86\x48\x86\xF7\x12\x01\x02\x02"}},
++ #endif
++ #ifdef GSI
++  /* gssapi_ssleay 1.3.6.1.4.1.3536.1.1 */
++  {"N3+k7/4wGxHyuP8Yxi4RhA==",
++   "GSI",
++   {9, "\x2B\x06\x01\x04\x01\x9B\x50\x01\x01"}
++  },
++ #endif /* GSI */
++  {NULL,NULL,{0,0}}
++ };
++ 
++ char gssprefix[]=KEX_GSS_SHA1;
++ 
++ /* Return a list of the gss-group1-sha1-x mechanisms supported by this
++  * program.
++  *
++  * We only support the mechanisms that we've indicated in the list above,
++  * but we check that they're supported by the GSSAPI mechanism on the 
++  * machine. We also check, before including them in the list, that
++  * we have the necesary information in order to carry out the key exchange
++  * (that is, that the user has credentials, the server's creds are accessible,
++  * etc)
++  *
++  * The way that this is done is fairly nasty, as we do a lot of work that
++  * is then thrown away. This should possibly be implemented with a cache
++  * that stores the results (in an expanded Gssctxt structure), which are
++  * then used by the first calls if that key exchange mechanism is chosen.
++  */
++  
++ char * 
++ ssh_gssapi_mechanisms(int server,char *host) {
++ 	gss_OID_set 	supported;
++ 	OM_uint32	maj_status, min_status;
++ 	Buffer		buf;
++ 	int 		i = 0;
++ 	int		present;
++ 	char *		mechs;
++ 	Gssctxt		ctx;	
++ 	gss_buffer_desc	token;		
++ 
++ 	if (datafellows & SSH_OLD_GSSAPI) return NULL;
++ 	
++ 	gss_indicate_mechs(&min_status, &supported);
++ 	
++ 	buffer_init(&buf);	
++ 
++ 	do {
++ 		if ((maj_status=gss_test_oid_set_member(&min_status,
++ 						   	&supported_mechs[i].oid,
++ 						   	supported,
++ 						   	&present))) {
++ 			present=0;
++ 		}
++ 		if (present) {
++ 			ssh_gssapi_build_ctx(&ctx);
++ 			ssh_gssapi_set_oid(&ctx,&supported_mechs[i].oid);
++ 			if (server) {
++ 		  		if (ssh_gssapi_acquire_cred(&ctx)) {
++ 		  			ssh_gssapi_delete_ctx(&ctx);
++ 					continue;
++ 				}
++ 			}
++ 			else { /* client */
++ 				if (ssh_gssapi_import_name(&ctx,host))
++ 					continue;
++ 				maj_status=ssh_gssapi_init_ctx(&ctx, 0, 
++ 							       GSS_C_NO_BUFFER,
++ 							       &token,
++ 							       NULL);
++ 				ssh_gssapi_delete_ctx(&ctx);
++ 				if (GSS_ERROR(maj_status)) {
++ 					continue;
++ 				}
++ 			}				 
++ 				
++ 			/* Append gss_group1_sha1_x to our list */
++ 			buffer_append(&buf, gssprefix,
++ 				      strlen(gssprefix));
++ 		        buffer_append(&buf, supported_mechs[i].enc_name,
++ 		        	      strlen(supported_mechs[i].enc_name));
++ 	 	}
++ 	} while (supported_mechs[++i].name != NULL);
++ 	
++ 	buffer_put_char(&buf,'\0');
++ 	
++ 	mechs=xmalloc(buffer_len(&buf));
++ 	buffer_get(&buf,mechs,buffer_len(&buf));
++ 	buffer_free(&buf);
++ 	if (strlen(mechs)==0)
++ 	   return(NULL);
++ 	else
++ 	   return(mechs);
++ }
++ 
++ void ssh_gssapi_supported_oids(gss_OID_set *oidset) {
++ 	enum ssh_gss_id i =0;
++ 	OM_uint32 maj_status,min_status;
++ 	int present;
++ 	gss_OID_set supported;
++ 	
++ 	gss_create_empty_oid_set(&min_status,oidset);
++ 	gss_indicate_mechs(&min_status, &supported);
++ 
++ 	while (supported_mechs[i].name!=NULL) {
++ 		if ((maj_status=gss_test_oid_set_member(&min_status,
++ 						       &supported_mechs[i].oid,
++ 						       supported,
++ 						       &present))) {
++ 			present=0;
++ 		}
++ 		if (present) {
++ 			gss_add_oid_set_member(&min_status,
++ 					       &supported_mechs[i].oid,
++ 				       	       oidset);	
++ 		}
++ 		i++;
++ 	}
++ }	
++ 
++ /* Set the contexts OID from a data stream */
++ void ssh_gssapi_set_oid_data(Gssctxt *ctx, void *data, size_t len) { 
++   if (ctx->oid != GSS_C_NO_OID) {
++ 	xfree(ctx->oid->elements);
++    	xfree(ctx->oid);
++   }
++   ctx->oid=xmalloc(sizeof(gss_OID_desc));
++   ctx->oid->length=len;
++   ctx->oid->elements=xmalloc(len);
++   memcpy(ctx->oid->elements,data,len);
++ }
++ 
++ /* Set the contexts OID */
++ void ssh_gssapi_set_oid(Gssctxt *ctx, gss_OID oid) {  
++   ssh_gssapi_set_oid_data(ctx,oid->elements,oid->length);
++ }
++ 
++ /* Find out which GSS type (out of the list we define in ssh-gss.h) a
++  * particular connection is using 
++  */
++ enum ssh_gss_id ssh_gssapi_get_ctype(Gssctxt *ctxt) {
++ 	enum ssh_gss_id i=0;
++ 	
++ 	while(supported_mechs[i].name!=NULL &&
++ 	      	supported_mechs[i].oid.length != ctxt->oid->length &&
++ 	      	(memcmp(supported_mechs[i].oid.elements,
++ 	      	       ctxt->oid->elements,ctxt->oid->length) !=0)) {
++ 	   i++;
++ 	}
++ 	return(i);
++ }
++ 
++ /* Set the GSS context's OID to the oid indicated by the given key exchange
++  * name. */
++ int ssh_gssapi_id_kex(Gssctxt *ctx, char *name) {
++   enum ssh_gss_id i=0;
++   
++   if (strncmp(name, gssprefix, strlen(gssprefix)-1) !=0) {
++      return(1);
++   }
++   
++   name+=strlen(gssprefix); /* Move to the start of the MIME string */
++   
++   while (supported_mechs[i].name!=NULL &&
++   	 strcmp(name,supported_mechs[i].enc_name)!=0) {
++   	i++;
++   }
++ 
++   if (supported_mechs[i].name==NULL)
++      return (1);
++ 
++   ssh_gssapi_set_oid(ctx,&supported_mechs[i].oid);
++ 
++   return 0;
++ }
++ 
++ 
++ /* All this effort to report an error ... */
++ void
++ ssh_gssapi_error(OM_uint32 major_status,OM_uint32 minor_status) {
++ 	OM_uint32 lmaj, lmin;
++         gss_buffer_desc msg;
++         OM_uint32 ctx;
++         
++         ctx = 0;
++ 	/* The GSSAPI error */
++         do {
++         	lmaj = gss_display_status(&lmin, major_status,
++         				  GSS_C_GSS_CODE,
++         				  GSS_C_NULL_OID,
++         				  &ctx, &msg);
++         	if (lmaj == GSS_S_COMPLETE) {
++         	    	debug((char *)msg.value);
++         	    	(void) gss_release_buffer(&lmin, &msg);
++         	}
++         } while (ctx!=0);	   
++ 
++         /* The mechanism specific error */
++         do {
++         	lmaj = gss_display_status(&lmin, minor_status,
++         				  GSS_C_MECH_CODE,
++         				  GSS_C_NULL_OID,
++         				  &ctx, &msg);
++         	if (lmaj == GSS_S_COMPLETE) {
++         	    	debug((char *)msg.value);
++         	    	(void) gss_release_buffer(&lmin, &msg);
++         	}
++         } while (ctx!=0);
++ }
++ 
++ /* Initialise our GSSAPI context. We use this opaque structure to contain all
++  * of the data which both the client and server need to persist across
++  * {accept,init}_sec_context calls, so that when we do it from the userauth
++  * stuff life is a little easier
++  */
++ void
++ ssh_gssapi_build_ctx(Gssctxt *ctx)
++ {
++ 	ctx->context=GSS_C_NO_CONTEXT;
++ 	ctx->name=GSS_C_NO_NAME;
++ 	ctx->oid=GSS_C_NO_OID;
++ 	ctx->creds=GSS_C_NO_CREDENTIAL;
++ 	ctx->client=GSS_C_NO_NAME;
++ 	ctx->client_creds=GSS_C_NO_CREDENTIAL;
++ }
++ 
++ /* Delete our context, providing it has been built correctly */
++ void
++ ssh_gssapi_delete_ctx(Gssctxt *ctx)
++ {
++ 	OM_uint32 ms;
++ 	
++ 	if (ctx->context != GSS_C_NO_CONTEXT) 
++ 		gss_delete_sec_context(&ms,&ctx->context,GSS_C_NO_BUFFER);
++ 	if (ctx->name != GSS_C_NO_NAME)
++ 		gss_release_name(&ms,&ctx->name);
++ 	if (ctx->oid != GSS_C_NO_OID) {
++ 		xfree(ctx->oid->elements);
++ 		xfree(ctx->oid);
++ 		ctx->oid = GSS_C_NO_OID;
++ 	}
++ 	if (ctx->creds != GSS_C_NO_CREDENTIAL)
++ 		gss_release_cred(&ms,&ctx->creds);
++ 	if (ctx->client != GSS_C_NO_NAME)
++ 		gss_release_name(&ms,&ctx->client);	
++ 	if (ctx->client_creds != GSS_C_NO_CREDENTIAL)
++ 		gss_release_cred(&ms,&ctx->client_creds); 
++ }
++ 
++ /* Wrapper to init_sec_context 
++  * Requires that the context contains:
++  *	oid
++  * 	server name (from ssh_gssapi_import_name)
++  */
++ OM_uint32 
++ ssh_gssapi_init_ctx(Gssctxt *ctx, int deleg_creds, gss_buffer_desc *recv_tok,
++        	      	    gss_buffer_desc* send_tok, OM_uint32 *flags) 
++ {
++       	OM_uint32 maj_status, min_status;
++ 	int deleg_flag = 0;
++ 	
++ 	if (deleg_creds) {
++ 		deleg_flag=GSS_C_DELEG_FLAG;
++ 		debug("Delegating credentials");
++ 	}
++ 	      	
++       	maj_status=gss_init_sec_context(&min_status,
++       					GSS_C_NO_CREDENTIAL, /* def. cred */
++       					&ctx->context,
++       					ctx->name,
++       					ctx->oid,
++       					GSS_C_MUTUAL_FLAG |
++       					GSS_C_INTEG_FLAG |
++       					deleg_flag,
++       					0, /* default lifetime */
++       					NULL, /* no channel bindings */
++       					recv_tok,
++       					NULL,
++       					send_tok,
++       					flags,
++       					NULL);
++ 	ctx->status=maj_status;
++       	if (GSS_ERROR(maj_status)) {
++       		ssh_gssapi_error(maj_status,min_status);
++       	}
++       	return(maj_status);
++ }
++ 
++ /* Wrapper arround accept_sec_context
++  * Requires that the context contains:
++  *    oid		
++  *    credentials	(from ssh_gssapi_acquire_cred)
++  */
++ OM_uint32 ssh_gssapi_accept_ctx(Gssctxt *ctx,gss_buffer_desc *recv_tok,
++ 				gss_buffer_desc *send_tok, OM_uint32 *flags) 
++ {
++ 	OM_uint32 maj_status, min_status;
++ 	gss_OID mech;
++ 	
++ 	maj_status=gss_accept_sec_context(&min_status,
++ 					  &ctx->context,
++ 					  ctx->creds,
++ 					  recv_tok,
++ 					  GSS_C_NO_CHANNEL_BINDINGS,
++ 					  &ctx->client,
++ 					  &mech,
++ 					  send_tok,
++ 					  flags,
++ 					  NULL,
++ 					  &ctx->client_creds);
++ 	if (GSS_ERROR(maj_status)) {
++ 		ssh_gssapi_error(maj_status,min_status);
++ 	}
++ 	
++ 	if (ctx->client_creds) {
++ 		debug("Received some client credentials");
++ 	} else {
++ 		debug("Got no client credentials");
++ 	}
++ 
++ 	/* FIXME: We should check that the mechanism thats being used is
++ 	 * the one that we asked for (in ctx->oid) */
++ 
++ 	ctx->status=maj_status;
++ 	
++ 	return(maj_status);
++ }
++ 
++ /* Create a service name for the given host */
++ OM_uint32
++ ssh_gssapi_import_name(Gssctxt *ctx, const char *host) {
++ 	gss_buffer_desc gssbuf;
++ 	OM_uint32 maj_status, min_status;
++ 	struct hostent *hostinfo = NULL;
++ 	char *xhost;
++ 	
++ 	/* Make a copy of the host name, in case it was returned by a
++ 	 * previous call to gethostbyname(). */	
++ 	xhost = xstrdup(host);
++ 
++ 	/* Make sure we have the FQDN. Some GSSAPI implementations don't do
++ 	 * this for us themselves */
++ 	
++ 	hostinfo = gethostbyname(xhost);
++ 	
++ 	if ((hostinfo == NULL) || (hostinfo->h_name == NULL)) {
++ 		debug("Unable to get FQDN for \"%s\"", xhost);
++ 	} else {
++ 		xfree(xhost);
++ 		xhost = xstrdup(hostinfo->h_name);
++ 	}
++ 		
++         gssbuf.length = sizeof("host@")+strlen(xhost);
++ 
++         gssbuf.value = xmalloc(gssbuf.length);
++         if (gssbuf.value == NULL) {
++ 		xfree(xhost);
++ 		return(-1);
++         }
++         snprintf(gssbuf.value,gssbuf.length,"host@%s",xhost);
++         if ((maj_status=gss_import_name(&min_status,
++                                    	&gssbuf,
++                                         GSS_C_NT_HOSTBASED_SERVICE,
++                                         &ctx->name))) {
++ 		ssh_gssapi_error(maj_status,min_status);
++ 	}
++ 	
++ 	xfree(xhost);
++ 	xfree(gssbuf.value);
++ 	return(maj_status);
++ }
++ 
++ /* Acquire credentials for a server running on the current host.
++  * Requires that the context structure contains a valid OID
++  */      
++ OM_uint32
++ ssh_gssapi_acquire_cred(Gssctxt *ctx) {
++ 	OM_uint32 maj_status, min_status;
++ 	char lname[MAXHOSTNAMELEN];
++ 	gss_OID_set oidset;
++ 	
++ 	gss_create_empty_oid_set(&min_status,&oidset);
++ 	gss_add_oid_set_member(&min_status,ctx->oid,&oidset);
++ 	
++         if (gethostname(lname, MAXHOSTNAMELEN)) {
++                 return(-1);
++         }
++ 
++ 	if ((maj_status=ssh_gssapi_import_name(ctx,lname))) {
++ 		return(maj_status);
++ 	}
++ 	if ((maj_status=gss_acquire_cred(&min_status,
++ 			 	    ctx->name,
++ 				    0,
++ 				    oidset,
++ 				    GSS_C_ACCEPT,
++ 				    &ctx->creds,
++ 				    NULL,
++ 				    NULL))) {
++ 		ssh_gssapi_error(maj_status,min_status);
++ 	}
++ 				
++ 	gss_release_oid_set(&min_status, &oidset);
++ 	return(maj_status);
++ }
++ 
++ /* Extract the client details from a given context. This can only reliably
++  * be called once for a context */
++ 
++ OM_uint32 
++ ssh_gssapi_getclient(Gssctxt *ctx, enum ssh_gss_id *type,
++ 		     gss_buffer_desc *name, gss_cred_id_t *creds) {
++ 
++ 	OM_uint32 maj_status,min_status;
++ 	
++ 	*type=ssh_gssapi_get_ctype(ctx);
++ 	if ((maj_status=gss_display_name(&min_status,ctx->client,name,NULL))) {
++ 		ssh_gssapi_error(maj_status,min_status);
++ 	}
++ 	
++ 	/* This is icky. There appears to be no way to copy this structure,
++ 	 * rather than the pointer to it, so we simply copy the pointer and
++ 	 * mark the originator as empty so we don't destroy it. 
++ 	 */
++ 	*creds=ctx->client_creds;
++ 	ctx->client_creds=GSS_C_NO_CREDENTIAL;
++ 	return(maj_status);
++ }
++ 	
++ #endif /* GSSAPI */
+diff -c -d -r openssh-3.3p1/gss-serv.c openssh-3.3p1-gssapi-dce-1.1/gss-serv.c
+*** openssh-3.3p1/gss-serv.c	Tue Jun 25 16:13:19 2002
+--- openssh-3.3p1-gssapi-dce-1.1/gss-serv.c	Mon Jun 24 17:15:54 2002
+***************
+*** 0 ****
+--- 1,659 ----
++ /*
++  * Copyright (c) 2001 Simon Wilkinson. All rights reserved.
++  *
++  * Redistribution and use in source and binary forms, with or without
++  * modification, are permitted provided that the following conditions
++  * are met:
++  * 1. Redistributions of source code must retain the above copyright
++  *    notice, this list of conditions and the following disclaimer.
++  * 2. Redistributions in binary form must reproduce the above copyright
++  *    notice, this list of conditions and the following disclaimer in the
++  *    documentation and/or other materials provided with the distribution.
++  *
++  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
++  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
++  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
++  * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
++  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
++  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++  */
++ 
++ #include "includes.h"
++ 
++ #ifdef GSSAPI
++ 
++ #include "ssh.h"
++ #include "ssh2.h"
++ #include "xmalloc.h"
++ #include "buffer.h"
++ #include "bufaux.h"
++ #include "packet.h"
++ #include "compat.h"
++ #include <openssl/evp.h>
++ #include "cipher.h"
++ #include "kex.h"
++ #include "auth.h"
++ #include "log.h"
++ #include "channels.h"
++ #include "session.h"
++ #include "dispatch.h"
++ #include "servconf.h"
++ #include "compat.h"
++ 
++ #include "ssh-gss.h"
++ 
++ extern ServerOptions options;
++ extern u_char *session_id2;
++ extern int session_id2_len;
++ 
++ 
++ typedef struct ssh_gssapi_cred_cache {
++ 	char *filename;
++ 	char *envvar;
++ 	char *envval;
++ 	void *data;
++ } ssh_gssapi_cred_cache;
++ 
++ static struct ssh_gssapi_cred_cache gssapi_cred_store = {NULL,NULL,NULL};
++ 
++ #ifdef KRB5
++ 
++ #ifdef HEIMDAL
++ #include <krb5.h>
++ #else
++ #include <gssapi_krb5.h>
++ #define krb5_get_err_text(context,code) error_message(code)
++ #endif
++ 
++ static krb5_context krb_context = NULL;
++ 
++ /* Initialise the krb5 library, so we can use it for those bits that
++  * GSSAPI won't do */
++ 
++ int ssh_gssapi_krb5_init() {
++ 	krb5_error_code problem;
++ 	
++ 	if (krb_context !=NULL)
++ 		return 1;
++ 		
++ 	problem = krb5_init_context(&krb_context);
++ 	if (problem) {
++ 		log("Cannot initialize krb5 context");
++ 		return 0;
++ 	}
++ 	krb5_init_ets(krb_context);
++ 
++ 	return 1;	
++ }			
++ 
++ /* Check if this user is OK to login. This only works with krb5 - other 
++  * GSSAPI mechanisms will need their own.
++  * Returns true if the user is OK to log in, otherwise returns 0
++  */
++ 
++ int
++ ssh_gssapi_krb5_userok(char *name) {
++ 	krb5_principal princ;
++ 	int retval;
++ 
++ 	if (ssh_gssapi_krb5_init() == 0)
++ 		return 0;
++ 		
++ 	if ((retval=krb5_parse_name(krb_context, gssapi_client_name.value, 
++ 				    &princ))) {
++ 		log("krb5_parse_name(): %.100s", 
++ 			krb5_get_err_text(krb_context,retval));
++ 		return 0;
++ 	}
++ 	if (krb5_kuserok(krb_context, princ, name)) {
++ 		retval = 1;
++ 		log("Authorized to %s, krb5 principal %s (krb5_kuserok)",name,
++ 		    (char *)gssapi_client_name.value);
++ 	}
++ 	else
++ 		retval = 0;
++ 	
++ 	krb5_free_principal(krb_context, princ);
++ 	return retval;
++ }
++ 	
++ /* Make sure that this is called _after_ we've setuid to the user */
++ 
++ /* This writes out any forwarded credentials. Its specific to the Kerberos
++  * GSSAPI mechanism
++  *
++  * We assume that our caller has made sure that the user has selected
++  * delegated credentials, and that the client_creds structure is correctly
++  * populated.
++  */
++ 
++ void
++ #ifdef DCE
++ ssh_gssapi_krb5_storecreds(Authctxt *authctxt) {
++ #else /* DCE */
++ ssh_gssapi_krb5_storecreds() {
++ #endif /* DCE */
++ 	krb5_ccache ccache;
++ 	krb5_error_code problem;
++ 	krb5_principal princ;
++ 	char ccname[35];
++ 	static char name[40];
++ 	int tmpfd;
++ 	OM_uint32 maj_status,min_status;
++ 
++ 
++ 	if (gssapi_client_creds==NULL) {
++ 		debug("No credentials stored"); 
++ 		return;
++ 	}
++ 		
++ 	if (ssh_gssapi_krb5_init() == 0)
++ 		return;
++ 
++ #ifdef DCE
++ 
++ 	snprintf(name, sizeof(name), "MEMORY:dce");
++ 
++ #else /* DCE */
++ 	
++ 	if (options.gss_use_session_ccache) {
++         	snprintf(ccname,sizeof(ccname),"/tmp/krb5cc_%d_XXXXXX",geteuid());
++        
++         	if ((tmpfd = mkstemp(ccname))==-1) {
++                 	log("mkstemp(): %.100s", strerror(errno));
++                 	return;
++         	}
++ 	        if (fchmod(tmpfd, S_IRUSR | S_IWUSR) == -1) {
++ 	               	log("fchmod(): %.100s", strerror(errno));
++ 	               	close(tmpfd);
++ 	               	return;
++ 	        }
++         } else {
++         	snprintf(ccname,sizeof(ccname),"/tmp/krb5cc_%d",geteuid());
++         	tmpfd = open(ccname, O_TRUNC | O_CREAT, S_IRUSR | S_IWUSR);
++         	if (tmpfd == -1) {
++         		log("open(): %.100s", strerror(errno));
++         		return;
++         	}
++         }
++ 
++        	close(tmpfd);
++         snprintf(name, sizeof(name), "FILE:%s",ccname);
++ #endif /* DCE */
++ 	
++         if ((problem = krb5_cc_resolve(krb_context, name, &ccache))) {
++                 log("krb5_cc_default(): %.100s", 
++                 	krb5_get_err_text(krb_context,problem));
++                 return;
++         }
++ 
++ 	if ((problem = krb5_parse_name(krb_context, gssapi_client_name.value, 
++ 				       &princ))) {
++ 		log("krb5_parse_name(): %.100s", 
++ 			krb5_get_err_text(krb_context,problem));
++ 		krb5_cc_destroy(krb_context,ccache);
++ 		return;
++ 	}
++ 	
++ 	if ((problem = krb5_cc_initialize(krb_context, ccache, princ))) {
++ 		log("krb5_cc_initialize(): %.100s", 
++ 			krb5_get_err_text(krb_context,problem));
++ 		krb5_free_principal(krb_context,princ);
++ 		krb5_cc_destroy(krb_context,ccache);
++ 		return;
++ 	}
++ 	
++ 	krb5_free_principal(krb_context,princ);
++ 
++ 	#ifdef HEIMDAL
++ 	if ((problem = krb5_cc_copy_cache(krb_context, 
++ 					   gssapi_client_creds->ccache,
++ 					   ccache))) {
++ 		log("krb5_cc_copy_cache(): %.100s", 
++ 			krb5_get_err_text(krb_context,problem));
++ 		krb5_cc_destroy(krb_context,ccache);
++ 		return;
++ 	}
++ 	#else
++ 	if ((maj_status = gss_krb5_copy_ccache(&min_status, 
++ 					       gssapi_client_creds, 
++ 					       ccache))) {
++ 		log("gss_krb5_copy_ccache() failed");
++ 		ssh_gssapi_error(maj_status,min_status);
++ 		krb5_cc_destroy(krb_context,ccache);
++ 		return;
++ 	}
++ 	#endif
++ 	
++ #ifdef DCE
++ 	{
++ 		krb5_cc_cursor cursor;
++ 		krb5_creds creds;
++ 
++ 		if ((problem = krb5_cc_start_seq_get(krb_context, ccache, &cursor))) {
++ 			log("krb5_cc_start_seq_get(): %.100s",
++ 				krb5_get_err_text(krb_context, problem));
++ 			krb5_cc_destroy(krb_context,ccache);
++ 			return;
++ 		}
++ 
++ 		if ((problem = krb5_cc_next_cred(krb_context, ccache, &cursor, &creds))) {
++ 			log("krb5_cc_next_cred(): %.100s",
++ 				krb5_get_err_text(krb_context, problem));
++ 			krb5_cc_destroy(krb_context,ccache);
++ 			return;
++ 		}
++ 
++ 		if ((problem = krb5_cc_end_seq_get(krb_context, ccache, &cursor))) {
++ 			log("krb5_cc_end_seq_get(): %.100s",
++ 				krb5_get_err_text(krb_context, problem));
++ 			krb5_cc_destroy(krb_context,ccache);
++ 			return;
++ 		}
++ 
++ 		auth_dce_krb5_tgt(authctxt, &creds);
++ 		krb5_cc_destroy(krb_context,ccache);
++ 	}
++ #else /* DCE */
++ 
++ 	krb5_cc_close(krb_context,ccache);
++ 
++ 
++ #ifdef USE_PAM
++ 	do_pam_putenv("KRB5CCNAME",name);
++ #endif
++ 
++ 	gssapi_cred_store.filename=strdup(ccname);
++ 	gssapi_cred_store.envvar="KRB5CCNAME";
++ 	gssapi_cred_store.envval=strdup(name);
++ 
++ #endif /* DCE */
++ 	return;
++ }
++ 
++ #endif /* KRB5 */
++ 
++ #ifdef GSI
++ #include <globus_gss_assist.h>
++ 
++ /*
++  * Check if this user is OK to login under GSI. User has been authenticated
++  * as identity in global 'client_name.value' and is trying to log in as passed
++  * username in 'name'.
++  *
++  * Returns non-zero if user is authorized, 0 otherwise.
++  */
++ int
++ ssh_gssapi_gsi_userok(char *name)
++ {
++     int authorized = 0;
++     
++     /* This returns 0 on success */
++     authorized = (globus_gss_assist_userok(gssapi_client_name.value,
++ 					   name) == 0);
++     
++     debug("GSI user %s is%s authorized as target user %s",
++ 	  (char *) gssapi_client_name.value,
++ 	  (authorized ? "" : " not"),
++ 	  name);
++     
++     return authorized;
++ }
++ 
++ /*
++  * Handle setting up child environment for GSI.
++  *
++  * Make sure that this is called _after_ we've setuid to the user.
++  */
++ void
++ ssh_gssapi_gsi_storecreds()
++ {
++ 	OM_uint32	major_status;
++ 	OM_uint32	minor_status;
++ 	
++ 	
++ 	if (gssapi_client_creds != NULL)
++ 	{
++ 		char *creds_env = NULL;
++ 
++ 		/*
++  		 * This is the current hack with the GSI gssapi library to
++ 		 * export credentials to disk.
++ 		 */
++ 
++ 		debug("Exporting delegated credentials");
++ 		
++ 		minor_status = 0xdee0;	/* Magic value */
++ 		major_status =
++ 			gss_inquire_cred(&minor_status,
++ 					 gssapi_client_creds,
++ 					 (gss_name_t *) &creds_env,
++ 					 NULL,
++ 					 NULL,
++ 					 NULL);
++ 
++ 		if ((major_status == GSS_S_COMPLETE) &&
++ 		    (minor_status == 0xdee1) &&
++ 		    (creds_env != NULL))
++ 		{
++ 			char		*value;
++ 				
++ 			/*
++ 			 * String is of the form:
++ 			 * X509_USER_DELEG_PROXY=filename
++ 			 * so we parse out the filename
++ 			 * and then set X509_USER_PROXY
++ 			 * to point at it.
++ 			 */
++ 			value = strchr(creds_env, '=');
++ 			
++ 			if (value != NULL)
++ 			{
++ 				*value = '\0';
++ 				value++;
++ #ifdef USE_PAM
++ 				do_pam_putenv("X509_USER_PROXY",value);
++ #endif
++ 			 	gssapi_cred_store.filename=NULL;
++ 				gssapi_cred_store.envvar="X509_USER_PROXY";
++ 				gssapi_cred_store.envval=strdup(value);
++ 
++ 				return;
++ 			}
++ 			else
++ 			{
++ 				log("Failed to parse delegated credentials string '%s'",
++ 				    creds_env);
++ 			}
++ 		}
++ 		else
++ 		{
++ 			log("Failed to export delegated credentials (error %ld)",
++ 			    major_status);
++ 		}
++ 	}	
++ }
++ 
++ #endif /* GSI */
++ 
++ void
++ ssh_gssapi_cleanup_creds(void *ignored)
++ {
++ 	if (gssapi_cred_store.filename!=NULL) {
++ 		/* Unlink probably isn't sufficient */
++ 		debug("removing gssapi cred file\"%s\"",gssapi_cred_store.filename);
++ 		unlink(gssapi_cred_store.filename);
++ 	}
++ }
++ 
++ void 
++ #ifdef DCE
++ ssh_gssapi_storecreds(Authctxt *authctxt)
++ #else /* DCE */
++ ssh_gssapi_storecreds()
++ #endif /* DCE */
++ {
++ 	switch (gssapi_client_type) {
++ #ifdef KRB5
++ 	case GSS_KERBEROS:
++ #ifdef DCE
++ 		ssh_gssapi_krb5_storecreds(authctxt);
++ #else /* DCE */
++ 		ssh_gssapi_krb5_storecreds();
++ #endif /* DCE */
++ 		break;
++ #endif
++ #ifdef GSI
++ 	case GSS_GSI:
++ 		ssh_gssapi_gsi_storecreds();
++ 		break;
++ #endif /* GSI */
++ 	case GSS_LAST_ENTRY:
++ 		/* GSSAPI not used in this authentication */
++ 		debug("No GSSAPI credentials stored");
++ 		break;
++ 	default:
++ 		log("ssh_gssapi_do_child: Unknown mechanism");
++ 	
++ 	}
++ 	
++ 	if (options.gss_cleanup_creds) {
++ 		fatal_add_cleanup(ssh_gssapi_cleanup_creds, NULL);
++ 	}
++ 
++ }
++ 
++ /* This allows GSSAPI methods to do things to the childs environment based
++  * on the passed authentication process and credentials.
++  *
++  * Question: If we didn't use userauth_external for some reason, should we
++  * still delegate credentials?
++  */
++ void 
++ ssh_gssapi_do_child(char ***envp, u_int *envsizep) 
++ {
++ 
++ 	if (gssapi_cred_store.envvar!=NULL && 
++ 	    gssapi_cred_store.envval!=NULL) {
++ 	    
++ 		debug("Setting %s to %s", gssapi_cred_store.envvar,
++ 					  gssapi_cred_store.envval);				  
++ 		child_set_env(envp, envsizep, gssapi_cred_store.envvar, 
++ 					      gssapi_cred_store.envval);
++ 	}
++ 
++ 	switch(gssapi_client_type) {
++ #ifdef KRB5
++ 	case GSS_KERBEROS: break;
++ #endif
++ #ifdef GSI
++ 	case GSS_GSI: break;
++ #endif
++ 	case GSS_LAST_ENTRY:
++ 		debug("No GSSAPI credentials stored");
++ 		break;
++ 	default:
++ 		log("ssh_gssapi_do_child: Unknown mechanism");
++ 	}
++ }
++ 
++ int
++ ssh_gssapi_userok(char *user)
++ {
++ 	if (gssapi_client_name.length==0 || 
++ 	    gssapi_client_name.value==NULL) {
++ 		debug("No suitable client data");
++ 		return 0;
++ 	}
++ 	switch (gssapi_client_type) {
++ #ifdef KRB5
++ 	case GSS_KERBEROS:
++ 		return(ssh_gssapi_krb5_userok(user));
++ 		break; /* Not reached */
++ #endif
++ #ifdef GSI
++ 	case GSS_GSI:
++ 		return(ssh_gssapi_gsi_userok(user));
++ 		break; /* Not reached */
++ #endif /* GSI */
++ 	case GSS_LAST_ENTRY:
++ 		debug("Client not GSSAPI");
++ 		break;
++ 	default:
++ 		debug("Unknown client authentication type");
++ 	}
++ 	return(0);
++ }
++ 
++ int
++ userauth_external(Authctxt *authctxt)
++ {
++ 	packet_check_eom();
++ 
++ 	return(ssh_gssapi_userok(authctxt->user));
++ }
++ 
++ Authmethod method_external = {
++ 	"external-keyx",
++ 	userauth_external,
++ 	&options.gss_authentication
++ };
++ 
++ void input_gssapi_token(int type, u_int32_t plen, void *ctxt);
++ void input_gssapi_exchange_complete(int type, u_int32_t plen, void *ctxt);
++ 
++ /* We only support those mechanisms that we know about (ie ones that we know
++  * how to check local user kuserok and the like
++  */
++ int
++ userauth_gssapi(Authctxt *authctxt)
++ {
++ 	gss_OID_desc	oid= {0,NULL};
++ 	Gssctxt		*ctxt;
++ 	int		mechs;
++ 	gss_OID_set	supported;
++ 	int		present;
++ 	OM_uint32	ms;
++ 	u_int		len;
++ 	
++ 	if (!authctxt->valid || authctxt->user == NULL)
++ 		return 0;
++ 		
++ 	if (datafellows & SSH_OLD_GSSAPI) {
++ 		debug("Early drafts of GSSAPI userauth not supported");
++ 		return 0;
++ 	}
++ 	
++ 	mechs=packet_get_int();
++ 	if (mechs==0) {
++ 		debug("Mechanism negotiation is not supported");
++ 		return 0;
++ 	}
++ 
++ 	ssh_gssapi_supported_oids(&supported);
++ 	do {
++ 		if (oid.elements)
++ 			xfree(oid.elements);
++ 		oid.elements = packet_get_string(&len);
++ 		oid.length = len;
++ 		gss_test_oid_set_member(&ms, &oid, supported, &present);
++ 		mechs--;
++ 	} while (mechs>0 && !present);
++ 	
++ 	if (!present) {
++ 		xfree(oid.elements);
++ 		return(0);
++ 	}
++ 	
++ 	ctxt=xmalloc(sizeof(Gssctxt));
++ 	authctxt->methoddata=(void *)ctxt;
++ 	
++ 	ssh_gssapi_build_ctx(ctxt);
++ 	ssh_gssapi_set_oid(ctxt,&oid);
++ 
++ 	if (ssh_gssapi_acquire_cred(ctxt))
++ 		return 0;
++ 
++ 	/* Send SSH_MSG_USERAUTH_GSSAPI_RESPONSE */
++ 
++ 	packet_start(SSH2_MSG_USERAUTH_GSSAPI_RESPONSE);
++ 	packet_put_string(oid.elements,oid.length);
++ 	packet_send();
++ 	packet_write_wait();
++ 	xfree(oid.elements);
++ 		
++ 	dispatch_set(SSH2_MSG_USERAUTH_GSSAPI_TOKEN, 
++ 		     &input_gssapi_token);
++ 	authctxt->postponed = 1;
++ 	
++ 	return 0;
++ }
++ 
++ Authmethod method_gssapi = {
++ 	"gssapi",
++ 	userauth_gssapi,
++ 	&options.gss_authentication
++ };
++ 
++ void
++ input_gssapi_token(int type, u_int32_t plen, void *ctxt)
++ {
++ 	Authctxt *authctxt = ctxt;
++ 	Gssctxt *gssctxt;
++ 	gss_buffer_desc send_tok,recv_tok;
++ 	OM_uint32 maj_status, min_status;
++ 	
++ 	if (authctxt == NULL || authctxt->methoddata == NULL)
++ 		fatal("No authentication or GSSAPI context");
++ 		
++ 	gssctxt=authctxt->methoddata;
++ 
++ 	recv_tok.value=packet_get_string(&recv_tok.length);
++ 	
++ 	maj_status=ssh_gssapi_accept_ctx(gssctxt, &recv_tok, &send_tok, NULL);
++ 	packet_check_eom();
++ 	
++ 	if (GSS_ERROR(maj_status)) {
++ 		/* Failure <sniff> */
++ 		authctxt->postponed = 0;
++ 		dispatch_set(SSH2_MSG_USERAUTH_GSSAPI_TOKEN, NULL);
++ 		userauth_finish(authctxt, 0, "gssapi");
++ 	}
++ 			
++ 	if (send_tok.length != 0) {
++ 		/* Send a packet back to the client */
++ 	        packet_start(SSH2_MSG_USERAUTH_GSSAPI_TOKEN);
++                 packet_put_string(send_tok.value,send_tok.length);
++                 packet_send();
++                 packet_write_wait();
++                 gss_release_buffer(&min_status, &send_tok);                                     
++ 	}
++ 	
++ 	if (maj_status == GSS_S_COMPLETE) {
++ 		dispatch_set(SSH2_MSG_USERAUTH_GSSAPI_TOKEN,NULL);
++ 		dispatch_set(SSH2_MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE,
++ 			     &input_gssapi_exchange_complete);
++ 	}
++ }
++ 
++ /* This is called when the client thinks we've completed authentication.
++  * It should only be enabled in the dispatch handler by the function above,
++  * which only enables it once the GSSAPI exchange is complete.
++  */
++  
++ void
++ input_gssapi_exchange_complete(int type, u_int32_t plen, void *ctxt)
++ {
++ 	Authctxt *authctxt = ctxt;
++ 	Gssctxt *gssctxt;
++ 	int authenticated;
++ 	
++ 	if (authctxt == NULL || authctxt->methoddata == NULL)
++ 		fatal("No authentication or GSSAPI context");
++ 		
++ 	gssctxt=authctxt->methoddata;
++ 
++ 	/* This should never happen, but better safe than sorry. */
++ 	if (gssctxt->status != GSS_S_COMPLETE) {
++ 		packet_disconnect("Context negotiation is not complete");
++ 	}
++ 
++ 	if (ssh_gssapi_getclient(gssctxt,&gssapi_client_type,
++ 				 &gssapi_client_name,
++ 				 &gssapi_client_creds)) {
++ 		fatal("Couldn't convert client name");
++ 	}
++ 				     		
++         authenticated = ssh_gssapi_userok(authctxt->user);
++ 
++ 	authctxt->postponed = 0;
++ 	dispatch_set(SSH2_MSG_USERAUTH_GSSAPI_TOKEN, NULL);
++ 	dispatch_set(SSH2_MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE, NULL);
++ 	userauth_finish(authctxt, authenticated, "gssapi");
++ }
++ 
++ #endif /* GSSAPI */
+diff -c -d -r openssh-3.3p1/kex.c openssh-3.3p1-gssapi-dce-1.1/kex.c
+*** openssh-3.3p1/kex.c	Wed May 15 09:25:01 2002
+--- openssh-3.3p1-gssapi-dce-1.1/kex.c	Mon Jun 24 16:07:09 2002
+***************
+*** 42,47 ****
+--- 42,51 ----
+  #include "dispatch.h"
+  #include "monitor.h"
+  
++ #ifdef GSSAPI
++ #include "ssh-gss.h"
++ #endif
++ 
+  #define KEX_COOKIE_LEN	16
+  
+  /* Use privilege separation for sshd */
+***************
+*** 242,247 ****
+--- 246,256 ----
+  	case DH_GEX_SHA1:
+  		kexgex(kex);
+  		break;
++ #ifdef GSSAPI
++ 	case GSS_GRP1_SHA1:
++ 		kexgss(kex);
++ 		break;
++ #endif
+  	default:
+  		fatal("Unsupported key exchange %d", kex->kex_type);
+  	}
+***************
+*** 297,307 ****
+  {
+  	k->name = match_list(client, server, NULL);
+  	if (k->name == NULL)
+! 		fatal("no kex alg");
+  	if (strcmp(k->name, KEX_DH1) == 0) {
+  		k->kex_type = DH_GRP1_SHA1;
+  	} else if (strcmp(k->name, KEX_DHGEX) == 0) {
+  		k->kex_type = DH_GEX_SHA1;
+  	} else
+  		fatal("bad kex alg %s", k->name);
+  }
+--- 306,320 ----
+  {
+  	k->name = match_list(client, server, NULL);
+  	if (k->name == NULL)
+! 		fatal("No key exchange algorithm");
+  	if (strcmp(k->name, KEX_DH1) == 0) {
+  		k->kex_type = DH_GRP1_SHA1;
+  	} else if (strcmp(k->name, KEX_DHGEX) == 0) {
+  		k->kex_type = DH_GEX_SHA1;
++ #ifdef GSSAPI
++ 	} else if (strncmp(k->name, KEX_GSS_SHA1, sizeof(KEX_GSS_SHA1)-1) == 0) {
++ 		k->kex_type = GSS_GRP1_SHA1;
++ #endif
+  	} else
+  		fatal("bad kex alg %s", k->name);
+  }
+diff -c -d -r openssh-3.3p1/kex.h openssh-3.3p1-gssapi-dce-1.1/kex.h
+*** openssh-3.3p1/kex.h	Thu Jun  6 12:48:16 2002
+--- openssh-3.3p1-gssapi-dce-1.1/kex.h	Mon Jun 24 16:07:09 2002
+***************
+*** 56,62 ****
+  
+  enum kex_exchange {
+  	DH_GRP1_SHA1,
+! 	DH_GEX_SHA1
+  };
+  
+  #define KEX_INIT_SENT	0x0001
+--- 56,63 ----
+  
+  enum kex_exchange {
+  	DH_GRP1_SHA1,
+! 	DH_GEX_SHA1,
+! 	GSS_GRP1_SHA1
+  };
+  
+  #define KEX_INIT_SENT	0x0001
+***************
+*** 94,99 ****
+--- 95,105 ----
+  	Mac	mac;
+  	Comp	comp;
+  };
++ 
++ struct KexOptions {
++ 	int	gss_deleg_creds;
++ };
++ 
+  struct Kex {
+  	u_char	*session_id;
+  	int	session_id_len;
+***************
+*** 107,117 ****
+--- 113,125 ----
+  	Buffer	peer;
+  	int	done;
+  	int	flags;
++ 	char 	*host;
+  	char	*client_version_string;
+  	char	*server_version_string;
+  	int	(*verify_host_key)(Key *);
+  	Key	*(*load_host_key)(int);
+  	int	(*host_key_index)(Key *);
++ 	struct  KexOptions options;
+  };
+  
+  Kex	*kex_setup(char *[PROPOSAL_MAX]);
+***************
+*** 123,128 ****
+--- 131,139 ----
+  
+  void	 kexdh(Kex *);
+  void	 kexgex(Kex *);
++ #ifdef GSSAPI
++ void	 kexgss(Kex *);
++ #endif
+  
+  Newkeys *kex_get_newkeys(int);
+  
+diff -c -d -r openssh-3.3p1/kexgss.c openssh-3.3p1-gssapi-dce-1.1/kexgss.c
+*** openssh-3.3p1/kexgss.c	Tue Jun 25 16:13:56 2002
+--- openssh-3.3p1-gssapi-dce-1.1/kexgss.c	Mon Jun 24 16:07:09 2002
+***************
+*** 0 ****
+--- 1,448 ----
++   /*
++  * Copyright (c) 2001,2002 Simon Wilkinson. All rights reserved.
++  *
++  * Redistribution and use in source and binary forms, with or without
++  * modification, are permitted provided that the following conditions
++  * are met:
++  * 1. Redistributions of source code must retain the above copyright
++  *    notice, this list of conditions and the following disclaimer.
++  * 2. Redistributions in binary form must reproduce the above copyright
++  *    notice, this list of conditions and the following disclaimer in the
++  *    documentation and/or other materials provided with the distribution.
++  *
++  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
++  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
++  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
++  * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
++  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
++  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++  */
++ 
++ #include "includes.h"
++ 
++ #ifdef GSSAPI
++ 
++ #include <openssl/crypto.h>
++ #include <openssl/bn.h>
++ 
++ #include "xmalloc.h"
++ #include "buffer.h"
++ #include "bufaux.h"
++ #include "kex.h"
++ #include "log.h"
++ #include "packet.h"
++ #include "dh.h"
++ #include "ssh2.h"
++ #include "ssh-gss.h"
++ 
++ /* This is now the same as the DH hash ... */
++ 
++ u_char *
++ kex_gssapi_hash(
++     char *client_version_string,
++     char *server_version_string,
++     char *ckexinit, int ckexinitlen,
++     char *skexinit, int skexinitlen,
++     u_char *serverhostkeyblob, int sbloblen,
++     BIGNUM *client_dh_pub,
++     BIGNUM *server_dh_pub,
++     BIGNUM *shared_secret)
++ {
++ 	Buffer b;
++ 	static u_char digest[EVP_MAX_MD_SIZE];
++ 	EVP_MD *evp_md = EVP_sha1();
++ 	EVP_MD_CTX md;
++ 
++ 	buffer_init(&b);
++ 	buffer_put_string(&b, client_version_string, strlen(client_version_string));
++ 	buffer_put_string(&b, server_version_string, strlen(server_version_string));
++ 
++ 	/* kexinit messages: fake header: len+SSH2_MSG_KEXINIT */
++ 	buffer_put_int(&b, ckexinitlen+1);
++ 	buffer_put_char(&b, SSH2_MSG_KEXINIT);
++ 	buffer_append(&b, ckexinit, ckexinitlen);
++ 	buffer_put_int(&b, skexinitlen+1);
++ 	buffer_put_char(&b, SSH2_MSG_KEXINIT);
++ 	buffer_append(&b, skexinit, skexinitlen);
++ 
++ 	buffer_put_string(&b, serverhostkeyblob, sbloblen);
++ 	buffer_put_bignum2(&b, client_dh_pub);
++ 	buffer_put_bignum2(&b, server_dh_pub);
++ 	buffer_put_bignum2(&b, shared_secret);
++ 
++ #ifdef DEBUG_KEX
++ 	buffer_dump(&b);
++ #endif
++ 	EVP_DigestInit(&md, evp_md);
++ 	EVP_DigestUpdate(&md, buffer_ptr(&b), buffer_len(&b));
++ 	EVP_DigestFinal(&md, digest, NULL);
++ 
++ 	buffer_free(&b);
++ 
++ #ifdef DEBUG_KEX
++ 	dump_digest("hash", digest, evp_md->md_size);
++ #endif
++ 	return digest;
++ }
++ 
++ void
++ kexgss_client(Kex *kex)
++ {
++ 	gss_buffer_desc gssbuf,send_tok,recv_tok, msg_tok, *token_ptr;
++ 	Gssctxt ctxt;
++ 	OM_uint32 maj_status, min_status, ret_flags;
++ 	unsigned int klen, kout;
++ 	DH *dh; 
++ 	BIGNUM *dh_server_pub = 0;
++ 	BIGNUM *shared_secret = 0;	
++ 	unsigned char *kbuf;
++ 	unsigned char *hash;
++ 	unsigned char *serverhostkey;
++ 	int type = 0;
++ 	int first = 1;
++ 	int slen = 0;
++ 	
++ 	/* Initialise our GSSAPI world */
++ 	ssh_gssapi_build_ctx(&ctxt);
++ 	if (ssh_gssapi_id_kex(&ctxt,kex->name)) {
++ 		fatal("Couldn't identify host exchange");
++ 	}
++ 	if (ssh_gssapi_import_name(&ctxt,kex->host)) {
++ 		fatal("Couldn't import hostname ");
++ 	}
++ 	
++ 	/* This code should match that in ssh_dh1_client */
++ 		
++ 	/* Step 1 - e is dh->pub_key */
++ 	dh = dh_new_group1();
++ 	dh_gen_key(dh, kex->we_need * 8);
++ 
++ 	/* This is f, we initialise it now to make life easier */
++     	dh_server_pub = BN_new();
++     	if (dh_server_pub == NULL) {
++     		fatal("dh_server_pub == NULL");
++     	}
++     		
++ 	token_ptr = GSS_C_NO_BUFFER;
++ 			 
++ 	do {
++ 		debug("Calling gss_init_sec_context");
++ 		
++ 		maj_status=ssh_gssapi_init_ctx(&ctxt,
++ 					       kex->options.gss_deleg_creds,
++ 					       token_ptr,&send_tok,
++ 					       &ret_flags);
++ 
++ 		if (GSS_ERROR(maj_status)) {
++ 			fatal("gss_init_context failed");
++ 		} 
++ 
++ 		/* If we've got an old receive buffer get rid of it */
++ 		if (token_ptr != GSS_C_NO_BUFFER)
++ 	  		(void) gss_release_buffer(&min_status, &recv_tok);
++  	
++ 		
++ 		if (maj_status == GSS_S_COMPLETE) {
++ 			/* If mutual state flag is not true, kex fails */
++ 			if (!(ret_flags & GSS_C_MUTUAL_FLAG)) {
++ 				fatal("Mutual authentication failed");
++ 			}
++ 			/* If integ avail flag is not true kex fails */
++ 			if (!(ret_flags & GSS_C_INTEG_FLAG)) {
++ 				fatal("Integrity check failed");
++ 			}
++ 		}
++ 		
++ 		/* If we have data to send, then the last message that we
++ 		 * received cannot have been a 'complete'. */
++ 		if (send_tok.length !=0) {
++ 			if (first) {
++ 				packet_start(SSH2_MSG_KEXGSS_INIT);
++ 				packet_put_string(send_tok.value,
++ 					  	  send_tok.length);
++ 				packet_put_bignum2(dh->pub_key);
++ 				first=0;
++ 			} else {
++ 				packet_start(SSH2_MSG_KEXGSS_CONTINUE);
++ 				packet_put_string(send_tok.value,
++ 						  send_tok.length);
++ 			}
++ 			packet_send();
++ 			packet_write_wait();
++ 
++ 			
++ 			/* If we've sent them data, they'd better be polite
++ 			 * and reply. */
++ 		
++ 			type = packet_read();
++ 			switch (type) {
++ 			case SSH2_MSG_KEXGSS_HOSTKEY:
++ 				debug("Received KEXGSS_HOSTKEY");
++ 				serverhostkey=packet_get_string(&slen);
++ 				break;
++ 			case SSH2_MSG_KEXGSS_CONTINUE:
++ 				debug("Received GSSAPI_CONTINUE");
++ 				if (maj_status == GSS_S_COMPLETE) 
++ 					fatal("GSSAPI Continue received from server when complete");
++ 				recv_tok.value=packet_get_string(&recv_tok.length);
++ 				break;
++ 			case SSH2_MSG_KEXGSS_COMPLETE:
++ 				debug("Received GSSAPI_COMPLETE");
++ 			        packet_get_bignum2(dh_server_pub);
++ 			    	msg_tok.value=
++ 			    	    packet_get_string(&msg_tok.length);
++ 
++ 				/* Is there a token included? */
++ 				if (packet_get_char()) {
++ 					recv_tok.value=
++ 					    packet_get_string(&recv_tok.length);
++ 					/* If we're already complete - protocol error */
++ 					if (maj_status == GSS_S_COMPLETE)
++ 						packet_disconnect("Protocol error: received token when complete");
++ 				} else {
++ 				   	/* No token included */
++ 				   	if (maj_status != GSS_S_COMPLETE)
++ 				   		packet_disconnect("Protocol error: did not receive final token");
++ 				}
++ 				break;
++ 			default:
++ 				packet_disconnect("Protocol error: didn't expect packet type %d",
++ 		    		type);
++ 			}
++ 			token_ptr=&recv_tok;
++ 		}
++ 
++     	} while (maj_status & GSS_S_CONTINUE_NEEDED);
++     	
++     	/* We _must_ have received a COMPLETE message in reply from the 
++     	 * server, which will have set dh_server_pub and msg_tok */
++     	 
++     	if (type!=SSH2_MSG_KEXGSS_COMPLETE)
++     	   fatal("Didn't receive a SSH2_MSG_KEXGSS_COMPLETE when I expected it");
++     	 	    	
++ 	/* Check f in range [1, p-1] */
++         if (!dh_pub_is_valid(dh, dh_server_pub))
++                         packet_disconnect("bad server public DH value");
++                         
++         /* compute K=f^x mod p */
++         klen = DH_size(dh);
++         kbuf = xmalloc(klen);
++         kout = DH_compute_key(kbuf, dh_server_pub, dh);
++         
++         shared_secret = BN_new();
++         BN_bin2bn(kbuf,kout, shared_secret);
++         memset(kbuf, 0, klen);
++         xfree(kbuf);
++         
++         hash = kex_gssapi_hash(
++  	    kex->client_version_string,
++             kex->server_version_string,
++             buffer_ptr(&kex->my), buffer_len(&kex->my),
++             buffer_ptr(&kex->peer), buffer_len(&kex->peer),
++             serverhostkey, slen, /* server host key */
++             dh->pub_key,	/* e */
++             dh_server_pub,	/* f */
++             shared_secret	/* K */
++         );
++         
++         gssbuf.value=hash;
++         gssbuf.length=20;
++         
++         /* Verify that H matches the token we just got. */
++                 if ((maj_status = gss_verify_mic(&min_status,
++         	       		         ctxt.context,
++         	                         &gssbuf,
++         	                         &msg_tok,
++         	                         NULL))) {
++ 
++ 		packet_disconnect("Hash's MIC didn't verify");
++       	}	
++         
++         DH_free(dh);
++        	ssh_gssapi_delete_ctx(&ctxt);
++         /* save session id */
++         if (kex->session_id == NULL) {
++         	kex->session_id_len = 20;
++         	kex->session_id = xmalloc(kex->session_id_len);
++         	memcpy(kex->session_id, hash, kex->session_id_len);
++         }
++         
++ 	kex_derive_keys(kex, hash, shared_secret);
++ 	BN_clear_free(shared_secret);
++         kex_finish(kex);
++ }
++ 
++ 
++ 
++ 
++ void
++ kexgss_server(Kex *kex)
++ {
++ 
++ 	OM_uint32 maj_status, min_status;
++ 	
++ 	/* Some GSSAPI implementations use the input value of ret_flags (an
++  	 * output variable) as a means of triggering mechanism specific 
++  	 * features. Initializing it to zero avoids inadvertently 
++  	 * activating this non-standard behaviour.*/
++ 
++ 	OM_uint32 ret_flags = 0;
++ 	gss_buffer_desc gssbuf,send_tok,recv_tok,msg_tok;
++ 	Gssctxt ctxt;
++         unsigned int klen, kout;
++         unsigned char *kbuf;
++         unsigned char *hash;
++         DH *dh;
++         BIGNUM *shared_secret = NULL;
++         BIGNUM *dh_client_pub = NULL;
++ 	int type =0;
++ 	
++ 	/* Initialise GSSAPI */
++ 
++ 	ssh_gssapi_build_ctx(&ctxt);
++         if (ssh_gssapi_id_kex(&ctxt,kex->name))
++ 		fatal("Unknown gssapi mechanism");
++         if (ssh_gssapi_acquire_cred(&ctxt))
++         	fatal("Unable to acquire credentials for the server");
++                                                                                                                                 
++ 	do {
++ 		debug("Wait SSH2_MSG_GSSAPI_INIT");
++ 		type = packet_read();
++ 		switch(type) {
++ 		case SSH2_MSG_KEXGSS_INIT:
++ 			if (dh_client_pub!=NULL) 
++ 				fatal("Received KEXGSS_INIT after initialising");
++ 			recv_tok.value=packet_get_string(&recv_tok.length);
++ 
++ 		        dh_client_pub = BN_new();
++ 		        
++ 		        if (dh_client_pub == NULL)
++         			fatal("dh_client_pub == NULL");
++ 		  	packet_get_bignum2(dh_client_pub);
++ 		  	
++ 		  	/* Send SSH_MSG_KEXGSS_HOSTKEY here, if we want */
++ 			break;
++ 		case SSH2_MSG_KEXGSS_CONTINUE:
++ 			if (dh_client_pub == NULL)
++ 				fatal("Received KEXGSS_CONTINUE without initialising");
++ 			recv_tok.value=packet_get_string(&recv_tok.length);
++ 			break;
++ 		default:
++ 			packet_disconnect("Protocol error: didn't expect packet type %d",
++ 					   type);
++ 		}
++ 		maj_status=ssh_gssapi_accept_ctx(&ctxt,&recv_tok, &send_tok,
++ 						 &ret_flags);
++ 
++ 		gss_release_buffer(&min_status,&recv_tok);
++ 		
++ 		if (maj_status & GSS_S_CONTINUE_NEEDED) {
++ 			debug("Sending GSSAPI_CONTINUE");
++ 			packet_start(SSH2_MSG_KEXGSS_CONTINUE);
++ 			packet_put_string(send_tok.value,send_tok.length);
++ 			packet_send();
++ 			packet_write_wait();
++ 			gss_release_buffer(&min_status, &send_tok);
++ 		}
++ 	} while (maj_status & GSS_S_CONTINUE_NEEDED);
++ 
++ 	if (GSS_ERROR(maj_status))
++ 		fatal("gss_accept_context died");
++ 	
++ 	debug("gss_complete");
++ 	if (!(ret_flags & GSS_C_MUTUAL_FLAG))
++ 		fatal("mutual authentication flag wasn't set");
++ 		
++ 	if (!(ret_flags & GSS_C_INTEG_FLAG))
++ 		fatal("Integrity flag wasn't set");
++ 		
++ 	
++ 	dh = dh_new_group1();
++ 	dh_gen_key(dh, kex->we_need * 8);
++ 	
++         if (!dh_pub_is_valid(dh, dh_client_pub))
++                 packet_disconnect("bad client public DH value");
++ 
++         klen = DH_size(dh);
++         kbuf = xmalloc(klen); 
++         kout = DH_compute_key(kbuf, dh_client_pub, dh);
++ 
++ 	shared_secret = BN_new();
++ 	BN_bin2bn(kbuf, kout, shared_secret);
++ 	memset(kbuf, 0, klen);
++ 	xfree(kbuf);
++ 	
++         hash = kex_gssapi_hash(
++             kex->client_version_string,
++             kex->server_version_string,
++             buffer_ptr(&kex->peer), buffer_len(&kex->peer),
++             buffer_ptr(&kex->my), buffer_len(&kex->my),
++             NULL, 0, /* Change this if we start sending host keys */
++             dh_client_pub,
++             dh->pub_key,
++             shared_secret
++ 	);
++ 	BN_free(dh_client_pub);
++ 		
++ 	if (kex->session_id == NULL) {
++ 		kex->session_id_len = 20;
++ 		kex->session_id = xmalloc(kex->session_id_len);
++ 		memcpy(kex->session_id, hash, kex->session_id_len);
++ 	}
++ 	                        
++ 	gssbuf.value = hash;
++ 	gssbuf.length = 20; /* Hashlen appears to always be 20 */
++ 	
++ 	if ((maj_status=gss_get_mic(&min_status,
++ 			       ctxt.context,
++ 			       GSS_C_QOP_DEFAULT,
++ 			       &gssbuf,
++ 			       &msg_tok))) {
++ 		ssh_gssapi_error(maj_status,min_status);
++ 		fatal("Couldn't get MIC");
++ 	}	
++ 			      
++ 	packet_start(SSH2_MSG_KEXGSS_COMPLETE);
++ 	packet_put_bignum2(dh->pub_key);
++ 	packet_put_string((char *)msg_tok.value,msg_tok.length);
++ 
++ 	if (send_tok.length!=0) {
++ 		packet_put_char(1); /* true */
++ 		packet_put_string((char *)send_tok.value,send_tok.length);
++ 	} else {
++ 		packet_put_char(0); /* false */
++ 	}
++  	packet_send();
++ 	packet_write_wait();
++ 
++ 	/* Store the client name, and the delegated credentials for later
++ 	 * use */
++ 	if (ssh_gssapi_getclient(&ctxt,&gssapi_client_type, 
++ 				       &gssapi_client_name, 
++ 				       &gssapi_client_creds)) {
++ 		fatal("Couldn't convert client name");
++ 	}
++ 	
++ 	gss_release_buffer(&min_status, &send_tok);	
++ 	ssh_gssapi_delete_ctx(&ctxt);
++ 	DH_free(dh);
++ 
++ 	kex_derive_keys(kex, hash, shared_secret);
++ 	BN_clear_free(shared_secret);
++ 	kex_finish(kex);
++ }
++ 
++ void 
++ kexgss(Kex *kex)
++ {
++ 	if (kex->server)
++ 		kexgss_server(kex);
++ 	else
++ 		kexgss_client(kex);
++ }
++ 
++ #endif /* GSSAPI */
+diff -c -d -r openssh-3.3p1/key.c openssh-3.3p1-gssapi-dce-1.1/key.c
+*** openssh-3.3p1/key.c	Thu Jun  6 13:54:08 2002
+--- openssh-3.3p1-gssapi-dce-1.1/key.c	Mon Jun 24 16:07:09 2002
+***************
+*** 640,645 ****
+--- 640,647 ----
+  		return KEY_RSA;
+  	} else if (strcmp(name, "ssh-dss") == 0) {
+  		return KEY_DSA;
++ 	} else if (strcmp(name, "null") == 0){
++ 		return KEY_NULL;
+  	}
+  	debug2("key_type_from_name: unknown key type '%s'", name);
+  	return KEY_UNSPEC;
+diff -c -d -r openssh-3.3p1/key.h openssh-3.3p1-gssapi-dce-1.1/key.h
+*** openssh-3.3p1/key.h	Thu Mar 21 17:45:55 2002
+--- openssh-3.3p1-gssapi-dce-1.1/key.h	Mon Jun 24 16:07:09 2002
+***************
+*** 34,39 ****
+--- 34,40 ----
+  	KEY_RSA1,
+  	KEY_RSA,
+  	KEY_DSA,
++ 	KEY_NULL,
+  	KEY_UNSPEC
+  };
+  enum fp_type {
+diff -c -d -r openssh-3.3p1/makegssname.pl openssh-3.3p1-gssapi-dce-1.1/makegssname.pl
+*** openssh-3.3p1/makegssname.pl	Tue Jun 25 16:14:03 2002
+--- openssh-3.3p1-gssapi-dce-1.1/makegssname.pl	Mon Jun 24 16:07:09 2002
+***************
+*** 0 ****
+--- 1,46 ----
++ #!/usr/bin/perl
++ 
++ use Convert::ASN1 qw(:tag);
++ use Digest::MD5 qw(md5);
++ use MIME::Base64;
++  
++ $oid=shift;
++ $encoded=encode_object_id($oid);
++ 
++ @entries=unpack("C*",$encoded);
++ shift @entries; # Get rid of the NULL
++ 
++ print "DER representation: ";
++ foreach $entry (@entries) {
++   print "\\x";
++   printf "%02X",$entry;
++ }
++ print "\n";
++ 
++ $digest = md5($encoded);
++ # We only want the first 10 characters;
++ # Conversations with the authors suggest that we want to use all of the
++ # characters of the digest.
++ #$digest = substr($digest,0,10);
++ print "gsskeyex representation: ",encode_base64($digest),"\n";
++ 
++ sub encode_object_id {
++   $string="";
++ 
++   my @data = ($_[0] =~ /(\d+)/g);
++ 
++   if(@data < 2) {
++       @data = (0);
++   }
++   else {
++       my $first = $data[1] + ($data[0] * 40);
++       splice(@data,0,2,$first);
++   }
++ 
++ #  my $l = length $string;
++   $string .= pack("cw*", 0, @data);
++ #  substr($string,$l,1) = asn_encode_length(length($string) - $l - 1);
++   return $string;
++ }
++ 
++ 
+diff -c -d -r openssh-3.3p1/readconf.c openssh-3.3p1-gssapi-dce-1.1/readconf.c
+*** openssh-3.3p1/readconf.c	Thu Jun 20 17:41:52 2002
+--- openssh-3.3p1-gssapi-dce-1.1/readconf.c	Mon Jun 24 16:07:09 2002
+***************
+*** 97,102 ****
+--- 97,108 ----
+  #if defined(KRB4) || defined(KRB5)
+  	oKerberosAuthentication,
+  #endif
++ #ifdef GSSAPI
++ 	oGssAuthentication, oGssDelegateCreds,
++ #ifdef GSI
++ 	oGssGlobusDelegateLimitedCreds,
++ #endif /* GSI */
++ #endif /* GSSAPI */
+  #if defined(AFS) || defined(KRB5)
+  	oKerberosTgtPassing,
+  #endif
+***************
+*** 143,148 ****
+--- 149,163 ----
+  #if defined(KRB4) || defined(KRB5)
+  	{ "kerberosauthentication", oKerberosAuthentication },
+  #endif
++ #ifdef GSSAPI
++ 	{ "gssapiauthentication", oGssAuthentication },
++ 	{ "gssapidelegatecredentials", oGssDelegateCreds },
++ #ifdef GSI
++ 	/* For backwards compatability with old 1.2.27 client code */
++ 	{ "forwardgssapiglobusproxy", oGssDelegateCreds }, /* alias */
++ 	{ "forwardgssapiglobuslimitedproxy", oGssGlobusDelegateLimitedCreds },
++ #endif /* GSI */
++ #endif /* GSSAPI */
+  #if defined(AFS) || defined(KRB5)
+  	{ "kerberostgtpassing", oKerberosTgtPassing },
+  #endif
+***************
+*** 362,367 ****
+--- 377,399 ----
+  		intptr = &options->kerberos_authentication;
+  		goto parse_flag;
+  #endif
++ #ifdef GSSAPI
++ 	case oGssAuthentication:
++ 		intptr = &options->gss_authentication;
++ 		goto parse_flag;
++       
++ 	case oGssDelegateCreds:
++ 		intptr = &options->gss_deleg_creds;
++ 		goto parse_flag;
++  
++ #ifdef GSI
++ 	case oGssGlobusDelegateLimitedCreds:
++ 		intptr = &options->gss_globus_deleg_limited_proxy;
++ 		goto parse_flag;
++ #endif /* GSI */
++ 
++ #endif /* GSSAPI */
++ 
+  #if defined(AFS) || defined(KRB5)
+  	case oKerberosTgtPassing:
+  		intptr = &options->kerberos_tgt_passing;
+***************
+*** 747,752 ****
+--- 779,792 ----
+  	options->rsa_authentication = -1;
+  	options->pubkey_authentication = -1;
+  	options->challenge_response_authentication = -1;
++ #ifdef GSSAPI
++         options->gss_authentication = -1;
++         options->gss_deleg_creds = -1;
++ #ifdef GSI
++         options->gss_globus_deleg_limited_proxy = -1;
++ #endif /* GSI */
++ #endif /* GSSAPI */
++ 
+  #if defined(KRB4) || defined(KRB5)
+  	options->kerberos_authentication = -1;
+  #endif
+***************
+*** 823,828 ****
+--- 863,878 ----
+  		options->pubkey_authentication = 1;
+  	if (options->challenge_response_authentication == -1)
+  		options->challenge_response_authentication = 1;
++ #ifdef GSSAPI
++ 	if (options->gss_authentication == -1)
++ 		options->gss_authentication = 1;
++ 	if (options->gss_deleg_creds == -1)
++ 		options->gss_deleg_creds = 1;
++ #ifdef GSI
++ 	if (options->gss_globus_deleg_limited_proxy == -1)
++ 		options->gss_globus_deleg_limited_proxy = 0;
++ #endif /* GSI */
++ #endif /* GSSAPI */
+  #if defined(KRB4) || defined(KRB5)
+  	if (options->kerberos_authentication == -1)
+  		options->kerberos_authentication = 1;
+diff -c -d -r openssh-3.3p1/readconf.h openssh-3.3p1-gssapi-dce-1.1/readconf.h
+*** openssh-3.3p1/readconf.h	Sun Jun  9 13:04:03 2002
+--- openssh-3.3p1-gssapi-dce-1.1/readconf.h	Mon Jun 24 16:07:09 2002
+***************
+*** 47,52 ****
+--- 47,61 ----
+  #if defined(AFS) || defined(KRB5)
+  	int     kerberos_tgt_passing;	/* Try Kerberos TGT passing. */
+  #endif
++ 
++ #ifdef GSSAPI
++ 	int 	gss_authentication;
++ 	int	gss_deleg_creds;
++ #ifdef GSI
++ 	int	gss_globus_deleg_limited_proxy;
++ #endif /* GSI */
++ #endif /* GSSAPI */
++ 
+  #ifdef AFS
+  	int     afs_token_passing;	/* Try AFS token passing. */
+  #endif
+diff -c -d -r openssh-3.3p1/servconf.c openssh-3.3p1-gssapi-dce-1.1/servconf.c
+*** openssh-3.3p1/servconf.c	Thu Jun 20 23:20:44 2002
+--- openssh-3.3p1-gssapi-dce-1.1/servconf.c	Mon Jun 24 16:07:09 2002
+***************
+*** 86,91 ****
+--- 86,97 ----
+  	options->hostbased_uses_name_from_packet_only = -1;
+  	options->rsa_authentication = -1;
+  	options->pubkey_authentication = -1;
++ #ifdef GSSAPI
++ 	options->gss_authentication=-1;
++ 	options->gss_keyex=-1;
++ 	options->gss_use_session_ccache = -1;
++ 	options->gss_cleanup_creds = -1;
++ #endif
+  #if defined(KRB4) || defined(KRB5)
+  	options->kerberos_authentication = -1;
+  	options->kerberos_or_local_passwd = -1;
+***************
+*** 199,204 ****
+--- 205,220 ----
+  		options->rsa_authentication = 1;
+  	if (options->pubkey_authentication == -1)
+  		options->pubkey_authentication = 1;
++ #ifdef GSSAPI
++ 	if (options->gss_authentication == -1)
++ 		options->gss_authentication = 1;
++ 	if (options->gss_keyex == -1)
++ 		options->gss_keyex =1;
++ 	if (options->gss_use_session_ccache == -1)
++ 		options->gss_use_session_ccache = 1;
++ 	if (options->gss_cleanup_creds == -1)
++ 		options->gss_cleanup_creds = 1;
++ #endif
+  #if defined(KRB4) || defined(KRB5)
+  	if (options->kerberos_authentication == -1)
+  		options->kerberos_authentication = 0;
+***************
+*** 277,282 ****
+--- 293,301 ----
+  	sPort, sHostKeyFile, sServerKeyBits, sLoginGraceTime, sKeyRegenerationTime,
+  	sPermitRootLogin, sLogFacility, sLogLevel,
+  	sRhostsAuthentication, sRhostsRSAAuthentication, sRSAAuthentication,
++ #ifdef GSSAPI
++ 	sGssAuthentication, sGssKeyEx, sGssUseSessionCredCache, sGssCleanupCreds,
++ #endif
+  #if defined(KRB4) || defined(KRB5)
+  	sKerberosAuthentication, sKerberosOrLocalPasswd, sKerberosTicketCleanup,
+  #endif
+***************
+*** 327,332 ****
+--- 346,358 ----
+  	{ "rsaauthentication", sRSAAuthentication },
+  	{ "pubkeyauthentication", sPubkeyAuthentication },
+  	{ "dsaauthentication", sPubkeyAuthentication },			/* alias */
++ #ifdef GSSAPI
++ 	{ "gssapiauthentication", sGssAuthentication },
++ 	{ "gssapikeyexchange", sGssKeyEx },
++ 	{ "gssusesessionccache", sGssUseSessionCredCache },
++ 	{ "gssapiusesessioncredcache", sGssUseSessionCredCache },
++ 	{ "gssapicleanupcreds", sGssCleanupCreds },
++ #endif
+  #if defined(KRB4) || defined(KRB5)
+  	{ "kerberosauthentication", sKerberosAuthentication },
+  	{ "kerberosorlocalpasswd", sKerberosOrLocalPasswd },
+***************
+*** 642,647 ****
+--- 668,687 ----
+  	case sPubkeyAuthentication:
+  		intptr = &options->pubkey_authentication;
+  		goto parse_flag;
++ #ifdef GSSAPI
++ 	case sGssAuthentication:
++ 		intptr = &options->gss_authentication;
++ 		goto parse_flag;
++ 	case sGssKeyEx:
++ 		intptr = &options->gss_keyex;
++ 		goto parse_flag;
++ 	case sGssUseSessionCredCache:
++ 		intptr = &options->gss_use_session_ccache;
++ 		goto parse_flag;
++ 	case sGssCleanupCreds:
++ 		intptr = &options->gss_cleanup_creds;
++ 		goto parse_flag;
++ #endif
+  #if defined(KRB4) || defined(KRB5)
+  	case sKerberosAuthentication:
+  		intptr = &options->kerberos_authentication;
+diff -c -d -r openssh-3.3p1/servconf.h openssh-3.3p1-gssapi-dce-1.1/servconf.h
+*** openssh-3.3p1/servconf.h	Thu Jun 20 18:09:47 2002
+--- openssh-3.3p1-gssapi-dce-1.1/servconf.h	Mon Jun 24 16:07:09 2002
+***************
+*** 73,78 ****
+--- 73,85 ----
+  	int     hostbased_uses_name_from_packet_only; /* experimental */
+  	int     rsa_authentication;	/* If true, permit RSA authentication. */
+  	int     pubkey_authentication;	/* If true, permit ssh2 pubkey authentication. */
++ 	#ifdef GSSAPI
++ 	int     gss_authentication;
++ 	int     gss_keyex;
++ 	int     gss_use_session_ccache;        /* If true, delegated credentials are
++ 	                                        * stored in a session specific cache */
++ 	int 	gss_cleanup_creds;	       /* If true, destroy cred cache on logout */
++ #endif	
+  #if defined(KRB4) || defined(KRB5)
+  	int     kerberos_authentication;	/* If true, permit Kerberos
+  						 * authentication. */
+diff -c -d -r openssh-3.3p1/session.c openssh-3.3p1-gssapi-dce-1.1/session.c
+*** openssh-3.3p1/session.c	Thu Jun 20 18:09:47 2002
+--- openssh-3.3p1-gssapi-dce-1.1/session.c	Mon Jun 24 17:15:54 2002
+***************
+*** 58,63 ****
+--- 58,67 ----
+  #include "session.h"
+  #include "monitor_wrap.h"
+  
++ #ifdef GSSAPI
++ #include "ssh-gss.h"
++ #endif
++ 
+  #ifdef HAVE_CYGWIN
+  #include <windows.h>
+  #include <sys/cygwin.h>
+***************
+*** 460,465 ****
+--- 464,479 ----
+  
+  	session_proctitle(s);
+  
++ #if defined(GSSAPI)
++ 	temporarily_use_uid(s->pw);
++ #ifdef DCE
++ 	ssh_gssapi_storecreds(s->authctxt);
++ #else /* DCE */
++ 	ssh_gssapi_storecreds();
++ #endif /* DCE */
++ 	restore_uid();
++ #endif
++ 
+  #if defined(USE_PAM)
+  	do_pam_session(s->pw->pw_name, NULL);
+  	do_pam_setcred(1);
+***************
+*** 578,583 ****
+--- 592,607 ----
+  	ptyfd = s->ptyfd;
+  	ttyfd = s->ttyfd;
+  
++ #if defined(GSSAPI)
++ 	temporarily_use_uid(s->pw);
++ #ifdef DCE
++ 	ssh_gssapi_storecreds(s->authctxt);
++ #else /* DCE */
++ 	ssh_gssapi_storecreds();
++ #endif /* DCE */
++ 	restore_uid();
++ #endif
++ 
+  #if defined(USE_PAM)
+  	do_pam_session(s->pw->pw_name, s->tty);
+  	do_pam_setcred(1);
+***************
+*** 826,832 ****
+   * Sets the value of the given variable in the environment.  If the variable
+   * already exists, its value is overriden.
+   */
+! static void
+  child_set_env(char ***envp, u_int *envsizep, const char *name,
+  	const char *value)
+  {
+--- 850,856 ----
+   * Sets the value of the given variable in the environment.  If the variable
+   * already exists, its value is overriden.
+   */
+! void
+  child_set_env(char ***envp, u_int *envsizep, const char *name,
+  	const char *value)
+  {
+***************
+*** 946,951 ****
+--- 970,982 ----
+  	copy_environment(environ, &env, &envsize);
+  #endif
+  
++ #ifdef GSSAPI
++ 	/* Allow any GSSAPI methods that we've used to alter 
++ 	 * the childs environment as they see fit
++ 	 */
++ 	ssh_gssapi_do_child(&env,&envsize);
++ #endif
++ 
+  	if (!options.use_login) {
+  		/* Set basic environment. */
+  		child_set_env(&env, &envsize, "USER", pw->pw_name);
+***************
+*** 1029,1039 ****
+--- 1060,1076 ----
+  		child_set_env(&env, &envsize, "KRBTKFILE",
+  		    s->authctxt->krb4_ticket_file);
+  #endif
++ 
++ #ifdef DCE
++ 	auth_dce_setcred(env, &envsize);
++ #else /* DCE */
+  #ifdef KRB5
+  	if (s->authctxt->krb5_ticket_file)
+  		child_set_env(&env, &envsize, "KRB5CCNAME",
+  		    s->authctxt->krb5_ticket_file);
+  #endif
++ #endif /* DCE */
++ 
+  #ifdef USE_PAM
+  	/* Pull in any environment variables that may have been set by PAM. */
+  	copy_environment(fetch_pam_environment(), &env, &envsize);
+***************
+*** 2021,2024 ****
+--- 2058,2064 ----
+  do_authenticated2(Authctxt *authctxt)
+  {
+  	server_loop2(authctxt);
++ #if defined(GSSAPI)
++ 	ssh_gssapi_cleanup_creds(NULL);
++ #endif
+  }
+diff -c -d -r openssh-3.3p1/session.h openssh-3.3p1-gssapi-dce-1.1/session.h
+*** openssh-3.3p1/session.h	Tue Apr  2 12:35:38 2002
+--- openssh-3.3p1-gssapi-dce-1.1/session.h	Mon Jun 24 16:07:09 2002
+***************
+*** 68,71 ****
+--- 68,74 ----
+  Session	*session_by_tty(char *);
+  void	 session_close(Session *);
+  void	 do_setusercontext(struct passwd *);
++ 
++ void	 child_set_env(char ***envp, u_int *envsizep, const char *name,
++ 		       const char *value);
+  #endif
+diff -c -d -r openssh-3.3p1/ssh-gss.h openssh-3.3p1-gssapi-dce-1.1/ssh-gss.h
+*** openssh-3.3p1/ssh-gss.h	Tue Jun 25 16:14:07 2002
+--- openssh-3.3p1-gssapi-dce-1.1/ssh-gss.h	Mon Jun 24 16:07:09 2002
+***************
+*** 0 ****
+--- 1,122 ----
++ /*
++  * Copyright (c) 2001 Simon Wilkinson. All rights reserved.
++  *
++  * Redistribution and use in source and binary forms, with or without
++  * modification, are permitted provided that the following conditions
++  * are met:
++  * 1. Redistributions of source code must retain the above copyright
++  *    notice, this list of conditions and the following disclaimer.
++  * 2. Redistributions in binary form must reproduce the above copyright
++  *    notice, this list of conditions and the following disclaimer in the
++  *    documentation and/or other materials provided with the distribution.
++  *
++  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
++  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
++  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
++  * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
++  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
++  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++  */
++ 
++ #ifdef GSSAPI
++ 
++ #include "kex.h"
++ #include "buffer.h"
++ 
++ #include <gssapi.h>
++ 
++ #ifdef KRB5
++ #ifndef HEIMDAL
++ #include <gssapi_generic.h>
++ 
++ /* MIT Kerberos doesn't seem to define GSS_NT_HOSTBASED_SERVICE */
++ 
++ #ifndef GSS_C_NT_HOSTBASED_SERVICE
++ #define GSS_C_NT_HOSTBASED_SERVICE gss_nt_service_name
++ #endif /* GSS_C_NT_... */
++ #endif /* !HEIMDAL */
++ #endif /* KRB5 */
++ 
++ /* draft-ietf-secsh-gsskeyex-01 */
++ #define SSH2_MSG_KEXGSS_INIT		30
++ #define SSH2_MSG_KEXGSS_CONTINUE 	31
++ #define SSH2_MSG_KEXGSS_COMPLETE 	32
++ #define SSH2_MSG_KEXGSS_HOSTKEY		33
++ #define KEX_GSS_SHA1			"gss-group1-sha1-"
++ 
++ /* draft-galb-secsh-gssapi-01 */
++ #define SSH2_MSG_USERAUTH_GSSAPI_RESPONSE     60
++ #define SSH2_MSG_USERAUTH_GSSAPI_TOKEN        61
++ #define SSH2_MSG_USERAUTH_GSSAPI_HASH         62
++ #define SSH2_MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE	63    
++ 
++ enum ssh_gss_id {
++ #ifdef KRB5
++ 	GSS_KERBEROS,
++ #endif
++ #ifdef GSI
++ 	GSS_GSI,
++ #endif /* GSI */
++ 	GSS_LAST_ENTRY
++ };
++ 
++ typedef struct ssh_gss_mech_struct {
++         char *enc_name;
++         char *name;
++         gss_OID_desc oid;
++ } ssh_gssapi_mech;
++ 
++ typedef struct {
++ 	OM_uint32	status; /* both */
++ 	gss_ctx_id_t	context; /* both */
++ 	gss_name_t	name; /* both */
++ 	gss_OID		oid; /* client */
++ 	gss_cred_id_t	creds; /* server */
++ 	gss_name_t	client; /* server */
++ 	gss_cred_id_t	client_creds; /* server */
++ } Gssctxt;
++ 
++ extern ssh_gssapi_mech supported_mechs[];
++ extern gss_buffer_desc gssapi_client_name;
++ extern gss_cred_id_t   gssapi_client_creds;
++ extern enum ssh_gss_id gssapi_client_type;
++ 
++ char *ssh_gssapi_mechanisms(int server, char *host);
++ int ssh_gssapi_id_kex(Gssctxt *ctx, char *name);
++ void ssh_gssapi_set_oid_data(Gssctxt *ctx, void *data, size_t len);
++ void ssh_gssapi_set_oid(Gssctxt *ctx, gss_OID oid);
++ void ssh_gssapi_supported_oids(gss_OID_set *oidset);
++ enum ssh_gss_id ssh_gssapi_get_ctype(Gssctxt *ctxt);
++ 
++ OM_uint32 ssh_gssapi_import_name(Gssctxt *ctx, const char *host);
++ OM_uint32 ssh_gssapi_acquire_cred(Gssctxt *ctx);
++ OM_uint32 ssh_gssapi_init_ctx(Gssctxt *ctx, int deleg_creds,
++ 			      gss_buffer_desc *recv_tok, 
++ 			      gss_buffer_desc *send_tok, OM_uint32 *flags);
++ OM_uint32 ssh_gssapi_accept_ctx(Gssctxt *ctx,
++ 				gss_buffer_desc *recv_tok,
++ 				gss_buffer_desc *send_tok,
++ 				OM_uint32 *flags);
++ OM_uint32 ssh_gssapi_getclient(Gssctxt *ctx,
++ 				enum ssh_gss_id *type,
++ 				gss_buffer_desc *name,
++ 				gss_cred_id_t *creds);
++ void ssh_gssapi_error(OM_uint32 major_status,OM_uint32 minor_status);
++ void ssh_gssapi_build_ctx(Gssctxt *ctx);
++ void ssh_gssapi_delete_ctx(Gssctxt *ctx);
++ 
++ /* In the client */
++ void ssh_gssapi_client(Kex *kex, char *host, struct sockaddr *hostaddr,
++                        Buffer *client_kexinit, Buffer *server_kexinit);
++ 
++ /* In the server */
++ void ssh_gssapi_server(Kex *kex, Buffer *client_kexinit, 
++ 		       Buffer *server_kexinit);
++ void ssh_gssapi_do_child(char ***envp, u_int *envsizep);                 
++ void ssh_gssapi_cleanup_creds(void *ignored);
++ void ssh_gssapi_storecreds();
++ #endif /* GSSAPI */
+diff -c -d -r openssh-3.3p1/sshconnect2.c openssh-3.3p1-gssapi-dce-1.1/sshconnect2.c
+*** openssh-3.3p1/sshconnect2.c	Thu Jun 20 17:41:53 2002
+--- openssh-3.3p1-gssapi-dce-1.1/sshconnect2.c	Mon Jun 24 16:14:36 2002
+***************
+*** 48,53 ****
+--- 48,57 ----
+  #include "msg.h"
+  #include "pathnames.h"
+  
++ #ifdef GSSAPI
++ #include "ssh-gss.h"
++ #endif
++ 
+  /* import */
+  extern char *client_version_string;
+  extern char *server_version_string;
+***************
+*** 77,86 ****
+--- 81,106 ----
+  ssh_kex2(char *host, struct sockaddr *hostaddr)
+  {
+  	Kex *kex;
++ #ifdef GSSAPI
++ 	char *orig, *gss;
++ 	int len;
++ #endif
+  
+  	xxx_host = host;
+  	xxx_hostaddr = hostaddr;
+  
++ #ifdef GSSAPI
++ 	/* Add the GSSAPI mechanisms currently supported on this client to
++ 	 * the key exchange algorithm proposal */
++ 	orig = myproposal[PROPOSAL_KEX_ALGS];
++ 	gss = ssh_gssapi_mechanisms(0,host);
++ 	if (gss) {
++ 	   len = strlen(orig)+strlen(gss)+2;
++ 	   myproposal[PROPOSAL_KEX_ALGS]=xmalloc(len);
++ 	   snprintf(myproposal[PROPOSAL_KEX_ALGS],len,"%s,%s",gss,orig);
++ 	}
++ #endif
++ 
+  	if (options.ciphers == (char *)-1) {
+  		log("No valid ciphers for protocol version 2 given, using defaults.");
+  		options.ciphers = NULL;
+***************
+*** 108,118 ****
+--- 128,154 ----
+  		myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] =
+  		    options.hostkeyalgorithms;
+  
++ #ifdef GSSAPI
++         /* If we've got GSSAPI algorithms, then we also support the
++          * 'null' hostkey, as a last resort */
++ 	if (gss) {
++ 		orig=myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS];
++ 		len = strlen(orig)+sizeof(",null");
++ 		myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS]=xmalloc(len);
++ 		snprintf(myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS],len,"%s,null",orig);  
++ 	}
++ #endif
++ 
+  	/* start key exchange */
+  	kex = kex_setup(myproposal);
+  	kex->client_version_string=client_version_string;
+  	kex->server_version_string=server_version_string;
+  	kex->verify_host_key=&verify_host_key_callback;
++ 	kex->host=host;
++ 
++ #ifdef GSSAPI
++ 	kex->options.gss_deleg_creds=options.gss_deleg_creds;
++ #endif
+  
+  	xxx_kex = kex;
+  
+***************
+*** 159,164 ****
+--- 195,202 ----
+  	Sensitive *sensitive;
+  	/* kbd-interactive */
+  	int info_req_seen;
++ 	/* generic */
++ 	void *methoddata;
+  };
+  struct Authmethod {
+  	char	*name;		/* string to compare against server's list */
+***************
+*** 181,186 ****
+--- 219,232 ----
+  int	userauth_kbdint(Authctxt *);
+  int	userauth_hostbased(Authctxt *);
+  
++ #ifdef GSSAPI
++ int	userauth_external(Authctxt *authctxt);
++ int	userauth_gssapi(Authctxt *authctxt);
++ void	input_gssapi_response(int type, u_int32_t plen, void *ctxt);
++ void	input_gssapi_token(int type, u_int32_t plen, void *ctxt);
++ void	input_gssapi_hash(int type, u_int32_t plen, void *ctxt);
++ #endif
++ 
+  void	userauth(Authctxt *, char *);
+  
+  static int sign_and_send_pubkey(Authctxt *, Key *, sign_cb_fn *);
+***************
+*** 191,196 ****
+--- 237,252 ----
+  static char *authmethods_get(void);
+  
+  Authmethod authmethods[] = {
++ #ifdef GSSAPI
++ 	{"external-keyx",
++ 		userauth_external,
++ 		&options.gss_authentication,
++ 		NULL},
++ 	{"gssapi",
++ 		userauth_gssapi,
++ 		&options.gss_authentication,
++ 		NULL},
++ #endif
+  	{"hostbased",
+  		userauth_hostbased,
+  		&options.hostbased_authentication,
+***************
+*** 256,261 ****
+--- 312,318 ----
+  	authctxt.success = 0;
+  	authctxt.method = authmethod_lookup("none");
+  	authctxt.authlist = NULL;
++ 	authctxt.methoddata = NULL;
+  	authctxt.sensitive = sensitive;
+  	authctxt.info_req_seen = 0;
+  	if (authctxt.method == NULL)
+***************
+*** 278,283 ****
+--- 335,345 ----
+  void
+  userauth(Authctxt *authctxt, char *authlist)
+  {
++ 	if (authctxt->methoddata!=NULL) {
++ 		xfree(authctxt->methoddata);
++ 		authctxt->methoddata=NULL;
++ 	}
++            
+  	if (authlist == NULL) {
+  		authlist = authctxt->authlist;
+  	} else {
+***************
+*** 324,329 ****
+--- 386,393 ----
+  		fatal("input_userauth_success: no authentication context");
+  	if (authctxt->authlist)
+  		xfree(authctxt->authlist);
++ 	if (authctxt->methoddata)
++ 		xfree(authctxt->methoddata);
+  	clear_auth_state(authctxt);
+  	authctxt->success = 1;			/* break out */
+  }
+***************
+*** 424,429 ****
+--- 488,640 ----
+  
+  }
+  
++ #ifdef GSSAPI
++ int 
++ userauth_gssapi(Authctxt *authctxt)
++ {
++ 	int i;
++ 	Gssctxt *gssctxt;
++ 	static int tries=0;
++ 
++ 	/* For now, we only make one attempt at this. We could try offering
++ 	 * the server different GSSAPI OIDs until we get bored, I suppose.
++ 	 */	
++ 	if (tries++>0) return 0;
++ 
++ 	if (datafellows & SSH_OLD_GSSAPI) return 0;
++ 	
++         gssctxt=xmalloc(sizeof(Gssctxt));
++ 
++ 	/* Initialise as much of our context as we can, so failures can be
++ 	 * trapped before sending any packets.
++ 	 */
++ 	ssh_gssapi_build_ctx(gssctxt);
++ 	if (ssh_gssapi_import_name(gssctxt,authctxt->host)) {
++ 		return(0);
++ 	}
++ 	authctxt->methoddata=(void *)gssctxt;
++ 		
++ 	packet_start(SSH2_MSG_USERAUTH_REQUEST);
++ 	packet_put_cstring(authctxt->server_user);
++ 	packet_put_cstring(authctxt->service);
++         packet_put_cstring(authctxt->method->name);
++ 
++ 	/* FIXME: This assumes that our current GSSAPI implementation
++ 	 * supports all of the mechanisms listed in supported_mechs.
++ 	 * This may not be the case - we should use something along
++ 	 * the lines of the code in gss_genr to remove the ones that
++ 	 * aren't supported */
++ 	packet_put_int(GSS_LAST_ENTRY);
++ 	for (i=0;i<GSS_LAST_ENTRY;i++) {
++ 		packet_put_string(supported_mechs[i].oid.elements,
++ 			  	  supported_mechs[i].oid.length);
++ 	}
++         packet_send();
++         packet_write_wait();
++ 
++         dispatch_set(SSH2_MSG_USERAUTH_GSSAPI_RESPONSE,&input_gssapi_response);
++         dispatch_set(SSH2_MSG_USERAUTH_GSSAPI_TOKEN,&input_gssapi_token);
++ 	
++         return 1;
++ }
++ 
++ void
++ input_gssapi_response(int type, u_int32_t plen, void *ctxt) 
++ {
++ 	Authctxt *authctxt = ctxt;
++ 	Gssctxt *gssctxt;
++ 	OM_uint32 status,ms;
++ 	int oidlen;
++ 	char *oidv;
++ 	gss_buffer_desc send_tok;
++ 	
++ 	if (authctxt == NULL)
++ 		fatal("input_gssapi_response: no authentication context");
++ 	gssctxt = authctxt->methoddata;
++ 	
++ 	/* Setup our OID */
++ 	oidv=packet_get_string(&oidlen);
++ 	ssh_gssapi_set_oid_data(gssctxt,oidv,oidlen);
++ 	
++ 	packet_check_eom();
++ 	
++ 	status = ssh_gssapi_init_ctx(gssctxt, options.gss_deleg_creds,
++ 				     GSS_C_NO_BUFFER, &send_tok, 
++ 				     NULL);
++ 	if (GSS_ERROR(status)) {
++ 		/* Start again with next method on list */
++ 		debug("Trying to start again");
++ 		userauth(authctxt,NULL);
++ 		return;
++ 	}
++ 
++ 	/* We must have data to send */					
++ 	packet_start(SSH2_MSG_USERAUTH_GSSAPI_TOKEN);
++ 	packet_put_string(send_tok.value,send_tok.length);
++ 	packet_send();
++ 	packet_write_wait();
++ 	gss_release_buffer(&ms, &send_tok);
++ }
++ 
++ void
++ input_gssapi_token(int type, u_int32_t plen, void *ctxt)
++ {
++ 	Authctxt *authctxt = ctxt;
++ 	Gssctxt *gssctxt;
++ 	gss_buffer_desc send_tok,recv_tok;
++ 	OM_uint32 status;
++ 	
++ 	if (authctxt == NULL)
++ 		fatal("input_gssapi_response: no authentication context");
++ 	gssctxt = authctxt->methoddata;
++ 	
++ 	recv_tok.value=packet_get_string(&recv_tok.length);
++ 
++ 	status=ssh_gssapi_init_ctx(gssctxt, options.gss_deleg_creds,
++ 				   &recv_tok, &send_tok, NULL);
++ 
++ 	packet_check_eom();
++ 	
++ 	if (GSS_ERROR(status)) {
++ 		/* Start again with the next method in the list */
++ 		userauth(authctxt,NULL);
++ 		return;
++ 	}
++ 	
++ 	if (send_tok.length>0) {
++ 		packet_start(SSH2_MSG_USERAUTH_GSSAPI_TOKEN);
++ 		packet_put_string(send_tok.value,send_tok.length);
++ 		packet_send();
++ 		packet_write_wait();
++ 	}
++ 	
++ 	if (status == GSS_S_COMPLETE) {
++ 		/* If that succeeded, send a exchange complete message */
++ 		packet_start(SSH2_MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE);
++ 		packet_send();
++ 		packet_write_wait();
++ 	}
++ }
++ 
++ int
++ userauth_external(Authctxt *authctxt)
++ {
++         static int attempt =0;
++         
++         if (attempt++ >= 1)
++         	return 0;
++                                 
++         debug2("userauth_external");
++         packet_start(SSH2_MSG_USERAUTH_REQUEST);
++         packet_put_cstring(authctxt->server_user);
++         packet_put_cstring(authctxt->service);
++         packet_put_cstring(authctxt->method->name);
++         packet_send();
++         packet_write_wait();
++         return 1;
++ }                                                                                                
++ #endif /* GSSAPI */
++ 
+  int
+  userauth_none(Authctxt *authctxt)
+  {
+***************
+*** 434,439 ****
+--- 645,651 ----
+  	packet_put_cstring(authctxt->method->name);
+  	packet_send();
+  	return 1;
++ 
+  }
+  
+  int
+diff -c -d -r openssh-3.3p1/sshd.c openssh-3.3p1-gssapi-dce-1.1/sshd.c
+*** openssh-3.3p1/sshd.c	Thu Jun 20 18:09:47 2002
+--- openssh-3.3p1-gssapi-dce-1.1/sshd.c	Mon Jun 24 18:32:44 2002
+***************
+*** 85,90 ****
+--- 85,94 ----
+  #include "monitor_wrap.h"
+  #include "monitor_fdpass.h"
+  
++ #ifdef GSSAPI
++ #include "ssh-gss.h"
++ #endif
++ 
+  #ifdef LIBWRAP
+  #include <tcpd.h>
+  #include <syslog.h>
+***************
+*** 969,978 ****
+--- 973,985 ----
+  		log("Disabling protocol version 1. Could not load host key");
+  		options.protocol &= ~SSH_PROTO_1;
+  	}
++ #ifndef GSSAPI
++ 	/* The GSSAPI key exchange can run without a host key */
+  	if ((options.protocol & SSH_PROTO_2) && !sensitive_data.have_ssh2_key) {
+  		log("Disabling protocol version 2. Could not load host key");
+  		options.protocol &= ~SSH_PROTO_2;
+  	}
++ #endif
+  	if (!(options.protocol & (SSH_PROTO_1|SSH_PROTO_2))) {
+  		log("sshd: no hostkeys available -- exiting.");
+  		exit(1);
+***************
+*** 1497,1502 ****
+--- 1504,1513 ----
+  	/* The connection has been terminated. */
+  	verbose("Closing connection to %.100s", remote_ip);
+  
++ #ifdef DCE
++ 	auth_dce_cleanup();
++ #endif /* DCE */
++ 
+  #ifdef USE_PAM
+  	finish_pam();
+  #endif /* USE_PAM */
+***************
+*** 1770,1775 ****
+--- 1781,1825 ----
+  		myproposal[PROPOSAL_COMP_ALGS_STOC] = "none";
+  	}
+  	myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = list_hostkey_types();
++ 
++ #ifdef GSSAPI
++ 	{ 
++ 	char *orig;
++ 	char *gss = NULL;
++ 	char *newstr = NULL;
++        	orig = myproposal[PROPOSAL_KEX_ALGS];
++ 
++ 	/* If we don't have a host key, then all of the algorithms
++ 	 * currently in myproposal are useless */
++ 	if (strlen(myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS])==0)
++ 		orig= NULL;
++ 		
++         if (options.gss_keyex)
++         	gss = ssh_gssapi_mechanisms(1,NULL);
++         else
++         	gss = NULL;
++         
++ 	if (gss && orig) {
++ 		int len = strlen(orig) + strlen(gss) +2;
++ 		newstr=xmalloc(len);
++ 		snprintf(newstr,len,"%s,%s",gss,orig);
++ 	} else if (gss) {
++ 		newstr=gss;
++ 	} else if (orig) {
++ 		newstr=orig;
++ 	}
++         /* If we've got GSSAPI mechanisms, then we've also got the 'null'
++ 	   host key algorithm, but we're not allowed to advertise it, unless
++ 	   its the only host key algorithm we're supporting */
++ 	if (gss && (strlen(myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS])) == 0) {
++ 	  	myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS]="null";
++ 	}
++ 	if (newstr)
++ 		myproposal[PROPOSAL_KEX_ALGS]=newstr;
++ 	else
++ 		fatal("No supported key exchange algorithms");
++         }
++ #endif
+  
+  	/* start key exchange */
+  	kex = kex_setup(myproposal);
+diff -c -d -r openssh-3.3p1/sshd_config.5 openssh-3.3p1-gssapi-dce-1.1/sshd_config.5
+*** openssh-3.3p1/sshd_config.5	Thu Jun 20 17:59:06 2002
+--- openssh-3.3p1-gssapi-dce-1.1/sshd_config.5	Mon Jun 24 16:20:53 2002
+***************
+*** 233,238 ****
+--- 233,257 ----
+  and applies to protocol version 2 only.
+  The default is
+  .Dq no .
++ .It Cm GssapiAuthentication
++ Specifies whether authentication based on GSSAPI may be used, either using
++ the result of a successful key exchange, or using GSSAPI user
++ authentication.
++ The default is 
++ .Dq yes .
++ Note that this option applies to protocol version 2 only.
++ .It Cm GssapiKeyExchange
++ Specifies whether key exchange based on GSSAPI may be used. When using
++ GSSAPI key exchange the server need not have a host key.
++ The default is
++ .Dq yes .
++ Note that this option applies to protocol version 2 only.
++ .It Cm GssapiUseSessionCredCache
++ Specifies whether a unique credentials cache name should be generated per
++ session for storing delegated credentials.
++ The default is
++ .Dq yes .
++ Note that this option applies to protocol version 2 only.
+  .It Cm HostKey
+  Specifies a file containing a private host key
+  used by SSH.

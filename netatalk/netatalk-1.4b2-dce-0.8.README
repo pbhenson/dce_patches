@@ -1,0 +1,58 @@
+DCE authentication/DFS fileset patch (version 0.8) for netatalk 1.4b2
+---------------------------------------------------------------------------
+
+This patch adds support for DCE authentication and DFS filesets to
+netatalk 1.4b2. To apply the patch, first acquire the netatalk
+distribution, and then execute the commands:
+
+     cd /path/to/netatalk-1.4b2
+     patch -p1 -d . < /path/to/netatalk-1.4b2-dce-0.5.diff
+
+
+Once you've applied the patch, please refer to the README.DCEDFS file
+created in the netatalk directory for further installation instructions.
+
+
+Changes
+-------
+
+0.8 - Fixed incorrect assumption that the object UUID of the flserver was
+      constant. The UUID is now determined at runtime.
+
+    - Added code to report correct access permissions on a directory in
+      DFS.
+
+
+0.5 - First publicly released version.
+
+
+Feedback/Availability
+---------------------
+
+Please report problems/requests to <henson@acm.org>. If you use this patch,
+I'd like to hear from you. If you could send me a short email describing
+how you use DCE at you site, I'd really appreciate it.
+
+The latest version of this patch is currently available at:
+
+http://www.intranet.csupomona.edu/~henson/www/projects/dce_patches/
+
+
+---------------------------------------------------------------------------
+   Copyright (C) 1997 Paul Henson <henson@acm.org>
+
+   This patch is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 1, or (at your option)
+   any later version.
+
+   This patch is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License, write to the Free
+   Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+   The GNU General Public License is, as of this writing, also available
+   at http://www.irsociety.com/webchat/gnu.html

@@ -1,0 +1,606 @@
+diff -c -r ssh-1.2.20/auth-passwd.c ssh-1.2.20-dce-0.5/auth-passwd.c
+*** ssh-1.2.20/auth-passwd.c	Tue Apr 22 17:40:08 1997
+--- ssh-1.2.20-dce-0.5/auth-passwd.c	Wed Jul 30 16:05:54 1997
+***************
+*** 269,274 ****
+--- 269,279 ----
+  #include <afs/kautils.h>
+  #endif /* AFS */
+  
++ #ifdef DCE
++ #include <dce/dce_error.h>
++ #include <dce/sec_login.h>
++ #endif /* DCE */
++ 
+  #if defined(KERBEROS) || defined(AFS_KERBEROS)
+  extern char *ticket;
+  #endif /* KERBEROS || AFS_KERBEROS */
+***************
+*** 440,446 ****
+--- 445,456 ----
+  int auth_password(const char *server_user, const char *password,
+  		  krb5_principal client)
+  #else  /* KERBEROS */
++ #ifdef DCE
++ int auth_password(const char *server_user, const char *password,
++ 		  sec_login_handle_t *login_context)
++ #else  /* DCE */
+  int auth_password(const char *server_user, const char *password)
++ #endif /* DCE */
+  #endif /* KERBEROS */
+  {
+  #ifdef KERBEROS
+***************
+*** 657,662 ****
+--- 667,722 ----
+       password code. */
+  #endif /* HAVE_SECURID */
+  
++ #ifdef DCE
++   {
++     sec_login_auth_src_t auth_src;
++     sec_passwd_rec_t pw_entry;
++     sec_passwd_str_t dce_pw;
++     dce_error_string_t dce_error;
++     boolean32 reset_passwd;
++     error_status_t dce_st;
++     int dce_error_st;
++ 
++     if (sec_login_setup_identity(server_user, sec_login_no_flags, login_context, &dce_st))
++       {
++ 	pw_entry.version_number = sec_passwd_c_version_none;
++ 	pw_entry.pepper = NULL;
++ 	pw_entry.key.key_type = sec_passwd_plain;
++            
++ 	strncpy( (char *)dce_pw, password, sec_passwd_str_max_len);
++ 	dce_pw[sec_passwd_str_max_len] = '\0';
++ 	pw_entry.key.tagged_union.plain = &(dce_pw[0]);
++ 	
++ 	if (sec_login_valid_and_cert_ident(*login_context, &pw_entry, &reset_passwd, &auth_src, &dce_st))
++ 	  {
++ 	    sec_login_set_context(*login_context, &dce_st);
++ 	    if (dce_st == error_status_ok)
++ 	      return 1;
++ 	    
++ 	    dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++ 	    log_msg("DCE context failed  for %s - %s", server_user, dce_error);
++ 	    sec_login_purge_context(login_context, &dce_st);
++ 	  }
++ 	else /* !sec_login_valid_and_cert_ident */
++ 	  {
++ 	    dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++ 	    log_msg("DCE validation failed for %s - %s", server_user, dce_error);	
++ 	    sec_login_purge_context(login_context, &dce_st);
++ 	  }
++       }
++     else /* !sec_login_setup_identity */
++       {
++ 	dce_error_inq_text(dce_st, dce_error, &dce_error_st);
++ 	log_msg("DCE setup identity failed for %s - %s", server_user, dce_error);	
++ 	sec_login_purge_context(login_context, &dce_st);
++       }
++     
++     /* Fall through to standard password authentication on DCE failure */
++     packet_send_debug("DCE authentication failed.");
++ 
++   }
++ #endif /* DCE */
++   
+    /* Save the encrypted password. */
+    strncpy(correct_passwd, saved_pw_passwd, sizeof(correct_passwd));
+  
+diff -c -r ssh-1.2.20/auth-rsa.c ssh-1.2.20-dce-0.5/auth-rsa.c
+*** ssh-1.2.20/auth-rsa.c	Tue Apr 22 17:40:08 1997
+--- ssh-1.2.20-dce-0.5/auth-rsa.c	Wed Jul 30 16:05:54 1997
+***************
+*** 135,144 ****
+  
+    /* The response is MD5 of decrypted challenge plus session id. */
+    mp_linearize_msb_first(buf, 32, &challenge);
+!   MD5Init(&md);
+!   MD5Update(&md, buf, 32);
+!   MD5Update(&md, session_id, 16);
+!   MD5Final(mdbuf, &md);
+  
+    /* We will no longer need these. */
+    mpz_clear(&encrypted_challenge);
+--- 135,144 ----
+  
+    /* The response is MD5 of decrypted challenge plus session id. */
+    mp_linearize_msb_first(buf, 32, &challenge);
+!   ssh_MD5Init(&md);
+!   ssh_MD5Update(&md, buf, 32);
+!   ssh_MD5Update(&md, session_id, 16);
+!   ssh_MD5Final(mdbuf, &md);
+  
+    /* We will no longer need these. */
+    mpz_clear(&encrypted_challenge);
+diff -c -r ssh-1.2.20/cipher.c ssh-1.2.20-dce-0.5/cipher.c
+*** ssh-1.2.20/cipher.c	Tue Apr 22 17:40:13 1997
+--- ssh-1.2.20-dce-0.5/cipher.c	Wed Jul 30 16:05:55 1997
+***************
+*** 156,164 ****
+    struct MD5Context md;
+    unsigned char digest[16];
+    
+!   MD5Init(&md);
+!   MD5Update(&md, (const unsigned char *)passphrase, strlen(passphrase));
+!   MD5Final(digest, &md);
+  
+    cipher_set_key(context, cipher, digest, 16, for_encryption);
+    
+--- 156,164 ----
+    struct MD5Context md;
+    unsigned char digest[16];
+    
+!   ssh_MD5Init(&md);
+!   ssh_MD5Update(&md, (const unsigned char *)passphrase, strlen(passphrase));
+!   ssh_MD5Final(digest, &md);
+  
+    cipher_set_key(context, cipher, digest, 16, for_encryption);
+    
+diff -c -r ssh-1.2.20/md5.c ssh-1.2.20-dce-0.5/md5.c
+*** ssh-1.2.20/md5.c	Tue Apr 22 17:40:13 1997
+--- ssh-1.2.20-dce-0.5/md5.c	Wed Jul 30 16:05:58 1997
+***************
+*** 13,20 ****
+   * with every copy.
+   *
+   * To compute the message digest of a chunk of bytes, declare an
+!  * MD5Context structure, pass it to MD5Init, call MD5Update as
+!  * needed on buffers full of bytes, and then call MD5Final, which
+   * will fill a supplied 16-byte array with the digest.
+   */
+  
+--- 13,20 ----
+   * with every copy.
+   *
+   * To compute the message digest of a chunk of bytes, declare an
+!  * MD5Context structure, pass it to ssh_MD5Init, call ssh_MD5Update as
+!  * needed on buffers full of bytes, and then call ssh_MD5Final, which
+   * will fill a supplied 16-byte array with the digest.
+   */
+  
+***************
+*** 26,32 ****
+   * Start MD5 accumulation.  Set bit count to 0 and buffer to mysterious
+   * initialization constants.
+   */
+! void MD5Init(struct MD5Context *ctx)
+  {
+      ctx->buf[0] = 0x67452301;
+      ctx->buf[1] = 0xefcdab89;
+--- 26,32 ----
+   * Start MD5 accumulation.  Set bit count to 0 and buffer to mysterious
+   * initialization constants.
+   */
+! void ssh_MD5Init(struct MD5Context *ctx)
+  {
+      ctx->buf[0] = 0x67452301;
+      ctx->buf[1] = 0xefcdab89;
+***************
+*** 41,47 ****
+   * Update context to reflect the concatenation of another buffer full
+   * of bytes.
+   */
+! void MD5Update(struct MD5Context *ctx, unsigned char const *buf, unsigned len)
+  {
+      uint32 t;
+  
+--- 41,47 ----
+   * Update context to reflect the concatenation of another buffer full
+   * of bytes.
+   */
+! void ssh_MD5Update(struct MD5Context *ctx, unsigned char const *buf, unsigned len)
+  {
+      uint32 t;
+  
+***************
+*** 65,71 ****
+  	    return;
+  	}
+  	memcpy(p, buf, t);
+! 	MD5Transform(ctx->buf, ctx->in);
+  	buf += t;
+  	len -= t;
+      }
+--- 65,71 ----
+  	    return;
+  	}
+  	memcpy(p, buf, t);
+! 	ssh_MD5Transform(ctx->buf, ctx->in);
+  	buf += t;
+  	len -= t;
+      }
+***************
+*** 73,79 ****
+  
+      while (len >= 64) {
+  	memcpy(ctx->in, buf, 64);
+! 	MD5Transform(ctx->buf, ctx->in);
+  	buf += 64;
+  	len -= 64;
+      }
+--- 73,79 ----
+  
+      while (len >= 64) {
+  	memcpy(ctx->in, buf, 64);
+! 	ssh_MD5Transform(ctx->buf, ctx->in);
+  	buf += 64;
+  	len -= 64;
+      }
+***************
+*** 87,93 ****
+   * Final wrapup - pad to 64-byte boundary with the bit pattern 
+   * 1 0* (64-bit count of bits processed, MSB-first)
+   */
+! void MD5Final(unsigned char digest[16], struct MD5Context *ctx)
+  {
+      unsigned count;
+      unsigned char *p;
+--- 87,93 ----
+   * Final wrapup - pad to 64-byte boundary with the bit pattern 
+   * 1 0* (64-bit count of bits processed, MSB-first)
+   */
+! void ssh_MD5Final(unsigned char digest[16], struct MD5Context *ctx)
+  {
+      unsigned count;
+      unsigned char *p;
+***************
+*** 107,113 ****
+      if (count < 8) {
+  	/* Two lots of padding:  Pad the first block to 64 bytes */
+  	memset(p, 0, count);
+! 	MD5Transform(ctx->buf, ctx->in);
+  
+  	/* Now fill the next block with 56 bytes */
+  	memset(ctx->in, 0, 56);
+--- 107,113 ----
+      if (count < 8) {
+  	/* Two lots of padding:  Pad the first block to 64 bytes */
+  	memset(p, 0, count);
+! 	ssh_MD5Transform(ctx->buf, ctx->in);
+  
+  	/* Now fill the next block with 56 bytes */
+  	memset(ctx->in, 0, 56);
+***************
+*** 120,126 ****
+      PUT_32BIT_LSB_FIRST(ctx->in + 56, ctx->bits[0]);
+      PUT_32BIT_LSB_FIRST(ctx->in + 60, ctx->bits[1]);
+  
+!     MD5Transform(ctx->buf, ctx->in);
+      PUT_32BIT_LSB_FIRST(digest, ctx->buf[0]);
+      PUT_32BIT_LSB_FIRST(digest + 4, ctx->buf[1]);
+      PUT_32BIT_LSB_FIRST(digest + 8, ctx->buf[2]);
+--- 120,126 ----
+      PUT_32BIT_LSB_FIRST(ctx->in + 56, ctx->bits[0]);
+      PUT_32BIT_LSB_FIRST(ctx->in + 60, ctx->bits[1]);
+  
+!     ssh_MD5Transform(ctx->buf, ctx->in);
+      PUT_32BIT_LSB_FIRST(digest, ctx->buf[0]);
+      PUT_32BIT_LSB_FIRST(digest + 4, ctx->buf[1]);
+      PUT_32BIT_LSB_FIRST(digest + 8, ctx->buf[2]);
+***************
+*** 144,153 ****
+  
+  /*
+   * The core of the MD5 algorithm, this alters an existing MD5 hash to
+!  * reflect the addition of 16 longwords of new data.  MD5Update blocks
+   * the data and converts bytes into longwords for this routine.
+   */
+! void MD5Transform(uint32 buf[4], const unsigned char inext[64])
+  {
+      register word32 a, b, c, d, i;
+      word32 in[16];
+--- 144,153 ----
+  
+  /*
+   * The core of the MD5 algorithm, this alters an existing MD5 hash to
+!  * reflect the addition of 16 longwords of new data.  ssh_MD5Update blocks
+   * the data and converts bytes into longwords for this routine.
+   */
+! void ssh_MD5Transform(uint32 buf[4], const unsigned char inext[64])
+  {
+      register word32 a, b, c, d, i;
+      word32 in[16];
+diff -c -r ssh-1.2.20/md5.h ssh-1.2.20-dce-0.5/md5.h
+*** ssh-1.2.20/md5.h	Tue Apr 22 17:40:15 1997
+--- ssh-1.2.20-dce-0.5/md5.h	Wed Jul 30 16:05:53 1997
+***************
+*** 9,19 ****
+  	unsigned char in[64];
+  };
+  
+! void MD5Init(struct MD5Context *context);
+! void MD5Update(struct MD5Context *context, unsigned char const *buf,
+  	       unsigned len);
+! void MD5Final(unsigned char digest[16], struct MD5Context *context);
+! void MD5Transform(uint32 buf[4], const unsigned char in[64]);
+  
+  /*
+   * This is needed to make RSAREF happy on some MS-DOS compilers.
+--- 9,19 ----
+  	unsigned char in[64];
+  };
+  
+! void ssh_MD5Init(struct MD5Context *context);
+! void ssh_MD5Update(struct MD5Context *context, unsigned char const *buf,
+  	       unsigned len);
+! void ssh_MD5Final(unsigned char digest[16], struct MD5Context *context);
+! void ssh_MD5Transform(uint32 buf[4], const unsigned char in[64]);
+  
+  /*
+   * This is needed to make RSAREF happy on some MS-DOS compilers.
+diff -c -r ssh-1.2.20/mpaux.c ssh-1.2.20-dce-0.5/mpaux.c
+*** ssh-1.2.20/mpaux.c	Tue Apr 22 17:40:13 1997
+--- ssh-1.2.20-dce-0.5/mpaux.c	Wed Jul 30 16:05:58 1997
+***************
+*** 99,106 ****
+  			 (session_key_bits + 7) / 8, session_key_n);
+    memcpy(buf + (host_key_bits + 7) / 8 + (session_key_bits + 7) / 8,
+  	 cookie, 8);
+!   MD5Init(&md);
+!   MD5Update(&md, buf, bytes);
+!   MD5Final(session_id, &md);
+    xfree(buf);
+  }
+--- 99,106 ----
+  			 (session_key_bits + 7) / 8, session_key_n);
+    memcpy(buf + (host_key_bits + 7) / 8 + (session_key_bits + 7) / 8,
+  	 cookie, 8);
+!   ssh_MD5Init(&md);
+!   ssh_MD5Update(&md, buf, bytes);
+!   ssh_MD5Final(session_id, &md);
+    xfree(buf);
+  }
+diff -c -r ssh-1.2.20/randoms.c ssh-1.2.20-dce-0.5/randoms.c
+*** ssh-1.2.20/randoms.c	Tue Apr 22 17:40:13 1997
+--- ssh-1.2.20-dce-0.5/randoms.c	Wed Jul 30 16:05:58 1997
+***************
+*** 309,315 ****
+    /* First CFB pass. */
+    for (i = 0; i < RANDOM_STATE_BYTES; i += 16)
+      {
+!       MD5Transform(iv, state->stir_key);
+        iv[0] ^= GET_32BIT(state->state + i);
+        PUT_32BIT(state->state + i, iv[0]);
+        iv[1] ^= GET_32BIT(state->state + i + 4);
+--- 309,315 ----
+    /* First CFB pass. */
+    for (i = 0; i < RANDOM_STATE_BYTES; i += 16)
+      {
+!       ssh_MD5Transform(iv, state->stir_key);
+        iv[0] ^= GET_32BIT(state->state + i);
+        PUT_32BIT(state->state + i, iv[0]);
+        iv[1] ^= GET_32BIT(state->state + i + 4);
+***************
+*** 326,332 ****
+    /* Second CFB pass. */
+    for (i = 0; i < RANDOM_STATE_BYTES; i += 16)
+      {
+!       MD5Transform(iv, state->stir_key);
+        iv[0] ^= GET_32BIT(state->state + i);
+        PUT_32BIT(state->state + i, iv[0]);
+        iv[1] ^= GET_32BIT(state->state + i + 4);
+--- 326,332 ----
+    /* Second CFB pass. */
+    for (i = 0; i < RANDOM_STATE_BYTES; i += 16)
+      {
+!       ssh_MD5Transform(iv, state->stir_key);
+        iv[0] ^= GET_32BIT(state->state + i);
+        PUT_32BIT(state->state + i, iv[0]);
+        iv[1] ^= GET_32BIT(state->state + i + 4);
+diff -c -r ssh-1.2.20/ssh-agent.c ssh-1.2.20-dce-0.5/ssh-agent.c
+*** ssh-1.2.20/ssh-agent.c	Tue Apr 22 17:40:12 1997
+--- ssh-1.2.20-dce-0.5/ssh-agent.c	Wed Jul 30 16:06:00 1997
+***************
+*** 223,232 ****
+  	  case 1: /* As of protocol 1.1 */
+  	    /* The response is MD5 of decrypted challenge plus session id. */
+  	    mp_linearize_msb_first(buf, 32, &challenge);
+! 	    MD5Init(&md);
+! 	    MD5Update(&md, buf, 32);
+! 	    MD5Update(&md, session_id, 16);
+! 	    MD5Final(mdbuf, &md);
+  	    break;
+  
+  	  default:
+--- 223,232 ----
+  	  case 1: /* As of protocol 1.1 */
+  	    /* The response is MD5 of decrypted challenge plus session id. */
+  	    mp_linearize_msb_first(buf, 32, &challenge);
+! 	    ssh_MD5Init(&md);
+! 	    ssh_MD5Update(&md, buf, 32);
+! 	    ssh_MD5Update(&md, session_id, 16);
+! 	    ssh_MD5Final(mdbuf, &md);
+  	    break;
+  
+  	  default:
+diff -c -r ssh-1.2.20/ssh.h ssh-1.2.20-dce-0.5/ssh.h
+*** ssh-1.2.20/ssh.h	Tue Apr 22 17:40:16 1997
+--- ssh-1.2.20-dce-0.5/ssh.h	Wed Jul 30 16:05:53 1997
+***************
+*** 282,287 ****
+--- 282,291 ----
+  #endif /* KRB5 */
+  #endif /* KERBEROS */
+  
++ #ifdef DCE
++ #include <dce/sec_login.h>
++ #endif /* DCE */
++ 
+  /* Authentication methods.  New types can be added, but old types should not
+     be removed for compatibility.  The maximum allowed value is 31. */
+  #define SSH_AUTH_RHOSTS		1
+***************
+*** 450,456 ****
+--- 454,465 ----
+  int auth_password(const char *server_user, const char *password,
+  		  krb5_principal client);
+  #else /* defined(KERBEROS) && defined(KRB5) */
++ #ifdef DCE
++ int auth_password(const char *server_user, const char *password,
++ 		  sec_login_handle_t *login_context);
++ #else  /* DCE */
+  int auth_password(const char *server_user, const char *password);
++ #endif /* DCE */
+  #endif /* defined(KERBEROS) && defined(KRB5) */
+  
+  /* Performs the RSA authentication dialog with the client.  This returns
+diff -c -r ssh-1.2.20/sshconnect.c ssh-1.2.20-dce-0.5/sshconnect.c
+*** ssh-1.2.20/sshconnect.c	Tue Apr 22 17:40:11 1997
+--- ssh-1.2.20-dce-0.5/sshconnect.c	Wed Jul 30 16:06:00 1997
+***************
+*** 680,689 ****
+    /* Compute the response. */
+    /* The response is MD5 of decrypted challenge plus session id. */
+    mp_linearize_msb_first(buf, 32, challenge);
+!   MD5Init(&md);
+!   MD5Update(&md, buf, 32);
+!   MD5Update(&md, session_id, 16);
+!   MD5Final(response, &md);
+    
+    debug("Sending response to host key RSA challenge.");
+  
+--- 680,689 ----
+    /* Compute the response. */
+    /* The response is MD5 of decrypted challenge plus session id. */
+    mp_linearize_msb_first(buf, 32, challenge);
+!   ssh_MD5Init(&md);
+!   ssh_MD5Update(&md, buf, 32);
+!   ssh_MD5Update(&md, session_id, 16);
+!   ssh_MD5Final(response, &md);
+    
+    debug("Sending response to host key RSA challenge.");
+  
+diff -c -r ssh-1.2.20/sshd.c ssh-1.2.20-dce-0.5/sshd.c
+*** ssh-1.2.20/sshd.c	Tue Apr 22 17:40:08 1997
+--- ssh-1.2.20-dce-0.5/sshd.c	Wed Jul 30 16:18:55 1997
+***************
+*** 1652,1658 ****
+    krb5_principal client = 0, tkt_client = 0;
+    krb5_data krb5data;
+  #endif /* defined(KERBEROS) && defined(KRB5) */
+! 
+    if (strlen(user) > 255)
+      do_authentication_fail_loop();
+  
+--- 1652,1662 ----
+    krb5_principal client = 0, tkt_client = 0;
+    krb5_data krb5data;
+  #endif /* defined(KERBEROS) && defined(KRB5) */
+! #ifdef DCE
+!   sec_login_handle_t login_context = NULL;
+!   error_status_t dce_st;
+! #endif /* DCE */
+!   
+    if (strlen(user) > 255)
+      do_authentication_fail_loop();
+  
+***************
+*** 1722,1729 ****
+--- 1726,1737 ----
+    if (!options.kerberos_authentication && options.password_authentication &&
+        auth_password(user, "", 0))
+  #else /* defined(KERBEROS) && defined(KRB5) */
++ #ifdef DCE
++   if (options.password_authentication && auth_password(user, "", &login_context))
++ #else /* DCE */
+    /* If the user has no password, accept authentication immediately. */
+    if (options.password_authentication && auth_password(user, ""))
++ #endif /* DCE */
+  #endif /* defined(KERBEROS) && defined(KRB5) */
+      {
+        /* Authentication with empty password succeeded. */
+***************
+*** 2123,2129 ****
+--- 2131,2141 ----
+  #if defined(KERBEROS) && defined(KRB5)
+  	  if (auth_password(user, password, client))
+  #else  /* defined(KERBEROS) && defined(KRB5) */
++ #ifdef DCE
++ 	  if (auth_password(user, password, &login_context))
++ #else /* DCE */
+  	  if (auth_password(user, password))
++ #endif /* DCE */
+  #endif /* defined(KERBEROS) && defined(KRB5) */
+  	    {
+  	      /* Successful authentication. */
+***************
+*** 2198,2203 ****
+--- 2210,2220 ----
+  
+    /* Perform session preparation. */
+    do_authenticated(pw);
++ 
++ #ifdef DCE
++   if (login_context)
++     sec_login_purge_context(&login_context, &dce_st);
++ #endif /* DCE */
+  }
+  
+  /* Prepares for an interactive session.  This is called after the user has
+***************
+*** 3261,3266 ****
+--- 3278,3291 ----
+  #endif /* KRB5 */
+  #endif /* KERBEROS */
+  
++ #ifdef DCE
++   {
++     char *ccname = getenv("KRB5CCNAME");
++     if (ccname)
++       child_set_env(&env, &envsize, "KRB5CCNAME", ccname);
++   }
++ #endif /* DCE */
++   
+    /* Set variable for forwarded authentication connection, if we have one. */
+    if (auth_get_socket_name() != NULL)
+      child_set_env(&env, &envsize, SSH_AUTHSOCKET_ENV_NAME, 
+diff -c -r ssh-1.2.20/tss.c ssh-1.2.20-dce-0.5/tss.c
+*** ssh-1.2.20/tss.c	Tue Apr 22 17:40:13 1997
+--- ssh-1.2.20-dce-0.5/tss.c	Wed Jul 30 16:06:00 1997
+***************
+*** 54,62 ****
+      for(i = 2; i < sizeof(context->key); i++) 
+          (context->key)[i] = key[i % keylen];
+      for(i = 0; i <= 16; i++) { 
+! 	MD5Init(&mdctx);
+! 	MD5Update(&mdctx, context->key, (i + 1) * 16);
+! 	MD5Final(&((context->key)[i * 16]), &mdctx);
+      }
+      for(i = 0; i < sizeof(context->key); i++) {
+  	(context->key)[(i + 1) & TSS_POOL_MASK] ^= (context->key)[i];
+--- 54,62 ----
+      for(i = 2; i < sizeof(context->key); i++) 
+          (context->key)[i] = key[i % keylen];
+      for(i = 0; i <= 16; i++) { 
+! 	ssh_MD5Init(&mdctx);
+! 	ssh_MD5Update(&mdctx, context->key, (i + 1) * 16);
+! 	ssh_MD5Final(&((context->key)[i * 16]), &mdctx);
+      }
+      for(i = 0; i < sizeof(context->key); i++) {
+  	(context->key)[(i + 1) & TSS_POOL_MASK] ^= (context->key)[i];
+***************
+*** 76,85 ****
+      int i;
+      struct MD5Context mdctx;
+  
+!     MD5Init(&mdctx);
+!     MD5Update(&mdctx, context->salt, sizeof(context->salt));
+!     MD5Update(&mdctx, &((context->key)[sizeof(context->key) - 16]), 16);
+!     MD5Final(context->salt, &mdctx);
+      for(i = 0; i < 16; i++)
+  	(context->key)[i] ^= (context->salt)[i];
+      return;
+--- 76,85 ----
+      int i;
+      struct MD5Context mdctx;
+  
+!     ssh_MD5Init(&mdctx);
+!     ssh_MD5Update(&mdctx, context->salt, sizeof(context->salt));
+!     ssh_MD5Update(&mdctx, &((context->key)[sizeof(context->key) - 16]), 16);
+!     ssh_MD5Final(context->salt, &mdctx);
+      for(i = 0; i < 16; i++)
+  	(context->key)[i] ^= (context->salt)[i];
+      return;

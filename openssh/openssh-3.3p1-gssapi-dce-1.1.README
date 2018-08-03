@@ -1,0 +1,93 @@
+DCE integration patch v1.1 for openssh-3.3p1-gssapi
+---------------------------------------------------
+
+This patch adds DCE integration to OpenSSH. It includes plaintext password
+support, and extends protocol 1 Kerberos V TGT forwarding and protocol 2
+Kerberos V GSSAPI support to generate a DCE context.
+
+To utilize the patch, first retrieve openssh-3.3p1 from
+
+    http://www.openssh.org/
+
+
+This version of the DCE patch includes the GSSAPI support from a patch
+available at http://www.sxw.org.uk/computing/patches/, as there was
+no version for openssh-3.3p1 at the time of this release.
+
+
+After applying this patch, include the --with-dce option when configuring
+openssh. This will include plaintext password support, and extend protocol
+1 Kerberos V TGT forwarding and protocol 2 Kerberos V GSSAPI to include
+DCE credential forwarding if the --with-kerberos5 option is included. If
+you are using a brain-dead version of IBM DCE that has broken the
+semantics of the sec_login_valid_and_cert_ident() call, you will need to
+include --with-dce-ibm-kludge to work around this problem.
+
+Unfortunately, the current implementation of DCE/Kerberos authentication
+is not compatible with the new privilege separation feature. You will need
+to add the directive "UsePrivilegeSeparation no" to your sshd_config file.
+
+Historically, there was a bug in the openssh shadow support that made it
+believe an account was expired that really wasn't. You can include the
+--without-shadow option to configure if you have this problem.
+
+The Kerberos V integration requires a DCE library that has no link
+conflicts with MIT Kerberos libraries. This is known to be true for
+Transarc DCE 2.0 under Solaris 2.6 and IBM DCE 3.1 for Solaris 7/8 as of
+PTF5. If you are using Transarc DCE 2.0, it obfuscates the
+sec_login_krb5_add_cred function. You will need to uncomment the #define
+in auth-dce.c before compiling.
+
+
+Feedback/Availability
+---------------------
+
+Please report any bugs or feature requests to <henson@acm.org>.
+
+
+The latest version of this patch is currently available at
+
+    http://www.csupomona.edu/~henson/www/projects/dce_patches/openssh/
+
+
+Changes
+-------
+
+1.1 - Updated to openssh3.3p1
+
+    - Automatically include -ldce in the sshd link
+
+
+1.0 - Updated to openssh3.0.2p1
+
+    - Added support for protocol version 2
+
+
+0.8 - Updated to openssh-2.9p2 
+
+    - Added support for IBM DCE 3.1
+
+    - Note: internal version never released
+
+
+0.5 - First publicly released version for openssh-2.5.2p2-gss+krb5
+
+
+---------------------------------------------------------------------------
+   Copyright (C) 2001-2002 Paul Henson <henson@acm.org>
+
+   This patch is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 1, or (at your option)
+   any later version.
+
+   This patch is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License, write to the Free
+   Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+   The GNU General Public License is, as of this writing, also available
+   at http://www.gnu.org/copyleft/gpl.html

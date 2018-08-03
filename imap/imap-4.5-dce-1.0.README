@@ -1,0 +1,81 @@
+DCE authentication patch (version 1.0) for uwash imapd
+------------------------------------------------------
+
+
+This patch adds DCE authentication support to uwash imapd. (While the stock
+distribution has some DCE support, it does not attach credentials to the
+imapd process and therefore is not useful for mail stored in DFS). It
+also adds a new define, HOMEDIRMAIL, to more easily configure imapd to
+retrieve and store mail in alternate locations, usually the users home
+directory.
+
+
+To apply the patch, acquire and untar the imap distribution (available at
+ftp://ftp.cac.washington.edu/mail/imap-4.5.tar.Z), change into
+the imap-4.5 directory and type:
+
+patch -p1 -d . < /path/to/imap-4.5-dce-1.0.diff
+
+
+Note: once the patch is applied, non-DCE ports will fail to compile.
+In order to purge credentials when the server exits, I added a new function,
+server_logout(), which is called at rundown. As none of the other auth
+modules support this function, imapd will fail to link. This is easily
+fixed by adding "#define server_logout()" to the top of the source code
+for each other auth module, but I haven't had the time to do that yet.
+Arguably, I could have fixed this problem in about the same amount of time
+I took to describe it. Oh well.
+
+
+This patch has only been tested under Solaris, and the only DCE ports
+currently supported are gsd25 and gsd26, "GCC Solaris with DCE/DFS support",
+for Solaris 2.5 and Solaris 2.6, respectively. It should be very simple to
+add a port for other vendors. If you need a hand, feel free to send me email.
+
+
+If you leave HOMEDIRMAIL defined, you will want to edit the file
+src/osdep/unix/env_unix.c to use the correct values for imap home
+directory and system inbox at your site. The default values are correct
+for my site, where mail is delivered to ~/.mail/mail, and imap folders
+are stored in ~/.mail/imap.
+
+
+The latest version of this patch is available from:
+
+http://www.csupomona.edu/~henson/www/projects/dce_patches/imap/
+
+
+If your OS doesn't support DCE as a naming service, you will need to
+replicate your registry in local files for imapd to work. Solaris
+users can install my nss_dce package to integrate DCE into the Solaris
+naming service switch:
+
+http://www.csupomona.edu/~henson/www/projects/nss_dce/
+
+
+Changes
+-------
+
+1.0 - Updated to support imap-4.5
+
+0.5 - First publically released version.
+
+
+---------------------------------------------------------------------------
+   Copyright (C) 1997-99 Paul Henson <henson@acm.org>
+
+   This patch is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 1, or (at your option)
+   any later version.
+
+   This patch is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License, write to the Free
+   Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+   The GNU General Public License is, as of this writing, also available
+   at http://www.irsociety.com/webchat/gnu.html

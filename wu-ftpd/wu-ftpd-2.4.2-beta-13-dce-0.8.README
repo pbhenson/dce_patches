@@ -1,0 +1,64 @@
+DCE authentication patch (version 0.8) for Academ wu-ftpd 2.4.2-beta-13
+-----------------------------------------------------------------------
+
+
+This patch adds DCE authentication to Academ's wu-ftpd version
+2.4.2-beta-13. You can retrieve this version of wu-ftpd via the URL:
+
+ftp://ftp.academ.com/pub/wu-ftpd/private/wu-ftpd-2.4.2-beta-13.tar.Z
+
+
+To apply the patch, acquire and untar the wu-ftpd distribution, change into
+the wu-ftpd-2.4 directory and type:
+
+patch -p1 -d . < /path/to/wu-ftpd-2.4.2-beta-13-dce-0.8.diff
+
+
+This patch has only been tested under Solaris 2.5/Transarc 1.1, and it
+should compile in that environment without any problems. Makefile
+modifications for AIX 4.1 were contributed by Mark Plaksin
+<happy@arches.uga.edu>, and you should be able to compile on that platform
+with no changes, but I haven't tested it myself.
+
+If you want to use this patch with a different vendor's DCE, you will
+need to edit the appropriate Makefile in src/makefiles for your system
+and add the correct libraries. You can refer to src/makefiles/Makefile.sol
+as an example.
+
+If your OS doesn't support DCE as a naming service, you will need to
+replicate your registry in local files for wu-ftpd to work. Solaris
+users can install my nss_dce package to integrate DCE into the Solaris
+naming service switch:
+
+http://www.intranet.csupomona.edu/~henson/www/projects/nss_dce/
+
+
+Changes
+-------
+
+0.8 - Updated to apply to Academ wu-ftpd 2.4.2-beta-13
+
+    - Included modifications to Makefile.aix for AIX 4.1 as
+      contributed by Mark Plaksin <happy@arches.uga.edu>
+
+0.5 - First publicly released version for wu-ftpd 2.4
+
+
+---------------------------------------------------------------------------
+   Copyright (C) 1997 Paul Henson <henson@acm.org>
+
+   This patch is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 1, or (at your option)
+   any later version.
+
+   This patch is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License, write to the Free
+   Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+   The GNU General Public License is, as of this writing, also available
+   at http://www.irsociety.com/webchat/gnu.html

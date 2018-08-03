@@ -1,0 +1,368 @@
+diff -c -r imap-4.1.BETA/Makefile imap-4.1.BETA-dce-0.5/Makefile
+*** imap-4.1.BETA/Makefile	Fri Jul 25 12:16:40 1997
+--- imap-4.1.BETA-dce-0.5/Makefile	Mon Oct  6 13:59:09 1997
+***************
+*** 81,86 ****
+--- 81,87 ----
+  # gas	GCC Altos SVR4
+  # ghp	GCC HP-UX 10.x
+  # gso	GCC Solaris
++ # gsd	GCC Solaris with DCE/DFS support
+  # gsu	GCC SUN-OS
+  # gul	GCC RISC Ultrix (DEC-5000)
+  # hpp	HP-UX 9.x
+***************
+*** 122,128 ****
+  
+  # Note on SCO you may have to set LN to "ln".
+  
+! a32 a41 aix bsf bsi d-g d41 d54 drs epx gas ghp gso gsu gul hpp hpx hxd lnx lyn mct mnt neb nxt osf ptx qnx sc5 sco sgi shp slx sol sos uw2:
+  	$(MAKE) build OS=$@ PROCESS=an AFS=$(AFS)
+  
+  # If you use sv4, you may find that it works to move it to use the an process.
+--- 123,129 ----
+  
+  # Note on SCO you may have to set LN to "ln".
+  
+! a32 a41 aix bsf bsi d-g d41 d54 drs epx gas ghp gso gsd gsu gul hpp hpx hxd lnx lyn mct mnt neb nxt osf ptx qnx sc5 sco sgi shp slx sol sos uw2:
+  	$(MAKE) build OS=$@ PROCESS=an AFS=$(AFS)
+  
+  # If you use sv4, you may find that it works to move it to use the an process.
+diff -c -r imap-4.1.BETA/src/imapd/imapd.c imap-4.1.BETA-dce-0.5/src/imapd/imapd.c
+*** imap-4.1.BETA/src/imapd/imapd.c	Fri Aug 22 11:46:35 1997
+--- imap-4.1.BETA-dce-0.5/src/imapd/imapd.c	Tue Sep  2 14:52:07 1997
+***************
+*** 969,974 ****
+--- 969,975 ----
+      }
+      fflush (stdout);		/* make sure output blatted */
+    } while (state != LOGOUT);	/* until logged out */
++   server_logout();
+    syslog (LOG_INFO,"Logout user=%.80s host=%.80s",user ? user : "???",
+  	  tcp_clienthost (tmp));
+    exit (0);			/* all done */
+diff -c -r imap-4.1.BETA/src/osdep/unix/Makefile imap-4.1.BETA-dce-0.5/src/osdep/unix/Makefile
+*** imap-4.1.BETA/src/osdep/unix/Makefile	Fri Jul 25 12:46:01 1997
+--- imap-4.1.BETA-dce-0.5/src/osdep/unix/Makefile	Mon Oct  6 14:04:10 1997
+***************
+*** 223,228 ****
+--- 223,236 ----
+  		CC=gcc CFLAGS="-g -O2 -DNFSKLUDGE $(EXTRACFLAGS)" \
+  		RANLIB=true LDFLAGS="-lsocket -lnsl -lgen"
+  
++ gsd:	sigpsx	# GCC Solaris with DCE/DFS support
++ 	$(MAKE) $(ARCHIVE) OS=sod EXTRADRIVERS="$(EXTRADRIVERS)" \
++ 		STDPROTO=unixproto MAILSPOOL=/var/mail \
++ 		ACTIVEFILE=/usr/share/news/active NEWSSPOOL=/var/spool/news \
++ 		RSHPATH=/usr/bin/rsh \
++ 		CC=gcc CFLAGS="-g -O2 -DHOMEDIRMAIL $(EXTRACFLAGS)" \
++ 		RANLIB=true LDFLAGS="-ldce -lsocket -lnsl -lthread -lm -lgen"
++ 
+  gsu:	sigbsd	# GCC SUN-OS
+  	$(MAKE) $(ARCHIVE) OS=sun EXTRADRIVERS="$(EXTRADRIVERS)" \
+  		STDPROTO=unixproto MAILSPOOL=/usr/spool/mail \
+diff -c -r imap-4.1.BETA/src/osdep/unix/env_unix.c imap-4.1.BETA-dce-0.5/src/osdep/unix/env_unix.c
+*** imap-4.1.BETA/src/osdep/unix/env_unix.c	Tue Apr 29 16:39:53 1997
+--- imap-4.1.BETA-dce-0.5/src/osdep/unix/env_unix.c	Mon Oct  6 14:04:28 1997
+***************
+*** 320,325 ****
+--- 320,332 ----
+    myUserName = cpystr (user ? user : anonymous_user);
+    dorc ("/etc/imapd.conf",NIL);	/* do systemwide configuration */
+    if (!anonymousHome) anonymousHome = cpystr (ANONYMOUSHOME);
++ 
++ #ifdef HOMEDIRMAIL
++   sprintf(tmp, "%s/.mail/imap", home);
++   myHomeDir = cpystr(tmp);
++   sprintf(tmp, "%s/.mail/mail", home);
++   sysInbox = cpystr(tmp);
++ #else
+    if (user) {			/* remember user name and home directory */
+      if (blackBoxDir) {		/* build black box directory name */
+        sprintf (tmp,"%s/%s",blackBoxDir,myUserName);
+***************
+*** 344,349 ****
+--- 351,358 ----
+  				/* make sure an error message happens */
+      if (!blackBoxDir) blackBoxDir = blackBoxDefaultHome = anonymousHome;
+    }
++ #endif
++   
+    dorc (strcat (strcpy (tmp,myhomedir ()),"/.mminit"),T);
+    dorc (strcat (strcpy (tmp,myhomedir ()),"/.imaprc"),NIL);
+    if (!myLocalHost) mylocalhost ();
+diff -c -r imap-4.1.BETA/src/osdep/unix/log_dcedfs.c imap-4.1.BETA-dce-0.5/src/osdep/unix/log_dcedfs.c
+*** imap-4.1.BETA/src/osdep/unix/log_dcedfs.c	Mon Oct  6 13:58:45 1997
+--- imap-4.1.BETA-dce-0.5/src/osdep/unix/log_dcedfs.c	Mon Oct  6 13:19:50 1997
+***************
+*** 0 ****
+--- 1,88 ----
++ /*
++  * DCE authentication code for uwash imapd
++  *
++  * Paul Henson <henson@acm.org>
++  * California State Polytechnic University, Pomona
++  *
++  * Copyright (c) 1997 Paul Henson
++  *
++  */
++ 
++ #include <dce/sec_login.h>
++ 
++ static sec_login_handle_t login_context = NULL;
++ 
++ long server_login(char *user, char *pass, int argc, char *argv[])
++ {
++   sec_login_auth_src_t auth_src;
++   sec_passwd_rec_t pw_entry;
++   boolean32 reset_passwd;
++   sec_passwd_str_t tmp_pw;
++   error_status_t dce_st;
++   struct passwd *pwd;
++ 
++   if (!(pwd = getpwnam(user)))
++     return NIL;
++ 
++   if (pwd->pw_uid == 0)
++     return NIL;
++ 
++   if (!sec_login_setup_identity(user, sec_login_no_flags, &login_context, &dce_st))
++     return NIL;
++   
++   pw_entry.version_number = sec_passwd_c_version_none;
++   pw_entry.pepper = NULL;
++   pw_entry.key.key_type = sec_passwd_plain;
++   strncpy((char *)tmp_pw, pass, sec_passwd_str_max_len);
++   tmp_pw[sec_passwd_str_max_len] = '\0';
++   pw_entry.key.tagged_union.plain = &(tmp_pw[0]);
++ 
++   if (!sec_login_valid_and_cert_ident(login_context, &pw_entry, &reset_passwd, &auth_src, &dce_st))
++     {
++       sec_login_purge_context(&login_context, &dce_st);
++       return NIL;
++     }
++   
++   if (auth_src != sec_login_auth_src_network)
++     {
++       sec_login_purge_context(&login_context, &dce_st);
++       return NIL;
++     }
++  
++   sec_login_set_context(login_context, &dce_st);
++  
++   if (dce_st)
++     {
++       sec_login_purge_context(&login_context, &dce_st);
++       return NIL;
++     }
++ 
++   if (setgid(pwd->pw_gid) != 0)
++     {
++       sec_login_purge_context(&login_context, &dce_st);
++       return NIL;
++     }
++   
++   if (initgroups(pwd->pw_name, pwd->pw_gid) != 0)
++     {
++       sec_login_purge_context(&login_context, &dce_st);
++       return NIL;
++     }
++   
++   if (setuid(pwd->pw_uid) != 0)
++     {
++       sec_login_purge_context(&login_context, &dce_st);
++       return NIL;
++     }
++ 
++   chdir(pwd->pw_dir);
++   env_init(pwd->pw_name, pwd->pw_dir);
++ }
++ 
++ void server_logout()
++ {
++   error_status_t dce_st;
++ 
++   if (login_context)
++     sec_login_purge_context(&login_context, &dce_st);
++ }
+diff -c -r imap-4.1.BETA/src/osdep/unix/os_sod.c imap-4.1.BETA-dce-0.5/src/osdep/unix/os_sod.c
+*** imap-4.1.BETA/src/osdep/unix/os_sod.c	Mon Oct  6 13:58:45 1997
+--- imap-4.1.BETA-dce-0.5/src/osdep/unix/os_sod.c	Tue Sep  2 14:26:32 1997
+***************
+*** 0 ****
+--- 1,77 ----
++ /*
++  * Program:	Operating-system dependent routines -- Solaris version
++  *
++  * Author:	Mark Crispin
++  *		Networks and Distributed Computing
++  *		Computing & Communications
++  *		University of Washington
++  *		Administration Building, AG-44
++  *		Seattle, WA  98195
++  *		Internet: MRC@CAC.Washington.EDU
++  *
++  * Date:	10 April 1992
++  * Last Edited:	2 December 1996
++  *
++  * Copyright 1996 by the University of Washington
++  *
++  *  Permission to use, copy, modify, and distribute this software and its
++  * documentation for any purpose and without fee is hereby granted, provided
++  * that the above copyright notice appears in all copies and that both the
++  * above copyright notice and this permission notice appear in supporting
++  * documentation, and that the name of the University of Washington not be
++  * used in advertising or publicity pertaining to distribution of the software
++  * without specific, written prior permission.  This software is made
++  * available "as is", and
++  * THE UNIVERSITY OF WASHINGTON DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
++  * WITH REGARD TO THIS SOFTWARE, INCLUDING WITHOUT LIMITATION ALL IMPLIED
++  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND IN
++  * NO EVENT SHALL THE UNIVERSITY OF WASHINGTON BE LIABLE FOR ANY SPECIAL,
++  * INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
++  * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, TORT
++  * (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, ARISING OUT OF OR IN CONNECTION
++  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++  *
++  */
++ 
++ #include "tcp_unix.h"		/* must be before osdep includes tcp.h */
++ #include "mail.h"
++ #include "osdep.h"
++ #include <ctype.h>
++ #include <stdio.h>
++ #include <sys/stat.h>
++ #include <sys/tiuser.h>
++ #include <sys/stropts.h>
++ #include <netinet/in.h>
++ #include <arpa/inet.h>
++ #include <netdb.h>
++ #include <errno.h>
++ #include <pwd.h>
++ #include <shadow.h>
++ #include <sys/socket.h>
++ #include <sys/select.h>
++ #include "misc.h"
++ 
++ extern int sys_nerr;
++ extern char *sys_errlist[];
++ 
++ #define DIR_SIZE(d) d->d_reclen
++ 
++ #define toint(c)	((c)-'0')
++ #define isodigit(c)	(((unsigned)(c)>=060)&((unsigned)(c)<=067))
++ 
++ 
++ #include "fs_unix.c"
++ #include "ftl_unix.c"
++ #include "nl_unix.c"
++ #include "env_unix.c"
++ #define fork vfork
++ #include "tcp_unix.c"
++ #include "log_dcedfs.c"
++ #include "gr_waitp.c"
++ #undef flock
++ #include "flock.c"
++ #include "scandir.c"
++ #include "tz_sv4.c"
++ #include "gethstid.c"
++ #undef setpgrp
++ #include "setpgrp.c"
+diff -c -r imap-4.1.BETA/src/osdep/unix/os_sod.h imap-4.1.BETA-dce-0.5/src/osdep/unix/os_sod.h
+*** imap-4.1.BETA/src/osdep/unix/os_sod.h	Mon Oct  6 13:58:45 1997
+--- imap-4.1.BETA-dce-0.5/src/osdep/unix/os_sod.h	Tue Sep  2 14:26:04 1997
+***************
+*** 0 ****
+--- 1,92 ----
++ /*
++  * Program:	Operating-system dependent routines -- Solaris version
++  *
++  * Author:	Mark Crispin
++  *		Networks and Distributed Computing
++  *		Computing & Communications
++  *		University of Washington
++  *		Administration Building, AG-44
++  *		Seattle, WA  98195
++  *		Internet: MRC@CAC.Washington.EDU
++  *
++  * Date:	1 August 1988
++  * Last Edited:	23 May 1997
++  *
++  * Copyright 1997 by the University of Washington
++  *
++  *  Permission to use, copy, modify, and distribute this software and its
++  * documentation for any purpose and without fee is hereby granted, provided
++  * that the above copyright notice appears in all copies and that both the
++  * above copyright notice and this permission notice appear in supporting
++  * documentation, and that the name of the University of Washington not be
++  * used in advertising or publicity pertaining to distribution of the software
++  * without specific, written prior permission.  This software is made
++  * available "as is", and
++  * THE UNIVERSITY OF WASHINGTON DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED,
++  * WITH REGARD TO THIS SOFTWARE, INCLUDING WITHOUT LIMITATION ALL IMPLIED
++  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND IN
++  * NO EVENT SHALL THE UNIVERSITY OF WASHINGTON BE LIABLE FOR ANY SPECIAL,
++  * INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
++  * LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, TORT
++  * (INCLUDING NEGLIGENCE) OR STRICT LIABILITY, ARISING OUT OF OR IN CONNECTION
++  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
++  *
++  */
++ 
++ #include <string.h>
++ 
++ #include <sys/types.h>
++ #include <stdlib.h>
++ #include <dirent.h>
++ #include <fcntl.h>
++ #include <unistd.h>
++ #include <time.h>
++ #include <sys/utime.h>
++ #include <syslog.h>
++ #include <sys/file.h>
++ #include <ustat.h>
++ 
++ 
++ /* Many versions of SysV get this wrong */
++ 
++ #define setpgrp(a,b) Setpgrp(a,b)
++ 
++ 
++ /* Different names, equivalent things in BSD and SysV */
++ 
++ /* L_SET is defined for some strange reason in <sys/file.h> on SVR4. */
++ #ifndef L_SET
++ #define L_SET SEEK_SET
++ #endif
++ #ifndef L_INCR
++ #define L_INCR SEEK_CUR
++ #endif
++ #ifndef L_XTND
++ #define L_XTND SEEK_END
++ #endif
++ 
++ #define direct dirent
++ #define random lrand48
++ 
++ 
++ /* For flock() emulation */
++ 
++ #define flock bsd_flock
++ 
++ #define LOCK_SH 1
++ #define LOCK_EX 2
++ #define LOCK_NB 4
++ #define LOCK_UN 8
++ 
++ #include "env_unix.h"
++ #include "fs.h"
++ #include "ftl.h"
++ #include "nl.h"
++ #include "tcp.h"
++ #include "lockfix.h"
++ 
++ typedef int (*select_t) (struct direct *name);
++ typedef int (*compar_t) (const void *d1,const void *d2);
++ int scandir (char *dirname,struct direct ***namelist,select_t select,
++ 	     compar_t compar);
++ int bsd_flock (int fd,int operation);

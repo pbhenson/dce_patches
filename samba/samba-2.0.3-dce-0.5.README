@@ -1,0 +1,52 @@
+DCE authentication/DFS fileset patch (version 0.5) for samba 2.0.3
+------------------------------------------------------------------
+
+This patch adds support for DCE authentication and DFS filesets to
+samba 2.0.3. To apply the patch, first acquire the samba 
+distribution, and then execute the commands:
+
+     cd /path/to/samba-2.0.3
+     patch -p1 -d . < /path/to/samba-2.0.3-dce-0.5.diff
+
+
+Once you have installed the patch, you can use the '--with-dce' and/or
+the '--with-dfs' options when you configure samba. You will need the
+DFS header files and libraries to compile with DFS support. I'm unaware
+of any vendors that include these (get a clue, vendors); contact me for
+more information if you are interested.
+
+
+Changes
+-------
+
+0.5 - First publicly released version.
+
+
+Feedback/Availability
+---------------------
+
+Please report problems/requests to <henson@acm.org>.
+
+The latest version of this patch is currently available at:
+
+http://www.csupomona.edu/~henson/www/projects/dce_patches/samba/
+
+
+---------------------------------------------------------------------------
+  Copyright (C) 1999 Paul Henson <henson@acm.org>
+
+   This patch is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 1, or (at your option)
+   any later version.
+
+   This patch is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License, write to the Free
+   Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+   The GNU General Public License is, as of this writing, also available
+   at http://www.irsociety.com/webchat/gnu.html

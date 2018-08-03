@@ -1,0 +1,541 @@
+diff -c -r qpopper2.3/INSTALL qpopper2.3-dce-0.5/INSTALL
+*** qpopper2.3/INSTALL	Fri Mar 28 20:30:36 1997
+--- qpopper2.3-dce-0.5/INSTALL	Fri May  2 14:57:00 1997
+***************
+*** 82,88 ****
+  			      Ex: -DAUTHFILE=\"/etc/nonauthfile\"
+  			      The format is a list of user id's, one per line.
+  
+! 	    c) AUTH - Define this value if your system supports special
+  			authorization mechanisms like shadow passwords or
+  			special crypt programs.  The make files have been
+  			setup for this as best as I can tell.  SunOS4.x does
+--- 82,88 ----
+  			      Ex: -DAUTHFILE=\"/etc/nonauthfile\"
+  			      The format is a list of user id's, one per line.
+  
+! 	    c1) AUTH - Define this value if your system supports special
+  			authorization mechanisms like shadow passwords or
+  			special crypt programs.  The make files have been
+  			setup for this as best as I can tell.  SunOS4.x does
+***************
+*** 92,97 ****
+--- 92,109 ----
+  			SUNOS4 and AUTH in the make.sunos makefile.  You may
+  			have to port a pop_pass routine for your OS before
+  			enabling this feature.
++ 
++             c2) AUTH_DCE - Define this value to use the DCE security
++                            registry to authenticate the POP client,
++                            and to acquire DCE credentials so mail can
++                            successfully be retrieved from DFS. The makefile
++                            for Solaris already has this defined with the
++                            appropriate libraries. To use it under a
++                            different OS, you need to edit the makefile
++                            for that OS, add this define, and include
++                            the appropriate DCE libraries for your OS.
++                            If you define AUTH_DCE, you don't want to
++                            define AUTH.
+  
+  	    d) RPOP - This feature allows the pop client to use the
+  			hosts.equiv and .rhosts files for system/user
+diff -c -r qpopper2.3/make.solaris2 qpopper2.3-dce-0.5/make.solaris2
+*** qpopper2.3/make.solaris2	Mon Mar 31 09:52:23 1997
+--- qpopper2.3-dce-0.5/make.solaris2	Fri May  2 13:53:13 1997
+***************
+*** 36,45 ****
+  #               Defines are described in the INSTALL document.
+  
+  CFLAGS		=	-O2 -DSOLARIS2 -DSYSV -DBIND43 -DHAVE_VSPRINTF \
+! 			-DAUTH -DMAILOCK -DDEBUG -DBINMAIL_IS_SETGID \
+! 			-DCONTENT_LENGTH=1 \
+! 			-DGNU_PASS -DNO_GETLINE \
+! 			-DAPOP=\"/etc/pop.auth\" -DPOPUID=\"pop\" \
+  #			-DBULLDB \
+  #			-DKERBEROS -DKUSEROK \
+  #			-DSERVER_MODE -DNO_STATUS
+--- 36,44 ----
+  #               Defines are described in the INSTALL document.
+  
+  CFLAGS		=	-O2 -DSOLARIS2 -DSYSV -DBIND43 -DHAVE_VSPRINTF \
+! 			-DAUTH_DCE -DHOMEDIRMAIL\
+! 			-DGNU_PASS -DNO_GETLINE
+! #			-DAPOP=\"/etc/pop.auth\" -DPOPUID=\"pop\" \
+  #			-DBULLDB \
+  #			-DKERBEROS -DKUSEROK \
+  #			-DSERVER_MODE -DNO_STATUS
+***************
+*** 61,67 ****
+  all: ${TARGET} popauth
+  
+  ${TARGET}: ${OBJS}
+! 	${CC}  ${OBJS} -o ${TARGET} -lsocket -lnsl -lresolv -lkrb -lmail 
+  
+  popauth: popauth.o flock.o
+  	${CC}  -o popauth popauth.o  flock.o 
+--- 60,66 ----
+  all: ${TARGET} popauth
+  
+  ${TARGET}: ${OBJS}
+! 	${CC}  ${OBJS} -o ${TARGET} -ldce -lsocket -lnsl -lthread -lm -lresolv
+  
+  popauth: popauth.o flock.o
+  	${CC}  -o popauth popauth.o  flock.o 
+diff -c -r qpopper2.3/md5.c qpopper2.3-dce-0.5/md5.c
+*** qpopper2.3/md5.c	Fri Mar 28 20:30:36 1997
+--- qpopper2.3-dce-0.5/md5.c	Fri May  2 11:57:12 1997
+***************
+*** 102,109 ****
+  
+  /* MD5 initialization. Begins an MD5 operation, writing a new context.
+   */
+! void MD5Init (context)
+! MD5_CTX *context;                                        /* context */
+  {
+    context->count[0] = context->count[1] = 0;
+    /* Load magic initialization constants.
+--- 102,109 ----
+  
+  /* MD5 initialization. Begins an MD5 operation, writing a new context.
+   */
+! void pop_MD5Init (context)
+! pop_MD5_CTX *context;                                        /* context */
+  {
+    context->count[0] = context->count[1] = 0;
+    /* Load magic initialization constants.
+***************
+*** 118,125 ****
+    operation, processing another message block, and updating the
+    context.
+   */
+! void MD5Update (context, input, inputLen)
+! MD5_CTX *context;                                        /* context */
+  unsigned char *input;                                /* input block */
+  unsigned int inputLen;                     /* length of input block */
+  {
+--- 118,125 ----
+    operation, processing another message block, and updating the
+    context.
+   */
+! void pop_MD5Update (context, input, inputLen)
+! pop_MD5_CTX *context;                                        /* context */
+  unsigned char *input;                                /* input block */
+  unsigned int inputLen;                     /* length of input block */
+  {
+***************
+*** 155,163 ****
+  /* MD5 finalization. Ends an MD5 message-digest operation, writing the
+    the message digest and zeroizing the context.
+   */
+! void MD5Final (digest, context)
+  unsigned char digest[16];                         /* message digest */
+! MD5_CTX *context;                                       /* context */
+  {
+    unsigned char bits[8];
+    unsigned int index, padLen;
+--- 155,163 ----
+  /* MD5 finalization. Ends an MD5 message-digest operation, writing the
+    the message digest and zeroizing the context.
+   */
+! void pop_MD5Final (digest, context)
+  unsigned char digest[16];                         /* message digest */
+! pop_MD5_CTX *context;                                       /* context */
+  {
+    unsigned char bits[8];
+    unsigned int index, padLen;
+***************
+*** 169,178 ****
+  */
+    index = (unsigned int)((context->count[0] >> 3) & 0x3f);
+    padLen = (index < 56) ? (56 - index) : (120 - index);
+!   MD5Update (context, PADDING, padLen);
+  
+    /* Append length (before padding) */
+!   MD5Update (context, bits, 8);
+    /* Store state in digest */
+    Encode (digest, context->state, 16);
+  
+--- 169,178 ----
+  */
+    index = (unsigned int)((context->count[0] >> 3) & 0x3f);
+    padLen = (index < 56) ? (56 - index) : (120 - index);
+!   pop_MD5Update (context, PADDING, padLen);
+  
+    /* Append length (before padding) */
+!   pop_MD5Update (context, bits, 8);
+    /* Store state in digest */
+    Encode (digest, context->state, 16);
+  
+diff -c -r qpopper2.3/md5.h qpopper2.3-dce-0.5/md5.h
+*** qpopper2.3/md5.h	Fri Mar 28 20:30:36 1997
+--- qpopper2.3-dce-0.5/md5.h	Fri May  2 11:57:12 1997
+***************
+*** 64,73 ****
+    UINT4 state[4];                                   /* state (ABCD) */
+    UINT4 count[2];        /* number of bits, modulo 2^64 (lsb first) */
+    unsigned char buffer[64];                         /* input buffer */
+! } MD5_CTX;
+  
+! void MD5Init PROTO_LIST ((MD5_CTX *));
+! void MD5Update PROTO_LIST
+!   ((MD5_CTX *, unsigned char *, unsigned int));
+! void MD5Final PROTO_LIST ((unsigned char [16], MD5_CTX *));
+  
+--- 64,73 ----
+    UINT4 state[4];                                   /* state (ABCD) */
+    UINT4 count[2];        /* number of bits, modulo 2^64 (lsb first) */
+    unsigned char buffer[64];                         /* input buffer */
+! } pop_MD5_CTX;
+  
+! void pop_MD5Init PROTO_LIST ((pop_MD5_CTX *));
+! void pop_MD5Update PROTO_LIST
+!   ((pop_MD5_CTX *, unsigned char *, unsigned int));
+! void pop_MD5Final PROTO_LIST ((unsigned char [16], pop_MD5_CTX *));
+  
+diff -c -r qpopper2.3/pop_apop.c qpopper2.3-dce-0.5/pop_apop.c
+*** qpopper2.3/pop_apop.c	Fri Mar 28 20:30:36 1997
+--- qpopper2.3-dce-0.5/pop_apop.c	Fri May  2 11:57:13 1997
+***************
+*** 80,86 ****
+  #else
+      DBM	   *db;
+  #endif
+!     MD5_CTX mdContext;
+      int f;
+  
+      (void)strncpy(p->user, p->pop_parm[1], sizeof(p->user));
+--- 80,86 ----
+  #else
+      DBM	   *db;
+  #endif
+!     pop_MD5_CTX mdContext;
+      int f;
+  
+      (void)strncpy(p->user, p->pop_parm[1], sizeof(p->user));
+***************
+*** 194,203 ****
+  #endif
+      (void) close(f);
+  
+!     MD5Init(&mdContext);
+!     MD5Update(&mdContext, (unsigned char *)p->md5str, strlen(p->md5str));
+!     MD5Update(&mdContext, (unsigned char *)obscure(ddatum.dptr), (ddatum.dsize - 1));
+!     MD5Final(digest, &mdContext);
+  
+      cp = buffer;
+      for (ep = (dp = digest) + sizeof digest / sizeof digest[0];
+--- 194,203 ----
+  #endif
+      (void) close(f);
+  
+!     pop_MD5Init(&mdContext);
+!     pop_MD5Update(&mdContext, (unsigned char *)p->md5str, strlen(p->md5str));
+!     pop_MD5Update(&mdContext, (unsigned char *)obscure(ddatum.dptr), (ddatum.dsize - 1));
+!     pop_MD5Final(digest, &mdContext);
+  
+      cp = buffer;
+      for (ep = (dp = digest) + sizeof digest / sizeof digest[0];
+diff -c -r qpopper2.3/pop_dropcopy.c qpopper2.3-dce-0.5/pop_dropcopy.c
+*** qpopper2.3/pop_dropcopy.c	Fri Mar 28 20:30:36 1997
+--- qpopper2.3-dce-0.5/pop_dropcopy.c	Fri May  2 11:57:13 1997
+***************
+*** 282,288 ****
+      int			    expecting_trailer;
+      int			    content_length, content_nchar, cont_len;
+      char                    buffer[MAXLINELEN];		/*  Read buffer */
+!     MD5_CTX		    mdContext;
+      unsigned char	    digest[16];
+  
+  #ifdef DEBUG
+--- 282,288 ----
+      int			    expecting_trailer;
+      int			    content_length, content_nchar, cont_len;
+      char                    buffer[MAXLINELEN];		/*  Read buffer */
+!     pop_MD5_CTX		    mdContext;
+      unsigned char	    digest[16];
+  
+  #ifdef DEBUG
+***************
+*** 355,362 ****
+  		continue;
+  	    }
+  
+! 	    MD5Init (&mdContext);
+! 	    MD5Update(&mdContext,(unsigned char *)buffer,strlen(buffer));
+  
+  	    if (!inheader) {
+  		if (++msg_num > p->msg_count) {
+--- 355,362 ----
+  		continue;
+  	    }
+  
+! 	    pop_MD5Init (&mdContext);
+! 	    pop_MD5Update(&mdContext,(unsigned char *)buffer,strlen(buffer));
+  
+  	    if (!inheader) {
+  		if (++msg_num > p->msg_count) {
+***************
+*** 418,424 ****
+  		    char	*cp;
+  		    int		i;
+  
+! 		    MD5Final (digest, &mdContext);
+  		    cp = mp->uidl_str = (char *)malloc((DIG_SIZE * 2) + 2);
+  
+  		    for (i = 0; i < DIG_SIZE; i++, cp+=2) {
+--- 418,424 ----
+  		    char	*cp;
+  		    int		i;
+  
+! 		    pop_MD5Final (digest, &mdContext);
+  		    cp = mp->uidl_str = (char *)malloc((DIG_SIZE * 2) + 2);
+  
+  		    for (i = 0; i < DIG_SIZE; i++, cp+=2) {
+***************
+*** 441,454 ****
+  
+  	    } else if (CONTENT_LENGTH && !strncmp(buffer, "Content-Length:", 15)) {
+  		cont_len = atoi(buffer + 15);
+! 		MD5Update(&mdContext,(unsigned char *)buffer,strlen(buffer));
+  		continue;	/* not part of the message size */
+  	    } else if (!uidl_found && (!strncasecmp("Received:", buffer, 9) ||
+  				       !strncasecmp("Date:", buffer, 5) ||
+  				       !strncasecmp("Message-Id:",buffer, 11) ||
+  				       !strncasecmp("Subject:",buffer, 8)
+  				       )) {
+! 		MD5Update(&mdContext,(unsigned char *)buffer,strlen(buffer));
+  	    } else if (!strncasecmp("X-UIDL:", buffer, 7)) {
+  		if (!uidl_found) {
+  		    char *cp;
+--- 441,454 ----
+  
+  	    } else if (CONTENT_LENGTH && !strncmp(buffer, "Content-Length:", 15)) {
+  		cont_len = atoi(buffer + 15);
+! 		pop_MD5Update(&mdContext,(unsigned char *)buffer,strlen(buffer));
+  		continue;	/* not part of the message size */
+  	    } else if (!uidl_found && (!strncasecmp("Received:", buffer, 9) ||
+  				       !strncasecmp("Date:", buffer, 5) ||
+  				       !strncasecmp("Message-Id:",buffer, 11) ||
+  				       !strncasecmp("Subject:",buffer, 8)
+  				       )) {
+! 		pop_MD5Update(&mdContext,(unsigned char *)buffer,strlen(buffer));
+  	    } else if (!strncasecmp("X-UIDL:", buffer, 7)) {
+  		if (!uidl_found) {
+  		    char *cp;
+***************
+*** 509,515 ****
+      int			    msg_num;
+      int			    expecting_trailer;
+      int			    content_length, content_nchar, cont_len;
+!     MD5_CTX		    mdContext;
+      unsigned char	    digest[16];
+  
+      FILE		    *mail_drop;		    /*  Streams for fids */
+--- 509,515 ----
+      int			    msg_num;
+      int			    expecting_trailer;
+      int			    content_length, content_nchar, cont_len;
+!     pop_MD5_CTX		    mdContext;
+      unsigned char	    digest[16];
+  
+      FILE		    *mail_drop;		    /*  Streams for fids */
+***************
+*** 588,595 ****
+  		continue;
+  	    }
+  
+! 	    MD5Init (&mdContext);
+! 	    MD5Update(&mdContext,(unsigned char *)buffer,strlen(buffer));
+  
+  	    if (!inheader) {
+  		if (++msg_num > p->msg_count) {
+--- 588,595 ----
+  		continue;
+  	    }
+  
+! 	    pop_MD5Init (&mdContext);
+! 	    pop_MD5Update(&mdContext,(unsigned char *)buffer,strlen(buffer));
+  
+  	    if (!inheader) {
+  		if (++msg_num > p->msg_count) {
+***************
+*** 654,660 ****
+  		    char *cp;
+  		    int  i;
+  
+! 		    MD5Final (digest, &mdContext);
+  		    cp = mp->uidl_str = (char *)malloc((DIG_SIZE * 2) + 2);
+  
+  		    for (i = 0; i < DIG_SIZE; i++, cp+=2) {
+--- 654,660 ----
+  		    char *cp;
+  		    int  i;
+  
+! 		    pop_MD5Final (digest, &mdContext);
+  		    cp = mp->uidl_str = (char *)malloc((DIG_SIZE * 2) + 2);
+  
+  		    for (i = 0; i < DIG_SIZE; i++, cp+=2) {
+***************
+*** 677,683 ****
+  
+  	    } else if (CONTENT_LENGTH && !strncmp(buffer, "Content-Length:", 15)) {
+  		cont_len = atoi(buffer + 15);
+! 		MD5Update(&mdContext,(unsigned char *)buffer,strlen(buffer));
+  		continue;  /* Not included in message size */
+  
+  	    } else if (!uidl_found && (!strncasecmp("Received:", buffer, 9) ||
+--- 677,683 ----
+  
+  	    } else if (CONTENT_LENGTH && !strncmp(buffer, "Content-Length:", 15)) {
+  		cont_len = atoi(buffer + 15);
+! 		pop_MD5Update(&mdContext,(unsigned char *)buffer,strlen(buffer));
+  		continue;  /* Not included in message size */
+  
+  	    } else if (!uidl_found && (!strncasecmp("Received:", buffer, 9) ||
+***************
+*** 685,691 ****
+  				       !strncasecmp("Message-Id:",buffer, 11) ||
+  				       !strncasecmp("Subject:",buffer, 8)
+  				       )) {
+! 		MD5Update(&mdContext,(unsigned char *)buffer,strlen(buffer));
+  	    } else if (!strncasecmp("X-UIDL:", buffer, 7)) {
+  		if (!uidl_found) {
+  		    char *cp;
+--- 685,691 ----
+  				       !strncasecmp("Message-Id:",buffer, 11) ||
+  				       !strncasecmp("Subject:",buffer, 8)
+  				       )) {
+! 		pop_MD5Update(&mdContext,(unsigned char *)buffer,strlen(buffer));
+  	    } else if (!strncasecmp("X-UIDL:", buffer, 7)) {
+  		if (!uidl_found) {
+  		    char *cp;
+diff -c -r qpopper2.3/pop_pass.c qpopper2.3-dce-0.5/pop_pass.c
+*** qpopper2.3/pop_pass.c	Fri Mar 28 20:30:36 1997
+--- qpopper2.3-dce-0.5/pop_pass.c	Fri May  2 14:25:42 1997
+***************
+*** 473,479 ****
+  
+  #endif  /* LINUX */
+  
+! #else	/* NOT AUTH */
+  
+  char *crypt();
+  
+--- 473,535 ----
+  
+  #endif  /* LINUX */
+  
+! #else /* NOT AUTH */
+! 
+! #ifdef AUTH_DCE
+! 
+! #include <dce/sec_login.h>
+! extern sec_login_handle_t login_context;
+! 
+! static int
+! auth_user(p, pw)
+! POP     *   p;
+! struct passwd  *   pw;
+! {
+!   sec_login_auth_src_t auth_src;
+!   sec_passwd_rec_t pw_entry;
+!   boolean32 reset_passwd;
+!   sec_passwd_str_t tmp_pw;
+!   error_status_t dce_st;
+!   
+!   pw_entry.version_number = sec_passwd_c_version_none;
+!   pw_entry.pepper = NULL;
+!   pw_entry.key.key_type = sec_passwd_plain;
+!   strncpy( (char *)tmp_pw, p->pop_parm[1], sec_passwd_str_max_len);
+!   tmp_pw[sec_passwd_str_max_len] = '\0';
+!   pw_entry.key.tagged_union.plain = &(tmp_pw[0]);
+! 
+!   if (!sec_login_setup_identity(p->user, sec_login_no_flags, &login_context, &dce_st))
+!     {
+!       sleep(SLEEP_SECONDS);
+!       return (pop_msg(p,POP_FAILURE, "Unable to setup DCE identity for %s.", p->user));
+!     }
+! 
+!   if (!sec_login_valid_and_cert_ident(login_context, &pw_entry, &reset_passwd, &auth_src, &dce_st))
+!     {
+!       sleep(SLEEP_SECONDS);
+!       return (pop_msg(p,POP_FAILURE, "Unable to validate DCE identity for %s.", p->user));
+!     }
+! 
+!   if (auth_src != sec_login_auth_src_network)
+!     {
+!       sec_login_purge_context(&login_context, &dce_st);
+!       sleep(SLEEP_SECONDS);
+!       return (pop_msg(p,POP_FAILURE, "No DCE network credentials for %s.", p->user));
+!     }
+! 
+!   sec_login_set_context(login_context, &dce_st);
+! 
+!   if (dce_st)
+!     {
+!       sec_login_purge_context(&login_context, &dce_st);
+!       sleep(SLEEP_SECONDS);
+!       return (pop_msg(p,POP_FAILURE, "Unable to set DCE context for %s.", p->user));
+!     }
+! 
+!   return(POP_SUCCESS);
+! }
+! 
+! #else	/* NOT AUTH_DCE */
+  
+  char *crypt();
+  
+***************
+*** 494,499 ****
+--- 550,556 ----
+      return(POP_SUCCESS);
+  }
+  
++ #endif  /* AUTH_DCE */
+  #endif	/* AUTH */
+  
+  /* 
+
+diff -c -r qpopper2.3/popper.c qpopper2.3-dce-0.5/popper.c
+*** qpopper2.3/popper.c	Fri Mar 28 20:30:37 1997
+--- qpopper2.3-dce-0.5/popper.c	Fri May  2 11:57:15 1997
+***************
+*** 36,41 ****
+--- 36,46 ----
+  #include <prot.h>
+  #endif
+  
++ #ifdef AUTH_DCE
++ #include <dce/sec_login.h>
++ sec_login_handle_t login_context;
++ #endif
++ 
+  #include "popper.h"
+  
+  #ifdef NEED_STRERROR
+***************
+*** 63,68 ****
+--- 68,77 ----
+      char                message[MAXLINELEN];
+      char            *   tgets();
+  
++ #ifdef AUTH_DCE
++     error_status_t dce_st;
++ #endif
++ 
+  #if (defined(POPSCO) || defined(OSF1)) && defined(AUTH)
+      (void) set_auth_parameters(argc, argv);
+  #endif
+***************
+*** 154,159 ****
+--- 163,172 ----
+  
+      /*  Say goodbye to the client */
+      pop_msg(&p,POP_SUCCESS,"Pop server at %s signing off.",p.myhost);
++ 
++ #ifdef AUTH_DCE
++     sec_login_purge_context(&login_context, &dce_st);
++ #endif
+  
+  #ifdef DEBUG
+      /*  Log the end of activity */
